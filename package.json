@@ -1,18 +1,53 @@
 {
   "name": "rn-toolkit",
   "version": "1.0.0",
-  "description": "react native工具包",
-  "main": "index.js",
+  "description": "A comprehensive React Native toolkit",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rimraf lib && tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@gitcode.com:gaozh1024/rn-toolkit.git"
+  "keywords": [
+    "react-native",
+    "toolkit",
+    "navigation",
+    "storage",
+    "animation",
+    "clipboard",
+    "device-info",
+    "localization",
+    "i18n"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "files": [
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-native": ">=0.60.0",
+    "react-native-mmkv": ">=2.0.0",
+    "react-native-navigation": ">=7.0.0",
+    "react-native-reanimated": ">=3.0.0",
+    "@react-native-clipboard/clipboard": "^1.16.0",
+    "react-native-device-info": "^12.0.0",
+    "react-native-localize": "^3.5.2"
   },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@gaozh1024/js-toolkit": "^1.0.0"
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-native": "^0.73.0",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "eslint": "^8.56.0",
+    "rimraf": "^5.0.10",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
   }
 }
