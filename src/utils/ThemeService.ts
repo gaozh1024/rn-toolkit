@@ -36,6 +36,49 @@ export interface ThemeColors {
 export interface Theme {
     mode: 'light' | 'dark';
     colors: ThemeColors;
+    // 添加边框圆角配置
+    borderRadius?: {
+        xs: number;
+        sm: number;
+        md: number;
+        lg: number;
+        xl: number;
+    };
+    // 添加间距配置
+    spacing?: {
+        xs: number;
+        sm: number;
+        md: number;
+        lg: number;
+        xl: number;
+    };
+    // 添加导航配置
+    navigation?: {
+        headerHeight: number;
+        tabBarHeight: number;
+    };
+    // 添加字体配置
+    typography?: {
+        fontSize: {
+            xs: number;
+            sm: number;
+            md: number;
+            lg: number;
+            xl: number;
+        };
+        fontWeight: {
+            light: string;
+            normal: string;
+            medium: string;
+            semibold: string;
+            bold: string;
+        };
+        lineHeight: {
+            tight: number;
+            normal: number;
+            relaxed: number;
+        };
+    };
 }
 
 // 预定义的亮色主题
@@ -65,6 +108,49 @@ const lightTheme: Theme = {
 
         shadow: 'rgba(0, 0, 0, 0.1)',
     },
+    // 添加导航配置
+    navigation: {
+        headerHeight: 56,
+        tabBarHeight: 60,
+    },
+    // 添加边框圆角配置
+    borderRadius: {
+        xs: 4,
+        sm: 8,
+        md: 12,
+        lg: 16,
+        xl: 24,
+    },
+    // 添加间距配置
+    spacing: {
+        xs: 4,
+        sm: 8,
+        md: 16,
+        lg: 24,
+        xl: 32,
+    },
+    // 添加字体配置
+    typography: {
+        fontSize: {
+            xs: 12,
+            sm: 14,
+            md: 16,
+            lg: 18,
+            xl: 24,
+        },
+        fontWeight: {
+            light: '300',
+            normal: '400',
+            medium: '500',
+            semibold: '600',
+            bold: '700',
+        },
+        lineHeight: {
+            tight: 1.2,
+            normal: 1.5,
+            relaxed: 1.8,
+        },
+    },
 };
 
 // 预定义的暗色主题
@@ -93,6 +179,49 @@ const darkTheme: Theme = {
         placeholder: '#8E8E93',
 
         shadow: 'rgba(0, 0, 0, 0.3)',
+    },
+    // 添加导航配置
+    navigation: {
+        headerHeight: 56,
+        tabBarHeight: 60,
+    },
+    // 添加边框圆角配置
+    borderRadius: {
+        xs: 4,
+        sm: 8,
+        md: 12,
+        lg: 16,
+        xl: 24,
+    },
+    // 添加间距配置
+    spacing: {
+        xs: 4,
+        sm: 8,
+        md: 16,
+        lg: 24,
+        xl: 32,
+    },
+    // 添加字体配置
+    typography: {
+        fontSize: {
+            xs: 12,
+            sm: 14,
+            md: 16,
+            lg: 18,
+            xl: 24,
+        },
+        fontWeight: {
+            light: '300',
+            normal: '400',
+            medium: '500',
+            semibold: '600',
+            bold: '700',
+        },
+        lineHeight: {
+            tight: 1.2,
+            normal: 1.5,
+            relaxed: 1.8,
+        },
     },
 };
 

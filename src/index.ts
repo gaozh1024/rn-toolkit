@@ -1,9 +1,6 @@
 // 导航模块
 export * from './navigation';
 
-// 动画模块
-export * from './animation';
-
 // 存储模块
 export * from './storage';
 
@@ -12,3 +9,12 @@ export * from './utils';
 
 // 类型定义
 export * from './types';
+
+// 样式
+export * from './styles';
+
+// 动画 (如果需要)
+// export * from './animation';
+
+// UI 组件 (新增)
+export * from './components';

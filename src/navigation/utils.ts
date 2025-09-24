@@ -1,50 +1,234 @@
-import { NavigationOptions } from './types';
+import React from 'react';
+import { StackNavigationOptions } from '@react-navigation/stack';
+import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import { PlatformPressable } from '@react-navigation/elements';
+import ThemeService from '../utils/ThemeService';
 
-// 预设的导航样式
-export const NavigationStyles = {
-  // 透明导航栏
-  transparent: (): NavigationOptions => ({
-    topBar: {
-      background: {
-        color: 'transparent'
-      }
-    }
-  }),
+// 基于主题的导航样式生成器
+export const createThemedNavigationStyles = () => {
+  const theme = ThemeService.getCurrentTheme();
 
-  // 隐藏导航栏
-  hidden: (): NavigationOptions => ({
-    topBar: {
-      visible: false
-    }
-  }),
-
-  // 深色主题
-  dark: (): NavigationOptions => ({
-    topBar: {
-      background: {
-        color: '#000000'
+  return {
+    // 透明头部
+    transparent: (): StackNavigationOptions => ({
+      headerTransparent: true,
+      headerStyle: {
+        backgroundColor: 'transparent',
       },
-      title: {
-        color: '#ffffff'
-      }
+    }),
+
+    // 隐藏头部
+    hidden: (): StackNavigationOptions => ({
+      headerShown: false,
+    }),
+
+    // 主题适配的头部样式
+    themed: (): StackNavigationOptions => ({
+      headerStyle: {
+        backgroundColor: theme.colors.background,
+        borderBottomColor: theme.colors.border,
+        height: theme.navigation?.headerHeight || 56, // 使用主题中的高度
+      },
+      headerTintColor: theme.colors.onBackground,
+      headerTitleStyle: {
+        color: theme.colors.onBackground,
+      },
+    }),
+
+    // 深色主题（保持向后兼容）
+    dark: (): StackNavigationOptions => ({
+      headerStyle: {
+        backgroundColor: '#000000',
+      },
+      headerTintColor: '#ffffff',
+      headerTitleStyle: {
+        color: '#ffffff',
+      },
+    }),
+
+    // 浅色主题（保持向后兼容）
+    light: (): StackNavigationOptions => ({
+      headerStyle: {
+        backgroundColor: '#ffffff',
+      },
+      headerTintColor: '#000000',
+      headerTitleStyle: {
+        color: '#000000',
+      },
+    }),
+
+    // 无阴影头部
+    noShadow: (): StackNavigationOptions => ({
+      headerShadowVisible: false,
+    }),
+
+    // 自定义返回按钮
+    customBack: (onPress: () => void): StackNavigationOptions => ({
+      headerLeft: () => null, // 需要在组件中自定义
+    }),
+  };
+};
+
+// 基于主题的标签页样式生成器
+export const createThemedTabStyles = () => {
+  const theme = ThemeService.getCurrentTheme();
+
+  return {
+    // 隐藏标签栏
+    hidden: (): BottomTabNavigationOptions => ({
+      tabBarStyle: { display: 'none' },
+    }),
+
+    // 主题适配的标签栏样式
+    themed: (): BottomTabNavigationOptions => ({
+      tabBarStyle: {
+        backgroundColor: theme.colors.surface,
+        borderTopColor: theme.colors.border,
+      },
+      tabBarActiveTintColor: theme.colors.primary,
+      tabBarInactiveTintColor: theme.colors.disabled,
+    }),
+
+    // 深色标签栏（保持向后兼容）
+    dark: (): BottomTabNavigationOptions => ({
+      tabBarStyle: {
+        backgroundColor: '#000000',
+      },
+      tabBarActiveTintColor: '#ffffff',
+      tabBarInactiveTintColor: '#666666',
+    }),
+
+    // 浅色标签栏（保持向后兼容）
+    light: (): BottomTabNavigationOptions => ({
+      tabBarStyle: {
+        backgroundColor: '#ffffff',
+      },
+      tabBarActiveTintColor: '#000000',
+      tabBarInactiveTintColor: '#999999',
+    }),
+  };
+};
+
+// 预设的导航样式（使用主题）
+export const NavigationStyles = createThemedNavigationStyles();
+
+// 标签页样式预设（使用主题）
+export const TabStyles = createThemedTabStyles();
+
+// 导航动画预设
+export const NavigationAnimations = {
+  // 从右侧滑入
+  slideFromRight: (): StackNavigationOptions => ({
+    cardStyleInterpolator: ({ current, layouts }) => {
+      return {
+        cardStyle: {
+          transform: [
+            {
+              translateX: current.progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [layouts.screen.width, 0],
+              }),
+            },
+          ],
+        },
+      };
     },
-    statusBar: {
-      style: 'light'
-    }
   }),
 
-  // 浅色主题
-  light: (): NavigationOptions => ({
-    topBar: {
-      background: {
-        color: '#ffffff'
-      },
-      title: {
-        color: '#000000'
-      }
+  // 淡入淡出
+  fade: (): StackNavigationOptions => ({
+    cardStyleInterpolator: ({ current }) => {
+      return {
+        cardStyle: {
+          opacity: current.progress,
+        },
+      };
     },
-    statusBar: {
-      style: 'dark'
-    }
-  })
+  }),
+
+  // 从底部滑入
+  slideFromBottom: (): StackNavigationOptions => ({
+    cardStyleInterpolator: ({ current, layouts }) => {
+      return {
+        cardStyle: {
+          transform: [
+            {
+              translateY: current.progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [layouts.screen.height, 0],
+              }),
+            },
+          ],
+        },
+      };
+    },
+  }),
+};
+
+export const createStackScreens = (screens: Array<{
+  name: string;
+  component: React.ComponentType<any>;
+  options?: StackNavigationOptions;
+}>) => {
+  return screens;
+};
+
+export const createTabScreens = (tabs: Array<{
+  name: string;
+  component: React.ComponentType<any>;
+  options?: BottomTabNavigationOptions;
+}>) => {
+  return tabs;
+};
+
+// 无水滴效果的标签页按钮组件
+const NoRippleTabButton = (props: any) =>
+  React.createElement(PlatformPressable, {
+    ...props,
+    android_ripple: { color: 'transparent' }, // 禁用Android水滴效果
+    pressColor: 'transparent', // 禁用Android按压颜色
+    pressOpacity: 0.3, // iOS按压透明度
+  });
+
+// Stack Navigator 禁用水滴效果配置
+export const noRippleStackOptions: StackNavigationOptions = {
+  headerPressColor: 'transparent', // 禁用头部按钮的水滴效果
+  headerPressOpacity: 0.3, // 设置按压透明度
+};
+
+// Tab Navigator 禁用水滴效果配置
+export const noRippleTabOptions: BottomTabNavigationOptions = {
+  tabBarButton: NoRippleTabButton,
+};
+
+// 获取主题化的默认导航选项
+export const getThemedNavigationOptions = (): StackNavigationOptions => {
+  const theme = ThemeService.getCurrentTheme();
+
+  return {
+    ...noRippleStackOptions,
+    headerStyle: {
+      backgroundColor: theme.colors.surface,
+      borderBottomColor: theme.colors.border,
+    },
+    headerTintColor: theme.colors.onSurface,
+    headerTitleStyle: {
+      color: theme.colors.onSurface,
+    },
+  };
+};
+
+// 获取主题化的默认标签页选项
+export const getThemedTabOptions = (): BottomTabNavigationOptions => {
+  const theme = ThemeService.getCurrentTheme();
+
+  return {
+    ...noRippleTabOptions,
+    tabBarStyle: {
+      backgroundColor: theme.colors.surface,
+      borderTopColor: theme.colors.border,
+    },
+    tabBarActiveTintColor: theme.colors.primary,
+    tabBarInactiveTintColor: theme.colors.disabled,
+  };
 };
