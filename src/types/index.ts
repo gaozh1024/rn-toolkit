@@ -1,54 +1,33 @@
-// 通用类型定义
-export interface BaseResponse<T = any> {
-  code: number;
-  message: string;
-  data: T;
-}
+// 导出全局类型定义
+export * from './global';
 
-export interface PaginationParams {
-  page: number;
-  pageSize: number;
-}
+// 重新导出第三方库的类型定义
+export type { 
+  ClipboardStatic, 
+  ClipboardListener, 
+  ClipboardImageOptions, 
+  ClipboardStringOptions 
+} from '@react-native-clipboard/clipboard';
 
-export interface PaginationResponse<T> {
-  list: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type {
+  DeviceInfoModule,
+  DeviceType,
+  BatteryState,
+  PowerState,
+  DisplayMetrics,
+  DeviceInformation
+} from 'react-native-device-info';
 
-// 主题类型
-export interface Theme {
-  colors: {
-    primary: string;
-    secondary: string;
-    background: string;
-    surface: string;
-    text: string;
-    textSecondary: string;
-    border: string;
-    error: string;
-    warning: string;
-    success: string;
-  };
-  spacing: {
-    xs: number;
-    sm: number;
-    md: number;
-    lg: number;
-    xl: number;
-  };
-  typography: {
-    h1: TextStyle;
-    h2: TextStyle;
-    h3: TextStyle;
-    body: TextStyle;
-    caption: TextStyle;
-  };
-}
-
-interface TextStyle {
-  fontSize: number;
-  fontWeight: string;
-  lineHeight: number;
-}
+export type {
+  Locale,
+  NumberFormatSettings,
+  Calendar,
+  Currency,
+  LanguageTag,
+  TemperatureUnit,
+  LocalizationChangeListener,
+  LocalizationData,
+  NumberFormatOptions,
+  CurrencyFormatOptions,
+  DateFormatOptions
+} from 'react-native-localize';

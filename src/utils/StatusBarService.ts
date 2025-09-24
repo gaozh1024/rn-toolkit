@@ -1,6 +1,7 @@
-import { StatusBar, StatusBarStyle, Platform } from 'react-native';
+import { Platform, StatusBar, StatusBarStyle } from 'react-native';
+import styleService from '../theme/ThemeService';
+import { AppTheme } from '../theme/types';
 import StorageService from '../storage/StorageService';
-import ThemeService, { Theme } from './ThemeService';
 
 export type StatusBarStyleType = 'default' | 'light-content' | 'dark-content';
 export type StatusBarAnimation = 'none' | 'fade' | 'slide';
@@ -45,22 +46,23 @@ class StatusBarService {
    */
   static async initialize(): Promise<void> {
     try {
-      // 从存储中读取用户配置
+      // 从存储中读取配置
       const savedConfig = StorageService.getSimple(this.STORAGE_KEY);
-      if (savedConfig && typeof savedConfig === 'object') {
+      if (savedConfig) {
         this.currentConfig = {
           ...this.currentConfig,
           ...savedConfig,
         };
       }
 
-      // 应用初始配置
-      this.applyConfig(this.currentConfig);
-
-      // 监听主题变化
+      // 如果启用了自动主题，添加主题监听器
       if (this.autoThemeEnabled) {
-        this.enableAutoTheme();
+        styleService.addThemeChangeListener(this.handleThemeChange);
+        this.applyThemeBasedStyle();
       }
+
+      // 应用当前配置
+      this.applyConfig(this.currentConfig);
     } catch (error) {
       console.warn('StatusBarService: Failed to initialize:', error);
     }
@@ -117,10 +119,10 @@ class StatusBarService {
    * 显示/隐藏状态栏
    */
   static setHidden(hidden: boolean, animation: 'fade' | 'slide' = 'fade'): void {
-    this.setConfig({ 
-      hidden, 
+    this.setConfig({
+      hidden,
       showHideTransition: animation,
-      animated: true 
+      animated: true
     });
   }
 
@@ -152,14 +154,10 @@ class StatusBarService {
    * 根据当前主题自动调整状态栏样式
    */
   static enableAutoTheme(): void {
-    this.autoThemeEnabled = true;
-    
-    // 立即应用主题相关的状态栏样式
-    this.applyThemeBasedStyle();
-
-    // 监听主题变化
-    if (!this.themeSubscription) {
-      this.themeSubscription = ThemeService.addThemeChangeListener(this.handleThemeChange);
+    if (!this.autoThemeEnabled) {
+      this.autoThemeEnabled = true;
+      styleService.addThemeChangeListener(this.handleThemeChange);
+      this.applyThemeBasedStyle();
     }
   }
 
@@ -167,11 +165,9 @@ class StatusBarService {
    * 禁用自动主题模式
    */
   static disableAutoTheme(): void {
-    this.autoThemeEnabled = false;
-    
-    if (this.themeSubscription) {
-      ThemeService.removeThemeChangeListener(this.handleThemeChange);
-      this.themeSubscription = null;
+    if (this.autoThemeEnabled) {
+      this.autoThemeEnabled = false;
+      styleService.removeThemeChangeListener(this.handleThemeChange);
     }
   }
 
@@ -206,16 +202,15 @@ class StatusBarService {
    * 获取推荐的状态栏样式（基于主题）
    */
   static getRecommendedStyle(): StatusBarStyleType {
-    const theme = ThemeService.getCurrentTheme();
-    return theme.mode === 'dark' ? 'light-content' : 'dark-content';
+    const isDark = styleService.isDarkMode();
+    return isDark ? 'light-content' : 'dark-content';
   }
 
   /**
    * 获取推荐的背景色（基于主题）
    */
   static getRecommendedBackgroundColor(): string {
-    const theme = ThemeService.getCurrentTheme();
-    return theme.colors.background;
+    return styleService.getAppTheme().currentColors.background;
   }
 
   /**
@@ -240,9 +235,8 @@ class StatusBarService {
    */
   static cleanup(): void {
     this.listeners = [];
-    if (this.themeSubscription) {
-      ThemeService.removeThemeChangeListener(this.handleThemeChange);
-      this.themeSubscription = null;
+    if (this.autoThemeEnabled) {
+      styleService.removeThemeChangeListener(this.handleThemeChange);
     }
   }
 
@@ -279,7 +273,7 @@ class StatusBarService {
   /**
    * 主题变化处理器
    */
-  private static handleThemeChange = (theme: Theme): void => {
+  private static handleThemeChange = (theme: AppTheme): void => {
     if (this.autoThemeEnabled) {
       this.applyThemeBasedStyle();
     }
@@ -289,9 +283,10 @@ class StatusBarService {
    * 应用基于主题的样式
    */
   private static applyThemeBasedStyle(): void {
-    const theme = ThemeService.getCurrentTheme();
-    const recommendedStyle = theme.mode === 'dark' ? 'light-content' : 'dark-content';
-    const recommendedBackgroundColor = theme.colors.background;
+    const isDark = styleService.isDarkMode();
+    const colors = styleService.getAppTheme().currentColors;
+    const recommendedStyle = isDark ? 'light-content' : 'dark-content';
+    const recommendedBackgroundColor = colors.background;
 
     this.setConfig({
       barStyle: recommendedStyle,

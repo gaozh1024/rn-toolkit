@@ -1,53 +1,220 @@
-// import { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
-// import { useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Animated } from 'react-native';
 
-// // 淡入淡出Hook
-// export const useFadeAnimation = (visible: boolean, duration: number = 300) => {
-//   const opacity = useSharedValue(visible ? 1 : 0);
+export const useAnimation = () => {
+    const [isReanimatedAvailable, setIsReanimatedAvailable] = useState(false);
+    const reanimatedRef = useRef<any>(null);
 
-//   const animatedStyle = useAnimatedStyle(() => ({
-//     opacity: withTiming(opacity.value, { duration })
-//   }));
+    useEffect(() => {
+        const initReanimated = async () => {
+            try {
+                const reanimated = await import('react-native-reanimated');
+                reanimatedRef.current = reanimated;
+                setIsReanimatedAvailable(true);
+            } catch (error) {
+                setIsReanimatedAvailable(false);
+            }
+        };
+        initReanimated();
+    }, []);
 
-//   useEffect(() => {
-//     opacity.value = visible ? 1 : 0;
-//   }, [visible, opacity]);
+    const fadeIn = useCallback((duration: number = 300) => {
+        if (isReanimatedAvailable && reanimatedRef.current) {
+            const { withTiming, Easing } = reanimatedRef.current;
+            return withTiming(1, {
+                duration,
+                easing: Easing.out(Easing.quad)
+            });
+        } else {
+            return Animated.timing(new Animated.Value(0), {
+                toValue: 1,
+                duration,
+                useNativeDriver: true,
+            });
+        }
+    }, [isReanimatedAvailable]);
 
-//   return animatedStyle;
-// };
+    const fadeOut = useCallback((duration: number = 300) => {
+        if (isReanimatedAvailable && reanimatedRef.current) {
+            const { withTiming, Easing } = reanimatedRef.current;
+            return withTiming(0, {
+                duration,
+                easing: Easing.in(Easing.quad)
+            });
+        } else {
+            return Animated.timing(new Animated.Value(1), {
+                toValue: 0,
+                duration,
+                useNativeDriver: true,
+            });
+        }
+    }, [isReanimatedAvailable]);
 
-// // 缩放动画Hook
-// export const useScaleAnimation = (visible: boolean, duration: number = 300) => {
-//   const scale = useSharedValue(visible ? 1 : 0);
+    const slideIn = useCallback((from: 'left' | 'right' | 'top' | 'bottom' = 'left', distance: number = 100, duration: number = 300) => {
+        const initialValue = from === 'left' || from === 'top' ? -distance : distance;
 
-//   const animatedStyle = useAnimatedStyle(() => ({
-//     transform: [{ scale: withSpring(scale.value) }]
-//   }));
+        if (isReanimatedAvailable && reanimatedRef.current) {
+            const { withTiming, Easing } = reanimatedRef.current;
+            return withTiming(0, {
+                duration,
+                easing: Easing.out(Easing.back(1.5))
+            });
+        } else {
+            return Animated.timing(new Animated.Value(initialValue), {
+                toValue: 0,
+                duration,
+                useNativeDriver: true,
+            });
+        }
+    }, [isReanimatedAvailable]);
 
-//   useEffect(() => {
-//     scale.value = visible ? 1 : 0;
-//   }, [visible, scale]);
+    const scale = useCallback((toValue: number = 1, duration: number = 300) => {
+        if (isReanimatedAvailable && reanimatedRef.current) {
+            const { withTiming, Easing } = reanimatedRef.current;
+            return withTiming(toValue, {
+                duration,
+                easing: Easing.out(Easing.back(1.5))
+            });
+        } else {
+            return Animated.timing(new Animated.Value(0), {
+                toValue,
+                duration,
+                useNativeDriver: true,
+            });
+        }
+    }, [isReanimatedAvailable]);
 
-//   return animatedStyle;
-// };
+    return {
+        fadeIn,
+        fadeOut,
+        slideIn,
+        scale,
+        isReanimatedAvailable
+    };
+};
 
-// // 滑动动画Hook
-// export const useSlideAnimation = (
-//   visible: boolean, 
-//   direction: 'x' | 'y' = 'y', 
-//   distance: number = 100
-// ) => {
-//   const translate = useSharedValue(visible ? 0 : distance);
+// 可选的 reanimated hooks（仅在可用时导出）
+export const useSharedValue = (initialValue: number) => {
+    const [isReanimatedAvailable, setIsReanimatedAvailable] = useState(false);
+    const [sharedValue, setSharedValue] = useState<any>(null);
 
-//   const animatedStyle = useAnimatedStyle(() => ({
-//     transform: direction === 'x' 
-//       ? [{ translateX: withSpring(translate.value) }]
-//       : [{ translateY: withSpring(translate.value) }]
-//   }));
+    useEffect(() => {
+        const initReanimated = async () => {
+            try {
+                const reanimated = await import('react-native-reanimated');
+                if (reanimated.useSharedValue) {
+                    const value = reanimated.useSharedValue(initialValue);
+                    setSharedValue(value);
+                    setIsReanimatedAvailable(true);
+                }
+            } catch (error) {
+                // 降级到普通状态值
+                setSharedValue({ value: initialValue });
+                setIsReanimatedAvailable(false);
+            }
+        };
+        initReanimated();
+    }, [initialValue]);
 
-//   useEffect(() => {
-//     translate.value = visible ? 0 : distance;
-//   }, [visible, translate, distance]);
+    return sharedValue || { value: initialValue };
+};
 
-//   return animatedStyle;
-// };
+export const useAnimatedStyle = (styleFunction: () => any, dependencies?: any[]) => {
+    const [isReanimatedAvailable, setIsReanimatedAvailable] = useState(false);
+    const [animatedStyle, setAnimatedStyle] = useState<any>({});
+
+    useEffect(() => {
+        const initReanimated = async () => {
+            try {
+                const reanimated = await import('react-native-reanimated');
+                if (reanimated.useAnimatedStyle) {
+                    const style = reanimated.useAnimatedStyle(styleFunction, dependencies);
+                    setAnimatedStyle(style);
+                    setIsReanimatedAvailable(true);
+                }
+            } catch (error) {
+                // 降级到普通样式对象
+                setAnimatedStyle(styleFunction());
+                setIsReanimatedAvailable(false);
+            }
+        };
+        initReanimated();
+    }, dependencies);
+
+    return animatedStyle;
+};
+
+// 其他常用的动画 hooks
+export const useFadeAnimation = (initialValue: number = 0) => {
+    const fadeAnim = useRef(new Animated.Value(initialValue)).current;
+
+    const fadeIn = useCallback((duration: number = 300) => {
+        return Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration,
+            useNativeDriver: true,
+        });
+    }, [fadeAnim]);
+
+    const fadeOut = useCallback((duration: number = 300) => {
+        return Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration,
+            useNativeDriver: true,
+        });
+    }, [fadeAnim]);
+
+    return { fadeAnim, fadeIn, fadeOut };
+};
+
+export const useScaleAnimation = (initialValue: number = 0) => {
+    const scaleAnim = useRef(new Animated.Value(initialValue)).current;
+
+    const scaleIn = useCallback((duration: number = 300) => {
+        return Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration,
+            useNativeDriver: true,
+        });
+    }, [scaleAnim]);
+
+    const scaleOut = useCallback((duration: number = 300) => {
+        return Animated.timing(scaleAnim, {
+            toValue: 0,
+            duration,
+            useNativeDriver: true,
+        });
+    }, [scaleAnim]);
+
+    return { scaleAnim, scaleIn, scaleOut };
+};
+
+export const useSlideAnimation = (initialValue: number = -100) => {
+    const slideAnim = useRef(new Animated.Value(initialValue)).current;
+
+    const slideIn = useCallback((duration: number = 300) => {
+        return Animated.timing(slideAnim, {
+            toValue: 0,
+            duration,
+            useNativeDriver: true,
+        });
+    }, [slideAnim]);
+
+    const slideOut = useCallback((toValue: number = -100, duration: number = 300) => {
+        return Animated.timing(slideAnim, {
+            toValue,
+            duration,
+            useNativeDriver: true,
+        });
+    }, [slideAnim]);
+
+    return { slideAnim, slideIn, slideOut };
+};
+
+export const useSequenceAnimation = () => {
+    const runSequence = useCallback((animations: Animated.CompositeAnimation[]) => {
+        return Animated.sequence(animations);
+    }, []);
+
+    return { runSequence };
+};

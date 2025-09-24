@@ -1,25 +1,9 @@
-// 导航容器和导航器
-export { 
-  NavigationContainer, 
-  StackNavigator, 
-  TabNavigator 
-} from './NavigationContainer';
+export { NavigationBuilder, createNavigation } from './NavigationBuilder';
+export { NavigationContainer, StackNavigator, TabNavigator } from './NavigationContainer';
+export { NavigationService } from './NavigationService';
+export * from './utils';
 
-// 导航服务
-export { 
-  NavigationService, 
-  navigationService, 
-  Navigation,
-  navigationRef 
-} from './NavigationService';
-
-// 导航配置生成器 - 新增
-export { 
-  NavigationBuilder, 
-  createNavigation 
-} from './NavigationBuilder';
-
-// 类型定义
+// 导出类型
 export type {
   RootStackParamList,
   NavigationOptions,
@@ -30,25 +14,33 @@ export type {
   NavigationProps,
   ScreenConfig,
   StackConfig,
-  TabConfig as NavigationTabConfig
+  TabConfig,
 } from './types';
 
-// 导航配置生成器类型 - 新增
+// 重新导出 React Navigation 的类型
 export type {
-  TabConfig,
-  ScreenConfig as NavigationScreenConfig,
-  NavigationConfig
-} from './NavigationBuilder';
+  StackNavigationOptions,
+  StackNavigationProp,
+  StackScreenProps,
+} from '@react-navigation/stack';
 
-// 工具函数和样式
-export {
-  NavigationStyles,
-  TabStyles,
-  NavigationAnimations,
-  getThemedNavigationOptions,
-  createThemedNavigationStyles,
-  createThemedTabStyles
-} from './utils';
+export type {
+  BottomTabNavigationOptions,
+  BottomTabNavigationProp,
+  BottomTabScreenProps,
+} from '@react-navigation/bottom-tabs';
 
-// 默认导出导航容器
-export { default } from './NavigationContainer';
+export type {
+  NavigationProp,
+  RouteProp,
+  ParamListBase,
+  NavigationContainerRef,
+} from '@react-navigation/native';
+
+export type {
+  PlatformPressableProps,
+  HeaderBackButtonProps,
+  HeaderButtonProps,
+  HeaderTitleProps,
+  HeaderBackgroundProps,
+} from '@react-navigation/elements';

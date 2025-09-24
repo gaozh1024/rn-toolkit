@@ -1,11 +1,11 @@
 import React from 'react';
-import { Text as RNText, TextStyle, StyleSheet } from 'react-native';
-import ThemeService from '../../../utils/ThemeService';
+import { Text as RNText, TextStyle, StyleSheet, StyleProp } from 'react-native';
+import { useTheme } from '../../../theme';
 
 export interface TextProps {
     // 基础属性
     children?: React.ReactNode;
-    style?: TextStyle | TextStyle[];
+    style?: StyleProp<TextStyle>;  // 修改为 StyleProp<TextStyle>
 
     // 文本变体
     variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2' | 'caption' | 'overline';
@@ -79,7 +79,7 @@ const Text: React.FC<TextProps> = ({
     testID,
     ...props
 }) => {
-    const theme = ThemeService.getCurrentTheme();
+    const { theme, colors } = useTheme();
     const styles = createStyles(theme);
 
     // 获取变体样式
@@ -140,7 +140,7 @@ const Text: React.FC<TextProps> = ({
             return color;
         }
 
-        return theme.colors[color as keyof typeof theme.colors] || theme.colors.onBackground;
+        return colors[color as keyof typeof colors] || colors.onBackground;
     };
 
     // 获取行高
@@ -150,7 +150,7 @@ const Text: React.FC<TextProps> = ({
         }
 
         if (lineHeight && theme.typography?.lineHeight) {
-            return getFontSize() * theme.typography.lineHeight[lineHeight];
+            return getFontSize() * theme.typography.lineHeight[lineHeight as keyof typeof theme.typography.lineHeight];
         }
 
         return undefined;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp, ScrollView } from 'react-native';
-import { useTheme } from '../../../utils/useTheme';
+import { useTheme } from '../../../theme';
 
 export interface ContainerProps {
   children: React.ReactNode;
@@ -25,29 +25,29 @@ export const Container: React.FC<ContainerProps> = ({
   scrollViewProps,
   testID,
 }) => {
-  const theme = useTheme();
+  const { theme, colors } = useTheme();
 
-  const paddingStyle = typeof padding === 'number' 
+  const paddingStyle = typeof padding === 'number'
     ? { padding }
     : {
-        paddingTop: padding.top,
-        paddingBottom: padding.bottom,
-        paddingLeft: padding.left,
-        paddingRight: padding.right,
-      };
+      paddingTop: padding.top,
+      paddingBottom: padding.bottom,
+      paddingLeft: padding.left,
+      paddingRight: padding.right,
+    };
 
   const marginStyle = typeof margin === 'number'
     ? { margin }
     : {
-        marginTop: margin.top,
-        marginBottom: margin.bottom,
-        marginLeft: margin.left,
-        marginRight: margin.right,
-      };
+      marginTop: margin.top,
+      marginBottom: margin.bottom,
+      marginLeft: margin.left,
+      marginRight: margin.right,
+    };
 
   const containerStyle: ViewStyle = {
     flex,
-    backgroundColor: backgroundColor || theme.colors.background,
+    backgroundColor: backgroundColor || colors.background,
     ...paddingStyle,
     ...marginStyle,
   };

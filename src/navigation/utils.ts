@@ -2,11 +2,12 @@ import React from 'react';
 import { StackNavigationOptions } from '@react-navigation/stack';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { PlatformPressable } from '@react-navigation/elements';
-import ThemeService from '../utils/ThemeService';
+import styleService from '../theme/ThemeService';
 
 // 基于主题的导航样式生成器
 export const createThemedNavigationStyles = () => {
-  const theme = ThemeService.getCurrentTheme();
+  const theme = styleService.getTheme();
+  const colors = styleService.getAppTheme().currentColors;
 
   return {
     // 透明头部
@@ -25,13 +26,13 @@ export const createThemedNavigationStyles = () => {
     // 主题适配的头部样式
     themed: (): StackNavigationOptions => ({
       headerStyle: {
-        backgroundColor: theme.colors.background,
-        borderBottomColor: theme.colors.border,
-        height: theme.navigation?.headerHeight || 56, // 使用主题中的高度
+        backgroundColor: colors.background,
+        borderBottomColor: colors.border,
+        height: theme.navigation?.headerHeight || 56,
       },
-      headerTintColor: theme.colors.onBackground,
+      headerTintColor: colors.text,
       headerTitleStyle: {
-        color: theme.colors.onBackground,
+        color: colors.text,
       },
     }),
 
@@ -71,22 +72,28 @@ export const createThemedNavigationStyles = () => {
 
 // 基于主题的标签页样式生成器
 export const createThemedTabStyles = () => {
-  const theme = ThemeService.getCurrentTheme();
+  const theme = styleService.getTheme();
+  const colors = styleService.getAppTheme().currentColors;
 
   return {
-    // 隐藏标签栏
+    // 隐藏头部
     hidden: (): BottomTabNavigationOptions => ({
-      tabBarStyle: { display: 'none' },
+      headerShown: false,
     }),
 
-    // 主题适配的标签栏样式
+    // 主题适配的标签页样式
     themed: (): BottomTabNavigationOptions => ({
+      headerShown: false, // 默认隐藏头部
       tabBarStyle: {
-        backgroundColor: theme.colors.surface,
-        borderTopColor: theme.colors.border,
+        backgroundColor: colors.surface,
+        borderTopColor: colors.border,
+        height: theme.navigation?.tabBarHeight || 60,
       },
-      tabBarActiveTintColor: theme.colors.primary,
-      tabBarInactiveTintColor: theme.colors.disabled,
+      tabBarActiveTintColor: colors.primary,
+      tabBarInactiveTintColor: colors.textSecondary,
+      tabBarLabelStyle: {
+        fontSize: 12,
+      },
     }),
 
     // 深色标签栏（保持向后兼容）
@@ -199,36 +206,42 @@ export const noRippleStackOptions: StackNavigationOptions = {
 // Tab Navigator 禁用水滴效果配置
 export const noRippleTabOptions: BottomTabNavigationOptions = {
   tabBarButton: NoRippleTabButton,
+  headerShown: false, // 默认隐藏tab页头部
 };
 
 // 获取主题化的默认导航选项
 export const getThemedNavigationOptions = (): StackNavigationOptions => {
-  const theme = ThemeService.getCurrentTheme();
+  const colors = styleService.getAppTheme().currentColors;
 
   return {
     ...noRippleStackOptions,
     headerStyle: {
-      backgroundColor: theme.colors.surface,
-      borderBottomColor: theme.colors.border,
+      backgroundColor: colors.surface,
+      borderBottomColor: colors.border,
     },
-    headerTintColor: theme.colors.onSurface,
+    headerTintColor: colors.text,
     headerTitleStyle: {
-      color: theme.colors.onSurface,
+      color: colors.text,
     },
   };
 };
 
 // 获取主题化的默认标签页选项
 export const getThemedTabOptions = (): BottomTabNavigationOptions => {
-  const theme = ThemeService.getCurrentTheme();
+  const theme = styleService.getTheme();
+  const colors = styleService.getAppTheme().currentColors;
 
   return {
-    ...noRippleTabOptions,
+    headerShown: false, // 默认隐藏头部
     tabBarStyle: {
-      backgroundColor: theme.colors.surface,
-      borderTopColor: theme.colors.border,
+      backgroundColor: colors.surface,
+      borderTopColor: colors.border,
+      height: theme.navigation?.tabBarHeight || 60,
     },
-    tabBarActiveTintColor: theme.colors.primary,
-    tabBarInactiveTintColor: theme.colors.disabled,
+    tabBarActiveTintColor: colors.primary,
+    tabBarInactiveTintColor: colors.textSecondary,
+    tabBarLabelStyle: {
+      fontSize: 12,
+    },
   };
 };

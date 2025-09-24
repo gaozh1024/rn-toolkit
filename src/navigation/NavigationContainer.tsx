@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { navigationRef } from './NavigationService';
 import { StackScreenComponent, TabScreenComponent, RootStackParamList } from './types';
 import { noRippleStackOptions, noRippleTabOptions, createThemedNavigationStyles, createThemedTabStyles } from './utils';
-import ThemeService from '../utils/ThemeService';
+import { themeService } from '../theme';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<RootStackParamList>();
@@ -32,10 +32,10 @@ export const StackNavigator: React.FC<{
       };
 
       // 监听主题变化
-      ThemeService.addThemeChangeListener(updateStyles);
-      
+      themeService.addThemeChangeListener(updateStyles);
+
       return () => {
-        ThemeService.removeThemeChangeListener(updateStyles);
+        themeService.removeThemeChangeListener(updateStyles);
       };
     }
   }, [useTheme]);
@@ -79,10 +79,10 @@ export const TabNavigator: React.FC<{
       };
 
       // 监听主题变化
-      ThemeService.addThemeChangeListener(updateStyles);
-      
+      themeService.addThemeChangeListener(updateStyles);
+
       return () => {
-        ThemeService.removeThemeChangeListener(updateStyles);
+        themeService.removeThemeChangeListener(updateStyles);
       };
     }
   }, [useTheme]);
@@ -110,16 +110,18 @@ export const TabNavigator: React.FC<{
   );
 };
 
-// 主导航容器
-export const NavigationContainer: React.FC<NavigationContainerProps> = ({
-  children,
-  ...props
-}) => {
+// 主导航容器 - 使用 forwardRef 来正确处理 ref
+export const NavigationContainer = React.forwardRef<
+  any,
+  NavigationContainerProps
+>(({ children, ...props }, ref) => {
   return (
-    <RNNavigationContainer ref={navigationRef} {...props}>
+    <RNNavigationContainer ref={ref ?? navigationRef} {...props}>
       {children}
     </RNNavigationContainer>
   );
-};
+});
+
+NavigationContainer.displayName = 'NavigationContainer';
 
 export default NavigationContainer;

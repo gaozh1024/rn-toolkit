@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ViewStyle, TextStyle } from 'react-native';
 import { CSSStyles, AppTheme, ThemeMode } from './types';
-import styleService from './StyleService';
+import themeService from './ThemeService';
 
 // 使用样式的主要 Hook
 export const useStyles = (): CSSStyles => {
-    return useMemo(() => styleService.getCSS(), []);
+    return useMemo(() => themeService.getCSS(), []);
 };
 
 // 完整的主题管理 Hook
@@ -19,8 +19,8 @@ export interface UseThemeReturn {
 }
 
 export const useTheme = (): UseThemeReturn => {
-    const [theme, setTheme] = useState<AppTheme>(styleService.getAppTheme());
-    const [themeMode, setCurrentThemeMode] = useState<ThemeMode>(styleService.getCurrentThemeMode());
+    const [theme, setTheme] = useState<AppTheme>(themeService.getAppTheme());
+    const [themeMode, setCurrentThemeMode] = useState<ThemeMode>(themeService.getCurrentThemeMode());
 
     // 主题变化监听器
     const handleThemeChange = useCallback((newTheme: AppTheme) => {
@@ -30,31 +30,31 @@ export const useTheme = (): UseThemeReturn => {
 
     useEffect(() => {
         // 初始化主题服务
-        styleService.initialize();
+        themeService.initialize();
 
         // 添加监听器
-        styleService.addThemeChangeListener(handleThemeChange);
+        themeService.addThemeChangeListener(handleThemeChange);
 
         // 清理函数
         return () => {
-            styleService.removeThemeChangeListener(handleThemeChange);
+            themeService.removeThemeChangeListener(handleThemeChange);
         };
     }, [handleThemeChange]);
 
     // 设置主题模式
     const setThemeMode = useCallback(async (mode: ThemeMode) => {
-        await styleService.setThemeMode(mode);
+        await themeService.setThemeMode(mode);
     }, []);
 
     // 切换主题
     const toggleTheme = useCallback(async () => {
-        await styleService.toggleTheme();
+        await themeService.toggleTheme();
     }, []);
 
     return {
         theme,
         themeMode,
-        isDarkMode: styleService.isDarkMode(),
+        isDarkMode: themeService.isDarkMode(),
         setThemeMode,
         toggleTheme,
         colors: theme.currentColors,
@@ -63,16 +63,16 @@ export const useTheme = (): UseThemeReturn => {
 
 // 获取当前主题颜色的 Hook（轻量级版本）
 export const useThemeColors = () => {
-    const [colors, setColors] = useState(styleService.getAppTheme().currentColors);
+    const [colors, setColors] = useState(themeService.getAppTheme().currentColors);
 
     const handleThemeChange = useCallback((newTheme: AppTheme) => {
         setColors(newTheme.currentColors);
     }, []);
 
     useEffect(() => {
-        styleService.addThemeChangeListener(handleThemeChange);
+        themeService.addThemeChangeListener(handleThemeChange);
         return () => {
-            styleService.removeThemeChangeListener(handleThemeChange);
+            themeService.removeThemeChangeListener(handleThemeChange);
         };
     }, [handleThemeChange]);
 
@@ -81,32 +81,32 @@ export const useThemeColors = () => {
 
 // 主题模式选择器 Hook
 export const useThemeMode = () => {
-    const [themeMode, setCurrentThemeMode] = useState<ThemeMode>(styleService.getCurrentThemeMode());
+    const [themeMode, setCurrentThemeMode] = useState<ThemeMode>(themeService.getCurrentThemeMode());
 
     const handleThemeChange = useCallback((newTheme: AppTheme) => {
         setCurrentThemeMode(newTheme.mode);
     }, []);
 
     useEffect(() => {
-        styleService.addThemeChangeListener(handleThemeChange);
+        themeService.addThemeChangeListener(handleThemeChange);
         return () => {
-            styleService.removeThemeChangeListener(handleThemeChange);
+            themeService.removeThemeChangeListener(handleThemeChange);
         };
     }, [handleThemeChange]);
 
     const setThemeMode = useCallback(async (mode: ThemeMode) => {
-        await styleService.setThemeMode(mode);
+        await themeService.setThemeMode(mode);
     }, []);
 
     const toggleTheme = useCallback(async () => {
-        await styleService.toggleTheme();
+        await themeService.toggleTheme();
     }, []);
 
     return {
         themeMode,
         setThemeMode,
         toggleTheme,
-        isDarkMode: styleService.isDarkMode(),
+        isDarkMode: themeService.isDarkMode(),
     };
 };
 
@@ -114,7 +114,7 @@ export const useThemeMode = () => {
 export const useCombinedStyles = (
     ...styles: (ViewStyle | TextStyle | undefined | null | false)[]
 ): ViewStyle | TextStyle => {
-    return useMemo(() => styleService.combine(...styles), [styles]);
+    return useMemo(() => themeService.combine(...styles), [styles]);
 };
 
 // 条件样式的 Hook
@@ -122,7 +122,7 @@ export const useConditionalStyle = (
     condition: boolean,
     style: ViewStyle | TextStyle
 ): ViewStyle | TextStyle | {} => {
-    return useMemo(() => styleService.when(condition, style), [condition, style]);
+    return useMemo(() => themeService.when(condition, style), [condition, style]);
 };
 
 // 响应式样式 Hook（基于屏幕尺寸）

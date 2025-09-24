@@ -2,22 +2,22 @@
 
 一个简洁的链式API来配置React Navigation，让导航配置更加直观和易维护。
 
-## 特性
+## 重要提示 ⚠️
 
-- 🔗 **链式调用**：流畅的API设计
-- 📱 **标签页支持**：轻松配置底部标签页
-- 📄 **堆栈导航**：支持页面堆栈管理
-- 🎨 **主题集成**：自动集成主题系统
-- 📝 **TypeScript**：完整的类型支持
-- ⚡ **简洁配置**：减少样板代码
+为了避免 `NavigationContainer` 嵌套错误，请根据你的使用场景选择合适的构建方法：
+
+- **`buildRootNavigation()`**：包含 `NavigationContainer`，适用于应用根部
+- **`buildFullNavigation()`**：不包含 `NavigationContainer`，需要你在外部包装
+- **`buildTabNavigator()`** 和 **`buildStackNavigator()`**：单独的导航器，不包含容器
 
 ## 基础用法
 
-### 简单的标签页导航
+### 方式一：作为应用根导航（推荐）
 
 ```typescript
+// App.tsx
 import { createNavigation } from '@/navigation';
-import { HomeScreen, ProfileScreen } from '@/screens';
+import { HomeScreen, ProfileScreen, DetailsScreen } from '@/screens';
 
 const AppNavigation = createNavigation()
   .addTab('home', HomeScreen, { 
@@ -28,271 +28,321 @@ const AppNavigation = createNavigation()
     title: '个人中心', 
     icon: ({ color, size }) => <Icon name="user" color={color} size={size} />
   })
-  .buildTabNavigator();
+  .addScreen('details', DetailsScreen, { title: '详情页' })
+  .buildRootNavigation(); // 使用 buildRootNavigation，包含 NavigationContainer
 
-export default AppNavigation;
+export default function App() {
+  return <AppNavigation />;
+}
 ```
 
-### 完整的导航结构（标签页 + 堆栈）
+### 方式二：手动包装 NavigationContainer
 
 ```typescript
+// App.tsx
+import { NavigationContainer } from '@react-navigation/native';
 import { createNavigation } from '@/navigation';
-import { 
-  HomeTabScreen, 
-  ProfileTabScreen, 
-  DetailsScreen, 
-  SettingsScreen 
-} from '@/screens';
+import { HomeScreen, ProfileScreen, DetailsScreen } from '@/screens';
 
-const AppNavigation = createNavigation()
-  // 添加标签页
-  .addTab('home', HomeTabScreen, {
-    title: '首页',
-    icon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
-  })
-  .addTab('profile', ProfileTabScreen, {
-    title: '个人中心', 
-    icon: ({ color, size }) => <Icon name="user" color={color} size={size} />,
-    badge: '3', // 显示徽章
-  })
-  
-  // 添加堆栈页面
-  .addScreen('details', DetailsScreen, {
-    title: '详情页',
-    options: {
-      headerBackTitle: '返回',
-    }
-  })
-  .addScreen('settings', SettingsScreen, {
-    title: '设置',
-    options: {
-      presentation: 'modal',
-    }
-  })
-  
-  // 设置初始路由
-  .setInitialTabRoute('home')
-  
-  // 构建完整导航
-  .buildFullNavigation();
+const AppNavigator = createNavigation()
+  .addTab('home', HomeScreen, { title: '首页' })
+  .addTab('profile', ProfileScreen, { title: '个人中心' })
+  .addScreen('details', DetailsScreen, { title: '详情页' })
+  .buildFullNavigation(); // 使用 buildFullNavigation，不包含 NavigationContainer
 
-export default AppNavigation;
+export default function App() {
+  return (
+    <NavigationContainer>
+      <AppNavigator />
+    </NavigationContainer>
+  );
+}
 ```
 
-### 自定义导航选项
+### 方式三：嵌套在其他导航器中
 
 ```typescript
-const AppNavigation = createNavigation()
-  .addTab('home', HomeScreen, { title: '首页' })
-  .addTab('profile', ProfileScreen, { title: '个人' })
-  
-  // 设置标签页全局选项
-  .setTabOptions({
-    tabBarActiveTintColor: '#007AFF',
-    tabBarInactiveTintColor: '#8E8E93',
-    tabBarStyle: {
-      backgroundColor: '#F8F8F8',
-    },
-  })
-  
-  // 设置堆栈全局选项
-  .setStackOptions({
-    headerStyle: {
-      backgroundColor: '#007AFF',
-    },
-    headerTintColor: '#FFFFFF',
-  })
-  
-  .buildFullNavigation();
+// 如果你已经有一个根 NavigationContainer，想要嵌套使用
+import { createNavigation } from '@/navigation';
+
+const SubNavigation = createNavigation()
+  .addTab('tab1', Tab1Screen, { title: 'Tab 1' })
+  .addTab('tab2', Tab2Screen, { title: 'Tab 2' })
+  .buildTabNavigator(); // 只构建标签页导航器
+
+// 然后在其他地方使用
+<Stack.Screen name="SubTabs" component={SubNavigation} />
 ```
 
 ## API 参考
 
-### NavigationBuilder
+### 构建方法
 
-#### 方法
+#### buildRootNavigation()
+- **包含**: `NavigationContainer`
+- **适用**: 应用根部导航
+- **注意**: 确保整个应用只有一个根容器
 
-##### `addTab(name, component, config?)`
+#### buildFullNavigation()
+- **包含**: 完整导航结构（标签页 + 堆栈）
+- **不包含**: `NavigationContainer`
+- **适用**: 需要手动控制容器的场景
 
-添加标签页屏幕。
+#### buildTabNavigator()
+- **包含**: 仅标签页导航器
+- **不包含**: `NavigationContainer`
+- **适用**: 嵌套在其他导航器中
 
-**参数：**
-- `name: string` - 屏幕名称
-- `component: React.ComponentType` - 屏幕组件
-- `config?: TabConfig` - 标签页配置
+#### buildStackNavigator()
+- **包含**: 仅堆栈导航器
+- **不包含**: `NavigationContainer`
+- **适用**: 嵌套在其他导航器中
 
-**TabConfig：**
+## 错误排查
+
+### NavigationContainer 嵌套错误
+
+如果你看到这个错误：
+
+## 特性
+
+- ✅ **默认无头部**: 所有页面（包括Stack和Tab页面）默认隐藏头部
+- ✅ **智能构建**: 自动处理复杂的导航结构
+- ✅ **类型安全**: 完整的TypeScript支持
+- ✅ **主题适配**: 自动适配深色/浅色主题
+- ✅ **容器管理**: 避免NavigationContainer嵌套错误
+
+### 方式一：作为应用根导航（推荐）
+
 ```typescript
-interface TabConfig {
-  title?: string;                    // 标签标题
-  icon?: React.ReactNode | Function; // 标签图标
-  badge?: string | number;           // 徽章文本
-  options?: BottomTabNavigationOptions; // 其他选项
+// App.tsx
+import { createNavigation } from '@/navigation';
+import { HomeScreen, ProfileScreen, DetailsScreen } from '@/screens';
+
+const AppNavigation = createNavigation()
+  .addTab('home', HomeScreen, { 
+    title: '首页', 
+    icon: ({ color, size }) => <Icon name="home" color={color} size={size} />
+  })
+  .addTab('profile', ProfileScreen, { 
+    title: '个人中心', 
+    icon: ({ color, size }) => <Icon name="user" color={color} size={size} />
+  })
+  .addScreen('details', DetailsScreen, { title: '详情页' })
+  .buildRootNavigation(); // 使用 buildRootNavigation，包含 NavigationContainer
+
+export default function App() {
+  return <AppNavigation />;
 }
 ```
 
-##### `addScreen(name, component, config?)`
+### 方式二：手动包装 NavigationContainer
 
-添加堆栈屏幕。
-
-**参数：**
-- `name: string` - 屏幕名称
-- `component: React.ComponentType` - 屏幕组件
-- `config?: ScreenConfig` - 屏幕配置
-
-**ScreenConfig：**
 ```typescript
-interface ScreenConfig {
-  title?: string;                   // 屏幕标题
-  options?: StackNavigationOptions; // 导航选项
-  initialParams?: any;              // 初始参数
+// App.tsx
+import { NavigationContainer } from '@react-navigation/native';
+import { createNavigation } from '@/navigation';
+import { HomeScreen, ProfileScreen, DetailsScreen } from '@/screens';
+
+const AppNavigator = createNavigation()
+  .addTab('home', HomeScreen, { title: '首页' })
+  .addTab('profile', ProfileScreen, { title: '个人中心' })
+  .addScreen('details', DetailsScreen, { title: '详情页' })
+  .buildFullNavigation(); // 使用 buildFullNavigation，不包含 NavigationContainer
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <AppNavigator />
+    </NavigationContainer>
+  );
 }
 ```
 
-##### `setTabOptions(options)`
+### 方式三：嵌套在其他导航器中
+
+```typescript
+// 如果你已经有一个根 NavigationContainer，想要嵌套使用
+import { createNavigation } from '@/navigation';
+
+const SubNavigation = createNavigation()
+  .addTab('tab1', Tab1Screen, { title: 'Tab 1' })
+  .addTab('tab2', Tab2Screen, { title: 'Tab 2' })
+  .buildTabNavigator(); // 只构建标签页导航器
+
+// 然后在其他地方使用
+<Stack.Screen name="SubTabs" component={SubNavigation} />
+```
+
+## API 参考
+
+### 构建方法
+
+#### buildRootNavigation()
+- **包含**: `NavigationContainer`
+- **适用**: 应用根部导航
+- **注意**: 确保整个应用只有一个根容器
+
+#### buildFullNavigation()
+- **包含**: 完整导航结构（标签页 + 堆栈）
+- **不包含**: `NavigationContainer`
+- **适用**: 需要手动控制容器的场景
+
+#### buildTabNavigator()
+- **包含**: 仅标签页导航器
+- **不包含**: `NavigationContainer`
+- **适用**: 嵌套在其他导航器中
+
+#### buildStackNavigator()
+- **包含**: 仅堆栈导航器
+- **不包含**: `NavigationContainer`
+- **适用**: 嵌套在其他导航器中
+
+## 错误排查
+
+### NavigationContainer 嵌套错误
+
+如果你看到这个错误：
+
+## Tab页面配置
+
+### 基础用法（默认无头部）
+
+```typescript
+const navigation = createNavigation()
+  .addTab('Home', HomeScreen, {
+    title: '首页',
+    icon: ({ color, size }) => <Icon name="home" color={color} size={size} />
+  })
+  .addTab('Profile', ProfileScreen, {
+    title: '个人中心',
+    icon: ({ color, size }) => <Icon name="user" color={color} size={size} />
+  });
+```
+
+### 显示Tab页头部
+
+如果需要显示某个tab页的头部：
+
+```typescript
+const navigation = createNavigation()
+  .addTab('Home', HomeScreen, {
+    title: '首页',
+    icon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
+    options: {
+      headerShown: true, // 显示头部
+      headerTitle: '首页标题'
+    }
+  });
+```
+
+### 全局设置Tab页头部样式
+
+```typescript
+const navigation = createNavigation()
+  .setTabOptions({
+    headerShown: true, // 全局显示tab页头部
+    headerStyle: {
+      backgroundColor: '#f8f9fa',
+    },
+    headerTintColor: '#333',
+  })
+  .addTab('Home', HomeScreen)
+  .addTab('Profile', ProfileScreen);
+```
+
+### 方式一：作为应用根导航（推荐）
+
+```typescript
+// App.tsx
+import { createNavigation } from '@/navigation';
+import { HomeScreen, ProfileScreen, DetailsScreen } from '@/screens';
+
+const AppNavigation = createNavigation()
+  .addTab('home', HomeScreen, { 
+    title: '首页', 
+    icon: ({ color, size }) => <Icon name="home" color={color} size={size} />
+  })
+  .addTab('profile', ProfileScreen, { 
+    title: '个人中心', 
+    icon: ({ color, size }) => <Icon name="user" color={color} size={size} />
+  })
+  .addScreen('details', DetailsScreen, { title: '详情页' })
+  .buildRootNavigation(); // 使用 buildRootNavigation，包含 NavigationContainer
+
+export default function App() {
+  return <AppNavigation />;
+}
+```
+
+### 方式二：手动包装 NavigationContainer
+
+```typescript
+// App.tsx
+import { NavigationContainer } from '@react-navigation/native';
+import { createNavigation } from '@/navigation';
+import { HomeScreen, ProfileScreen, DetailsScreen } from '@/screens';
+
+const AppNavigator = createNavigation()
+  .addTab('home', HomeScreen, { title: '首页' })
+  .addTab('profile', ProfileScreen, { title: '个人中心' })
+  .addScreen('details', DetailsScreen, { title: '详情页' })
+  .buildFullNavigation(); // 使用 buildFullNavigation，不包含 NavigationContainer
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <AppNavigator />
+    </NavigationContainer>
+  );
+}
+```
+
+### 方式三：嵌套在其他导航器中
+
+```typescript
+// 如果你已经有一个根 NavigationContainer，想要嵌套使用
+import { createNavigation } from '@/navigation';
+
+const SubNavigation = createNavigation()
+  .addTab('tab1', Tab1Screen, { title: 'Tab 1' })
+  .addTab('tab2', Tab2Screen, { title: 'Tab 2' })
+  .buildTabNavigator(); // 只构建标签页导航器
+
+// 然后在其他地方使用
+<Stack.Screen name="SubTabs" component={SubNavigation} />
+```
+
+## API 参考
+
+### addTab(name, component, config?)
+
+添加标签页。
+
+**参数:**
+- `name`: 路由名称
+- `component`: 页面组件
+- `config`: 标签页配置
+  - `title?`: 标签页标题
+  - `icon?`: 标签页图标函数
+  - `badge?`: 标签页徽章
+  - `options?`: 底部标签页导航选项
+    - `headerShown?`: 是否显示头部（默认为 `false`）
+
+### setTabOptions(options)
 
 设置标签页导航器的全局选项。
 
-##### `setStackOptions(options)`
-
-设置堆栈导航器的全局选项。
-
-##### `setInitialTabRoute(routeName)`
-
-设置初始标签页路由。
-
-##### `setInitialStackRoute(routeName)`
-
-设置初始堆栈路由。
-
-##### `build()`
-
-构建导航配置对象。
-
-##### `buildTabNavigator()`
-
-构建并返回标签页导航器组件。
-
-##### `buildStackNavigator()`
-
-构建并返回堆栈导航器组件。
-
-##### `buildFullNavigation()`
-
-构建完整的导航结构（标签页 + 堆栈）。
-
-##### `reset()`
-
-重置构建器状态。
-
-### 工具函数
-
-##### `createNavigation()`
-
-创建新的导航配置生成器实例。
-
-```typescript
-const navigation = createNavigation();
-```
-
-## 高级用法
-
-### 条件导航
-
-```typescript
-const navigation = createNavigation()
-  .addTab('home', HomeScreen, { title: '首页' });
-
-// 根据用户状态添加不同的标签页
-if (user.isLoggedIn) {
-  navigation.addTab('profile', ProfileScreen, { title: '个人中心' });
-} else {
-  navigation.addTab('login', LoginScreen, { title: '登录' });
-}
-
-const AppNavigation = navigation.buildTabNavigator();
-```
-
-### 动态配置
-
-```typescript
-const tabConfigs = [
-  { name: 'home', component: HomeScreen, title: '首页' },
-  { name: 'search', component: SearchScreen, title: '搜索' },
-  { name: 'profile', component: ProfileScreen, title: '个人' },
-];
-
-let navigation = createNavigation();
-
-tabConfigs.forEach(config => {
-  navigation = navigation.addTab(config.name, config.component, {
-    title: config.title,
-  });
-});
-
-const AppNavigation = navigation.buildTabNavigator();
-```
-
-### 复用配置
-
-```typescript
-// 创建基础配置
-const baseNavigation = () => createNavigation()
-  .setTabOptions({
-    tabBarActiveTintColor: '#007AFF',
-    tabBarInactiveTintColor: '#8E8E93',
-  })
-  .setStackOptions({
-    headerStyle: { backgroundColor: '#007AFF' },
-    headerTintColor: '#FFFFFF',
-  });
-
-// 用户导航
-const UserNavigation = baseNavigation()
-  .addTab('home', HomeScreen, { title: '首页' })
-  .addTab('profile', ProfileScreen, { title: '个人' })
-  .buildFullNavigation();
-
-// 管理员导航
-const AdminNavigation = baseNavigation()
-  .addTab('dashboard', DashboardScreen, { title: '仪表板' })
-  .addTab('users', UsersScreen, { title: '用户管理' })
-  .addTab('settings', SettingsScreen, { title: '设置' })
-  .buildFullNavigation();
-```
+**参数:**
+- `options`: 底部标签页导航选项
+  - `headerShown?`: 是否显示头部（默认为 `false`）
+  - `tabBarStyle?`: 标签栏样式
+  - `tabBarActiveTintColor?`: 激活状态颜色
+  - `tabBarInactiveTintColor?`: 非激活状态颜色
 
 ## 注意事项
 
-1. **屏幕名称唯一性**：确保每个屏幕的名称在应用中是唯一的
-2. **图标组件**：标签页图标需要是React组件或返回组件的函数
-3. **主题集成**：导航器会自动应用当前主题样式
-4. **类型安全**：使用TypeScript时会有完整的类型检查
-
-## 迁移指南
-
-### 从传统配置迁移
-
-**之前：**
-```typescript
-const tabScreens = [
-  {
-    name: SCREEN_NAMES.HOME_TAB,
-    component: HomeTabScreen,
-    options: {
-      title: SCREEN_TITLES[SCREEN_NAMES.HOME_TAB],
-      tabBarIcon: ({ color, size }) => SCREEN_ICONS[SCREEN_NAMES.HOME_TAB],
-    },
-  },
-];
-```
-
-**现在：**
-```typescript
-const navigation = createNavigation()
-  .addTab('home', HomeTabScreen, {
-    title: '首页',
-    icon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
-  });
-```
-
-这种方式更加简洁，减少了常量定义，提高了可维护性。
+1. **默认无头部**: 所有页面（Stack和Tab）默认都不显示头部
+2. **显示头部**: 如需显示头部，请在 `options` 中设置 `headerShown: true`
+3. **全局设置**: 使用 `setStackOptions()` 或 `setTabOptions()` 进行全局配置
+4. **优先级**: 单个页面的 `options` 会覆盖全局设置

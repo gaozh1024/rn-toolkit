@@ -13,8 +13,8 @@ import {
     ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../../utils/useTheme';
-import { navigationService } from '../../../navigation/NavigationService';
+import { useTheme } from '../../../theme';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -68,7 +68,7 @@ export const Modal: React.FC<ModalProps> = ({
     backgroundColor,
     maskColor,
 }) => {
-    const { theme } = useTheme();
+    const { theme, colors } = useTheme();
     const insets = useSafeAreaInsets();
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -185,7 +185,7 @@ export const Modal: React.FC<ModalProps> = ({
     // 计算容器样式
     const getContainerStyle = () => {
         const baseStyle: any = {
-            backgroundColor: backgroundColor || theme.colors.surface,
+            backgroundColor: backgroundColor || colors.surface,
             borderRadius: theme.borderRadius?.md || 12,
             maxHeight: SCREEN_HEIGHT * 0.9,
         };
@@ -274,7 +274,7 @@ export const Modal: React.FC<ModalProps> = ({
                     {(title || closable) && (
                         <View style={styles.header}>
                             {title && (
-                                <Text style={[styles.title, { color: theme.colors.onSurface }]}>
+                                <Text style={[styles.title, { color: colors.surface }]}>
                                     {title}
                                 </Text>
                             )}
@@ -284,7 +284,7 @@ export const Modal: React.FC<ModalProps> = ({
                                     onPress={handleClosePress}
                                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                 >
-                                    <Text style={[styles.closeText, { color: theme.colors.onSurface }]}>
+                                    <Text style={[styles.closeText, { color: colors.surface }]}>
                                         ✕
                                     </Text>
                                 </TouchableOpacity>
@@ -302,7 +302,7 @@ export const Modal: React.FC<ModalProps> = ({
     );
 };
 
-const createStyles = (theme: any, maskColor?: string) =>
+const createStyles = (colors: any, maskColor?: string) =>
     StyleSheet.create({
         overlay: {
             position: 'absolute',
@@ -322,7 +322,7 @@ const createStyles = (theme: any, maskColor?: string) =>
             paddingHorizontal: 20,
         },
         modal: {
-            shadowColor: theme.colors.shadow || '#000',
+            shadowColor: colors.shadow || '#000',
             shadowOffset: {
                 width: 0,
                 height: 4,
@@ -338,7 +338,7 @@ const createStyles = (theme: any, maskColor?: string) =>
             paddingHorizontal: 20,
             paddingVertical: 16,
             borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: theme.colors.border,
+            borderBottomColor: colors.border,
         },
         title: {
             fontSize: 18,
@@ -351,7 +351,7 @@ const createStyles = (theme: any, maskColor?: string) =>
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 16,
-            backgroundColor: theme.colors.background,
+            backgroundColor: colors.background,
         },
         closeText: {
             fontSize: 16,

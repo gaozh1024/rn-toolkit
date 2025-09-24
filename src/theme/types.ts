@@ -7,6 +7,38 @@ export type Style = ViewStyle | TextStyle | ImageStyle;
 export type SpacingValue = number | 'auto';
 export type SpacingSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
+// 字体主题类型
+export interface TypographyTheme {
+    fontSize: {
+        xs: number;
+        sm: number;
+        md: number;
+        lg: number;
+        xl: number;
+        xxl: number;
+    };
+    fontWeight: {
+        light: '300';
+        normal: '400';  // 改为 normal
+        medium: '500';
+        semibold: '600';  // 改为 semibold
+        bold: '700';
+    };
+    lineHeight: {
+        xs: number;
+        sm: number;
+        md: number;
+        lg: number;
+        xl: number;
+        xxl: number;
+    };
+    letterSpacing: {
+        tight: number;
+        normal: number;
+        wide: number;
+    };
+}
+
 // 颜色主题类型
 export interface ColorTheme {
     primary: string;
@@ -19,8 +51,17 @@ export interface ColorTheme {
     dark: string;
     background: string;
     surface: string;
+    onSurface: string;
+    onPrimary: string;
+    onSecondary: string;
+    onSuccess: string;
+    onWarning: string;
+    onError: string;
+    onInfo: string;
+    onBackground: string;
     text: string;
     textSecondary: string;
+    placeholder: string;  // 添加 placeholder 颜色
     border: string;
     shadow: string;
 }
@@ -60,6 +101,7 @@ export interface StyleTheme {
     spacing: SpacingTheme;
     borderRadius: BorderRadiusTheme;
     shadows: ShadowTheme;
+    typography: TypographyTheme;
     // 添加导航高度配置
     navigation: {
         headerHeight: number;
@@ -202,4 +244,5 @@ export interface AppTheme {
     spacing: SpacingTheme;
     borderRadius: BorderRadiusTheme;
     shadows: ShadowTheme;
+    typography: TypographyTheme;
 }

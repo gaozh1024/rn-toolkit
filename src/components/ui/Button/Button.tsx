@@ -11,7 +11,7 @@ import {
     ActivityIndicator,
     GestureResponderEvent
 } from 'react-native';
-import ThemeService from '../../../utils/ThemeService';
+import { useTheme } from '../../../theme';
 
 export interface ButtonProps {
     // 基础属性
@@ -94,7 +94,7 @@ const Button: React.FC<ButtonProps> = ({
     testID,
     ...props
 }) => {
-    const theme = ThemeService.getCurrentTheme();
+    const { theme, colors } = useTheme();
     const styles = createStyles(theme);
 
     // 获取按钮样式
@@ -142,7 +142,7 @@ const Button: React.FC<ButtonProps> = ({
                     backgroundColor: themeColor,
                     borderWidth: 0,
                     elevation: 4,
-                    shadowColor: theme.colors.shadow,
+                    shadowColor: colors.shadow,
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.25,
                     shadowRadius: 4,
@@ -182,7 +182,7 @@ const Button: React.FC<ButtonProps> = ({
             return color;
         }
 
-        return theme.colors[color as keyof typeof theme.colors] || theme.colors.primary;
+        return colors[color as keyof typeof colors] || colors.primary;
     };
 
     // 获取文本颜色
@@ -193,15 +193,15 @@ const Button: React.FC<ButtonProps> = ({
             case 'filled':
             case 'elevated':
                 // 根据背景色选择合适的文本颜色
-                if (color === 'primary') return theme.colors.onPrimary;
-                if (color === 'secondary') return theme.colors.onSecondary;
-                if (color === 'error') return theme.colors.onError;
-                return '#FFFFFF';
+                if (color === 'primary') return colors.primary;
+                if (color === 'secondary') return colors.secondary;
+                if (color === 'error') return colors.error;
+                return colors.primary;
             case 'outlined':
             case 'text':
                 return themeColor;
             default:
-                return theme.colors.onSurface;
+                return colors.surface;
         }
     };
 
@@ -242,8 +242,8 @@ const Button: React.FC<ButtonProps> = ({
         return {
             color: getTextColor(),
             fontSize: sizeConfig.fontSize,
-            fontWeight: bold 
-                ? 'bold' 
+            fontWeight: bold
+                ? 'bold'
                 : (theme.typography?.fontWeight.medium || '500') as TextStyle['fontWeight'],
             textAlign: 'center',
         };

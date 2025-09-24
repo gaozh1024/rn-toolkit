@@ -13,8 +13,17 @@ const lightColors = {
     dark: '#1C1C1E',
     background: '#FFFFFF',
     surface: '#F2F2F7',
+    onSurface: '#000000',
+    onPrimary: '#FFFFFF',
+    onSecondary: '#FFFFFF',
+    onSuccess: '#FFFFFF',
+    onWarning: '#000000',
+    onError: '#FFFFFF',
+    onInfo: '#000000',
+    onBackground: '#000000',
     text: '#000000',
     textSecondary: '#6D6D70',
+    placeholder: '#C7C7CC',  // 添加占位符颜色（浅灰色）
     border: '#C6C6C8',
     shadow: '#000000',
 };
@@ -31,8 +40,17 @@ const darkColors = {
     dark: '#1C1C1E',
     background: '#000000',
     surface: '#1C1C1E',
+    onSurface: '#FFFFFF',
+    onPrimary: '#000000',
+    onSecondary: '#000000',
+    onSuccess: '#000000',
+    onWarning: '#000000',
+    onError: '#000000',
+    onInfo: '#000000',
+    onBackground: '#FFFFFF',
     text: '#FFFFFF',
     textSecondary: '#8E8E93',
+    placeholder: '#48484A',  // 添加占位符颜色（深灰色）
     border: '#38383A',
     shadow: '#FFFFFF',
 };
@@ -100,6 +118,36 @@ export const defaultAppTheme: AppTheme = {
             elevation: 10,
         },
     },
+    typography: {
+        fontSize: {
+            xs: 12,
+            sm: 14,
+            md: 16,
+            lg: 18,
+            xl: 20,
+            xxl: 24,
+        },
+        fontWeight: {
+            light: '300',
+            normal: '400',  // 改为 normal
+            medium: '500',
+            semibold: '600',  // 改为 semibold
+            bold: '700',
+        },
+        lineHeight: {
+            xs: 16,
+            sm: 20,
+            md: 24,
+            lg: 28,
+            xl: 32,
+            xxl: 36,
+        },
+        letterSpacing: {
+            tight: -0.5,
+            normal: 0,
+            wide: 0.5,
+        },
+    },
 };
 
 // 保持向后兼容的默认主题
@@ -108,6 +156,7 @@ export const defaultTheme: StyleTheme = {
     spacing: defaultAppTheme.spacing,
     borderRadius: defaultAppTheme.borderRadius,
     shadows: defaultAppTheme.shadows,
+    typography: defaultAppTheme.typography,
     navigation: {
         headerHeight: 56, // Android默认高度
         tabBarHeight: 60,  // 标签栏高度

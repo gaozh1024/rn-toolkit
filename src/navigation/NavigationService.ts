@@ -34,47 +34,47 @@ class NavigationService {
 
   // 导航到指定屏幕 - 使用 dispatch 方式避免类型问题
   navigate(name: string, params?: any): void {
-    if (navigationRef.isReady()) {
+    if (navigationRef.current?.isReady()) {
       const navigateAction = CommonActions.navigate({
         name,
         params,
       });
-      navigationRef.dispatch(navigateAction);
+      navigationRef.current.dispatch(navigateAction);
     }
   }
 
   // 推送新屏幕到堆栈
   push(name: string, params?: any): void {
-    if (navigationRef.isReady()) {
-      navigationRef.dispatch(StackActions.push(name, params));
+    if (navigationRef.current?.isReady()) {
+      navigationRef.current.dispatch(StackActions.push(name, params));
     }
   }
 
   // 弹出当前屏幕
   pop(): void {
-    if (navigationRef.isReady()) {
-      navigationRef.dispatch(StackActions.pop());
+    if (navigationRef.current?.isReady()) {
+      navigationRef.current.dispatch(StackActions.pop());
     }
   }
 
   // 弹出到根屏幕
   popToRoot(): void {
-    if (navigationRef.isReady()) {
-      navigationRef.dispatch(StackActions.popToTop());
+    if (navigationRef.current?.isReady()) {
+      navigationRef.current.dispatch(StackActions.popToTop());
     }
   }
 
   // 替换当前屏幕
   replace(name: string, params?: any): void {
-    if (navigationRef.isReady()) {
-      navigationRef.dispatch(StackActions.replace(name, params));
+    if (navigationRef.current?.isReady()) {
+      navigationRef.current.dispatch(StackActions.replace(name, params));
     }
   }
 
   // 重置导航堆栈
   reset(routes: Array<{ name: string; params?: any }>): void {
-    if (navigationRef.isReady()) {
-      navigationRef.dispatch(
+    if (navigationRef.current?.isReady()) {
+      navigationRef.current.dispatch(
         CommonActions.reset({
           index: routes.length - 1,
           routes: routes,
@@ -85,30 +85,30 @@ class NavigationService {
 
   // 返回上一屏幕
   goBack(): void {
-    if (navigationRef.isReady()) {
-      navigationRef.goBack();
+    if (navigationRef.current?.isReady()) {
+      navigationRef.current.goBack();
     }
   }
 
   // 获取当前路由名称
   getCurrentRouteName(): string | undefined {
-    if (navigationRef.isReady()) {
-      return navigationRef.getCurrentRoute()?.name;
+    if (navigationRef.current?.isReady()) {
+      return navigationRef.current.getCurrentRoute()?.name;
     }
     return undefined;
   }
 
   // 获取当前路由参数
   getCurrentParams(): any {
-    if (navigationRef.isReady()) {
-      return navigationRef.getCurrentRoute()?.params;
+    if (navigationRef.current?.isReady()) {
+      return navigationRef.current.getCurrentRoute()?.params;
     }
     return undefined;
   }
 
   // 检查是否可以返回
   canGoBack(): boolean {
-    return navigationRef.isReady() ? navigationRef.canGoBack() : false;
+    return navigationRef.current?.isReady() ? navigationRef.current.canGoBack() : false;
   }
 }
 

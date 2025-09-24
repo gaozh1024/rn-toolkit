@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, ViewStyle, TextStyle, StyleProp } from 'react-native';
-import { useTheme } from '../../../utils/useTheme';
+import { View, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { useTheme } from '../../../theme';
+import { Text } from '../../ui/Text';
 
 export interface SectionProps {
   children: React.ReactNode;
@@ -25,18 +26,18 @@ export const Section: React.FC<SectionProps> = ({
   spacing = 16,
   testID,
 }) => {
-  const theme = useTheme();
+  const { colors } = useTheme();
 
   const defaultTitleStyle: TextStyle = {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.onBackground,
+    color: colors.onBackground,
     marginBottom: subtitle ? 4 : spacing,
   };
 
   const defaultSubtitleStyle: TextStyle = {
     fontSize: 14,
-    color: theme.colors.placeholder,
+    color: colors.placeholder,
     marginBottom: spacing,
   };
 

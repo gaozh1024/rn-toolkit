@@ -1,7 +1,7 @@
 import React from 'react';
 import { ViewStyle, StyleProp } from 'react-native';
 import { SafeAreaView as RNSafeAreaView, Edge } from 'react-native-safe-area-context';
-import { useTheme } from '../../../utils/useTheme';
+import { useTheme } from '../../../theme';
 
 export interface SafeAreaViewProps {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export const SafeAreaView: React.FC<SafeAreaViewProps> = ({
 }) => {
   const theme = useTheme();
 
-  const containerStyle: ViewStyle = {
+  const containerStyle: StyleProp<ViewStyle> = {
     flex: 1,
     backgroundColor: backgroundColor || theme.colors.background,
   };

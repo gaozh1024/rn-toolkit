@@ -4,8 +4,8 @@ import { defaultTheme, defaultAppTheme, createStylePresets } from './presets';
 import StorageService from '../storage/StorageService';
 
 
-class StyleService {
-    private static instance: StyleService;
+class ThemeService {
+    private static instance: ThemeService;
     private theme: StyleTheme = defaultTheme;
     private appTheme: AppTheme = defaultAppTheme;
     private presets = createStylePresets(this.theme);
@@ -13,18 +13,18 @@ class StyleService {
     private appearanceSubscription: any = null;
     private static readonly STORAGE_KEY = 'app_theme_mode';
 
-    static getInstance(): StyleService {
-        if (!StyleService.instance) {
-            StyleService.instance = new StyleService();
+    static getInstance(): ThemeService {
+        if (!ThemeService.instance) {
+            ThemeService.instance = new ThemeService();
         }
-        return StyleService.instance;
+        return ThemeService.instance;
     }
 
     // 初始化主题服务
     async initialize(): Promise<void> {
         try {
             // 从存储中读取主题模式
-            const savedMode = StorageService.getSimple(StyleService.STORAGE_KEY);
+            const savedMode = StorageService.getSimple(ThemeService.STORAGE_KEY);
             if (savedMode && ['light', 'dark', 'system'].includes(savedMode)) {
                 this.appTheme.mode = savedMode as ThemeMode;
             }
@@ -56,6 +56,8 @@ class StyleService {
 
         // 在updateCurrentTheme方法中
         this.theme = {
+            ...defaultTheme,
+            typography: defaultTheme.typography,
             colors: this.appTheme.currentColors,
             spacing: this.appTheme.spacing,
             borderRadius: this.appTheme.borderRadius,
@@ -70,7 +72,7 @@ class StyleService {
     // 设置主题模式
     async setThemeMode(mode: ThemeMode): Promise<void> {
         this.appTheme.mode = mode;
-        StorageService.setSimple(StyleService.STORAGE_KEY, mode);
+        StorageService.setSimple(ThemeService.STORAGE_KEY, mode);
         this.updateCurrentTheme();
     }
 
@@ -206,5 +208,5 @@ class StyleService {
     }
 }
 
-export { StyleService };
-export default StyleService.getInstance();
+export { ThemeService };
+export default ThemeService.getInstance();

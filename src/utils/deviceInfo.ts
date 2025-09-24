@@ -1,7 +1,7 @@
 import { Dimensions, Platform } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 
-export interface DeviceInfo {
+export interface DeviceInformation {
   // 基础信息
   brand: string;
   model: string;
@@ -23,12 +23,12 @@ export interface DeviceInfo {
 }
 
 class DeviceInfoService {
-  private static cachedInfo: DeviceInfo | null = null;
+  private static cachedInfo: DeviceInformation | null = null;
 
   /**
    * 获取完整的设备信息
    */
-  static async getDeviceInfo(): Promise<DeviceInfo> {
+  static async getDeviceInfo(): Promise<DeviceInformation> {
     if (this.cachedInfo) {
       return this.cachedInfo;
     }
@@ -134,6 +134,62 @@ class DeviceInfoService {
     } catch (error) {
       console.error('检查模拟器失败:', error);
       return false;
+    }
+  }
+
+  /**
+   * 获取设备类型
+   */
+  static getDeviceType(): 'Handset' | 'Tablet' | 'Tv' | 'Desktop' | 'GamingConsole' | 'unknown' {
+    try {
+      return DeviceInfo.getDeviceType();
+    } catch (error) {
+      console.error('获取设备类型失败:', error);
+      return 'unknown';
+    }
+  }
+
+  /**
+   * 获取电池信息
+   */
+  static async getBatteryInfo() {
+    try {
+      const [batteryLevel, isCharging, powerState] = await Promise.all([
+        DeviceInfo.getBatteryLevel(),
+        DeviceInfo.isBatteryCharging(),
+        DeviceInfo.getPowerState()
+      ]);
+
+      return {
+        batteryLevel,
+        isCharging,
+        powerState
+      };
+    } catch (error) {
+      console.error('获取电池信息失败:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 获取内存信息
+   */
+  static async getMemoryInfo() {
+    try {
+      const [totalMemory, usedMemory, freeMemory] = await Promise.all([
+        DeviceInfo.getTotalMemory(),
+        DeviceInfo.getUsedMemory(),
+        DeviceInfo.getFreeMemory()
+      ]);
+
+      return {
+        totalMemory,
+        usedMemory,
+        freeMemory
+      };
+    } catch (error) {
+      console.error('获取内存信息失败:', error);
+      return null;
     }
   }
 

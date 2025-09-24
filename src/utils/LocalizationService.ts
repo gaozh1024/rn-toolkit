@@ -9,21 +9,16 @@ import {
     uses24HourClock,
     usesMetricSystem,
     findBestLanguageTag,
+    type Locale,
+    type NumberFormatSettings as RNLocalizeNumberFormatSettings,
+    type TemperatureUnit,
+    type LanguageTag
 } from 'react-native-localize';
 import { AppState, AppStateStatus } from 'react-native';
 
-export interface LocaleInfo {
-    languageCode: string;
-    scriptCode?: string;
-    countryCode: string;
-    languageTag: string;
-    isRTL: boolean;
-}
+export interface LocaleInfo extends Locale {}
 
-export interface NumberFormatSettings {
-    decimalSeparator: string;
-    groupingSeparator: string;
-}
+export interface NumberFormatSettings extends RNLocalizeNumberFormatSettings {}
 
 export interface LocalizationData {
     locales: LocaleInfo[];
@@ -31,7 +26,7 @@ export interface LocalizationData {
     calendar: string;
     country: string;
     currencies: string[];
-    temperatureUnit: 'celsius' | 'fahrenheit';
+    temperatureUnit: TemperatureUnit;
     timeZone: string;
     uses24HourClock: boolean;
     usesMetricSystem: boolean;
@@ -52,7 +47,7 @@ class LocalizationService {
      * 获取当前语言标签
      */
     static getCurrentLanguageTag(): string {
-        const locales = getLocales();
+        const locales = this.getLocales();
         return locales[0]?.languageTag || 'en-US';
     }
 
@@ -60,7 +55,7 @@ class LocalizationService {
      * 获取当前语言代码
      */
     static getCurrentLanguageCode(): string {
-        const locales = getLocales();
+        const locales = this.getLocales();
         return locales[0]?.languageCode || 'en';
     }
 
@@ -68,7 +63,7 @@ class LocalizationService {
      * 获取当前国家代码
      */
     static getCurrentCountryCode(): string {
-        const locales = getLocales();
+        const locales = this.getLocales();
         return locales[0]?.countryCode || 'US';
     }
 
@@ -76,17 +71,14 @@ class LocalizationService {
      * 检查当前语言是否为从右到左
      */
     static isRTL(): boolean {
-        const locales = getLocales();
+        const locales = this.getLocales();
         return locales[0]?.isRTL || false;
     }
 
     /**
      * 从支持的语言标签中找到最佳匹配
      */
-    static findBestLanguageTag(supportedLanguageTags: string[]): {
-        languageTag: string;
-        isRTL: boolean;
-    } | undefined {
+    static findBestLanguageTag(supportedLanguageTags: string[]): LanguageTag | undefined {
         return findBestLanguageTag(supportedLanguageTags);
     }
 
@@ -121,7 +113,7 @@ class LocalizationService {
     /**
      * 获取温度单位
      */
-    static getTemperatureUnit(): 'celsius' | 'fahrenheit' {
+    static getTemperatureUnit(): TemperatureUnit {
         return getTemperatureUnit();
     }
 
@@ -273,6 +265,56 @@ class LocalizationService {
             this.appStateSubscription.remove();
             this.appStateSubscription = null;
         }
+    }
+
+    /**
+     * 检查是否支持指定的语言标签
+     */
+    static isLanguageSupported(languageTag: string): boolean {
+        const locales = this.getLocales();
+        return locales.some(locale => locale.languageTag === languageTag);
+    }
+
+    /**
+     * 获取支持的语言标签列表
+     */
+    static getSupportedLanguageTags(): string[] {
+        return this.getLocales().map(locale => locale.languageTag);
+    }
+
+    /**
+     * 获取本地化的星期几名称
+     */
+    static getWeekdayNames(format: 'long' | 'short' | 'narrow' = 'long'): string[] {
+        const formatter = new Intl.DateTimeFormat(this.getCurrentLanguageTag(), {
+            weekday: format
+        });
+        
+        const weekdays: string[] = [];
+        // 从周日开始（0）到周六（6）
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(2023, 0, i + 1); // 2023年1月1日是周日
+            weekdays.push(formatter.format(date));
+        }
+        
+        return weekdays;
+    }
+
+    /**
+     * 获取本地化的月份名称
+     */
+    static getMonthNames(format: 'long' | 'short' | 'narrow' = 'long'): string[] {
+        const formatter = new Intl.DateTimeFormat(this.getCurrentLanguageTag(), {
+            month: format
+        });
+        
+        const months: string[] = [];
+        for (let i = 0; i < 12; i++) {
+            const date = new Date(2023, i, 1);
+            months.push(formatter.format(date));
+        }
+        
+        return months;
     }
 }
 

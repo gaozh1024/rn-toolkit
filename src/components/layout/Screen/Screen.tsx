@@ -2,7 +2,7 @@ import React from 'react';
 import { ViewStyle, StyleProp, StatusBar } from 'react-native';
 import { SafeAreaView } from '../SafeAreaView/SafeAreaView';
 import { Container } from '../Container/Container';
-import { useTheme } from '../../../utils/useTheme';
+import { useTheme } from '../../../theme';
 import { Edge } from 'react-native-safe-area-context';
 
 export interface ScreenProps {
@@ -32,11 +32,11 @@ export const Screen: React.FC<ScreenProps> = ({
     preset = 'default',
     testID,
 }) => {
-    const { theme } = useTheme();
+    const { theme, colors } = useTheme();
 
     // 根据主题自动设置状态栏样式
     const autoStatusBarStyle = statusBarStyle || (theme.mode === 'dark' ? 'light-content' : 'dark-content');
-    const autoStatusBarBgColor = statusBarBackgroundColor || theme.colors.background;
+    const autoStatusBarBgColor = statusBarBackgroundColor || colors.background;
 
     // 根据预设调整默认行为
     const isScrollable = scrollable !== undefined ? scrollable : preset === 'scroll';
@@ -44,7 +44,7 @@ export const Screen: React.FC<ScreenProps> = ({
     return (
         <SafeAreaView
             edges={safeAreaEdges}
-            style={[{ backgroundColor: backgroundColor || theme.colors.background }, style]}
+            style={[{ backgroundColor: backgroundColor || colors.background }, style]}
             testID={testID}
         >
             <StatusBar

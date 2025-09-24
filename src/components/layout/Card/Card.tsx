@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../utils/useTheme';
+import { useTheme } from '../../../theme';
 
 export interface CardProps {
   children: React.ReactNode;
@@ -29,15 +29,15 @@ export const Card: React.FC<CardProps> = ({
   disabled = false,
   testID,
 }) => {
-  const theme = useTheme();
+  const { theme, colors } = useTheme();
 
   const cardStyle: ViewStyle = {
-    backgroundColor: backgroundColor || theme.colors.surface,
+    backgroundColor: backgroundColor || colors.surface,
     padding,
     margin,
     borderRadius,
     // iOS 阴影
-    shadowColor: shadowColor || theme.colors.shadow,
+    shadowColor: shadowColor || colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

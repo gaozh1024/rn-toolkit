@@ -54,12 +54,13 @@ export class NavigationBuilder {
     ): NavigationBuilder {
         const { title, icon, badge, options = {} } = config;
 
-        // 构建标签页选项
+        // 构建标签页选项，默认隐藏头部
         const tabOptions: BottomTabNavigationOptions = {
             title: title || name,
             tabBarIcon: icon,
             tabBarBadge: badge,
-            ...options,
+            headerShown: false, // 默认隐藏头部
+            ...options, // 用户可以通过 options 覆盖默认设置
         };
 
         this.tabs.push({
@@ -84,10 +85,11 @@ export class NavigationBuilder {
     ): NavigationBuilder {
         const { title, options = {}, initialParams } = config;
 
-        // 构建屏幕选项
+        // 构建屏幕选项，默认隐藏头部
         const screenOptions: StackNavigationOptions = {
             title: title || name,
-            ...options,
+            headerShown: false, // 默认隐藏头部
+            ...options, // 用户可以通过 options 覆盖默认设置
         };
 
         this.screens.push({
@@ -100,20 +102,28 @@ export class NavigationBuilder {
     }
 
     /**
-     * 设置标签页导航器的全局选项
-     * @param options 标签页选项
-     */
-    setTabOptions(options: BottomTabNavigationOptions): NavigationBuilder {
-        this.tabOptions = options;
-        return this;
-    }
-
-    /**
      * 设置堆栈导航器的全局选项
      * @param options 堆栈选项
      */
     setStackOptions(options: StackNavigationOptions): NavigationBuilder {
-        this.stackOptions = options;
+        // 默认设置隐藏头部，用户可以覆盖
+        this.stackOptions = {
+            headerShown: false,
+            ...options,
+        };
+        return this;
+    }
+
+    /**
+     * 设置标签页导航器的全局选项
+     * @param options 标签页选项
+     */
+    setTabOptions(options: BottomTabNavigationOptions): NavigationBuilder {
+        // 默认设置隐藏头部，用户可以覆盖
+        this.tabOptions = {
+            headerShown: false,
+            ...options,
+        };
         return this;
     }
 
@@ -150,7 +160,7 @@ export class NavigationBuilder {
     }
 
     /**
-     * 构建并返回标签页导航器组件
+     * 构建标签页导航器（不包含NavigationContainer）
      */
     buildTabNavigator(): React.FC {
         const config = this.build();
@@ -159,13 +169,16 @@ export class NavigationBuilder {
             <TabNavigator
                 tabs={config.tabs}
                 initialRouteName={config.initialTabRoute}
-                screenOptions={config.tabOptions}
+                screenOptions={{
+                    headerShown: false, // 确保tab页面不显示header
+                    ...config.tabOptions,
+                }}
             />
         );
     }
 
     /**
-     * 构建并返回堆栈导航器组件
+     * 构建堆栈导航器（不包含NavigationContainer）
      */
     buildStackNavigator(): React.FC {
         const config = this.build();
@@ -174,26 +187,20 @@ export class NavigationBuilder {
             <StackNavigator
                 screens={config.screens}
                 initialRouteName={config.initialStackRoute}
-                screenOptions={config.stackOptions}
+                screenOptions={{
+                    headerShown: false, // 默认全局隐藏头部
+                    ...config.stackOptions,
+                }}
             />
         );
     }
 
     /**
-     * 构建完整的导航结构
-     * 包含Tab导航和Stack导航的组合
+     * 构建完整的导航结构（标签页 + 堆栈）- 不包含NavigationContainer
+     * 用户需要在应用根部自己包装NavigationContainer
      */
     buildFullNavigation(): React.FC {
         const config = this.build();
-
-        // 将内联组件提取为独立的组件
-        const MainTabsComponent = () => (
-            <TabNavigator
-                tabs={config.tabs}
-                initialRouteName={config.initialTabRoute}
-                screenOptions={config.tabOptions}
-            />
-        );
 
         return () => (
             <StackNavigator
@@ -201,14 +208,26 @@ export class NavigationBuilder {
                     [
                         {
                             name: 'MainTabs',
-                            component: MainTabsComponent,
+                            component: () => (
+                                <TabNavigator
+                                    tabs={config.tabs}
+                                    initialRouteName={config.initialTabRoute}
+                                    screenOptions={{
+                                        headerShown: false, // 确保tab页面不显示header
+                                        ...config.tabOptions,
+                                    }}
+                                />
+                            ),
                             options: { headerShown: false },
                         },
                         ...config.screens,
                     ]
                 }
                 initialRouteName="MainTabs"
-                screenOptions={config.stackOptions}
+                screenOptions={{
+                    headerShown: false, // 默认全局隐藏头部
+                    ...config.stackOptions,
+                }}
             />
         );
     }
@@ -220,15 +239,6 @@ export class NavigationBuilder {
     buildRootNavigation(): React.FC {
         const config = this.build();
 
-        // 将内联组件提取为独立的组件
-        const MainTabsComponent = () => (
-            <TabNavigator
-                tabs={config.tabs}
-                initialRouteName={config.initialTabRoute}
-                screenOptions={config.tabOptions}
-            />
-        );
-
         return () => (
             <NavigationContainer>
                 <StackNavigator
@@ -236,14 +246,26 @@ export class NavigationBuilder {
                         [
                             {
                                 name: 'MainTabs',
-                                component: MainTabsComponent,
+                                component: () => (
+                                    <TabNavigator
+                                        tabs={config.tabs}
+                                        initialRouteName={config.initialTabRoute}
+                                        screenOptions={{
+                                            headerShown: false, // 确保tab页面不显示header
+                                            ...config.tabOptions,
+                                        }}
+                                    />
+                                ),
                                 options: { headerShown: false },
                             },
                             ...config.screens,
                         ]
                     }
                     initialRouteName="MainTabs"
-                    screenOptions={config.stackOptions}
+                    screenOptions={{
+                        headerShown: false, // 默认全局隐藏头部
+                        ...config.stackOptions,
+                    }}
                 />
             </NavigationContainer>
         );

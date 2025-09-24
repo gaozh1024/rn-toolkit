@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ViewStyle, StyleProp } from 'react-native';
 import { SafeAreaView } from './SafeAreaView';
 import { Edge } from 'react-native-safe-area-context';
-import { useTheme } from '../../../utils/useTheme';
+import { useTheme } from '../../../theme';
 
 export interface SafeAreaContainerProps {
   children: React.ReactNode;
