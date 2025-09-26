@@ -1,46 +1,63 @@
-export { NavigationBuilder, createNavigation } from './NavigationBuilder';
-export { NavigationContainer, StackNavigator, TabNavigator } from './NavigationContainer';
-export { NavigationService } from './NavigationService';
-export * from './utils';
+// ===== 核心构建器 =====
+export {
+    NavigationBuilder,
+    NavigationBuilderFactory,
+    createNavigation,
+    createThemedNavigation,
+    createPlainNavigation,
+    createMinimalTabNavigation,
+    createFloatingTabNavigation,
+    createModalNavigation,
+    createTransparentNavigation,
+} from './builders';
 
-// 导出类型
+// ===== 组件 =====
+export {
+    StackNavigator,
+    TabNavigator,
+    NavigationContainer,
+} from './components';
+
+// ===== 服务 =====
+export {
+    navigationRef,
+    NavigationService,
+    navigationService,
+    Navigation,
+} from './services';
+
+// ===== 工具函数 =====
+export {
+    NavigationUtils,
+    NavigationGenerator,
+    useNavigationUtils,
+} from './utils';
+
+// ===== 样式和主题 =====
+export {
+    NavigationThemes,
+    StackPresets,
+    TabPresets,
+    AnimationPresets,
+    getTransitionConfig,
+} from './styles';
+
+// ===== 类型定义 =====
 export type {
-  RootStackParamList,
-  NavigationOptions,
-  StackScreenComponent,
-  TabScreenComponent,
-  ScreenComponent,
-  TabItem,
-  NavigationProps,
-  ScreenConfig,
-  StackConfig,
-  TabConfig,
+    RootStackParamList,
+    NavigationOptions,
+    TransitionMode,
+    ReactNavigationTheme,
+    StackScreenComponent,
+    TabScreenComponent,
+    ScreenComponent,
+    TabConfig,
+    StackConfig,
+    ScreenConfig,
+    TabItem,
+    NavigationProps,
+    NavigationBuilderConfig,
 } from './types';
 
-// 重新导出 React Navigation 的类型
-export type {
-  StackNavigationOptions,
-  StackNavigationProp,
-  StackScreenProps,
-} from '@react-navigation/stack';
-
-export type {
-  BottomTabNavigationOptions,
-  BottomTabNavigationProp,
-  BottomTabScreenProps,
-} from '@react-navigation/bottom-tabs';
-
-export type {
-  NavigationProp,
-  RouteProp,
-  ParamListBase,
-  NavigationContainerRef,
-} from '@react-navigation/native';
-
-export type {
-  PlatformPressableProps,
-  HeaderBackButtonProps,
-  HeaderButtonProps,
-  HeaderTitleProps,
-  HeaderBackgroundProps,
-} from '@react-navigation/elements';
+// ===== 默认导出 =====
+export { default } from './builders/NavigationBuilder';

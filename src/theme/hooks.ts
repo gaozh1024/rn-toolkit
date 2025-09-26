@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ViewStyle, TextStyle } from 'react-native';
 import { CSSStyles, AppTheme, ThemeMode } from './types';
 import themeService from './ThemeService';
+import { defaultAppTheme } from './presets';
 
 // 使用样式的主要 Hook
 export const useStyles = (): CSSStyles => {
@@ -18,9 +19,25 @@ export interface UseThemeReturn {
     colors: AppTheme['currentColors'];
 }
 
+// 创建安全的默认主题
+const createSafeTheme = (): AppTheme => {
+    try {
+        return themeService.getAppTheme();
+    } catch (error) {
+        console.warn('Theme service not initialized, using default theme');
+        return defaultAppTheme;
+    }
+};
+
 export const useTheme = (): UseThemeReturn => {
-    const [theme, setTheme] = useState<AppTheme>(themeService.getAppTheme());
-    const [themeMode, setCurrentThemeMode] = useState<ThemeMode>(themeService.getCurrentThemeMode());
+    const [theme, setTheme] = useState<AppTheme>(createSafeTheme);
+    const [themeMode, setCurrentThemeMode] = useState<ThemeMode>(() => {
+        try {
+            return themeService.getCurrentThemeMode();
+        } catch (error) {
+            return 'system';
+        }
+    });
 
     // 主题变化监听器
     const handleThemeChange = useCallback((newTheme: AppTheme) => {
@@ -29,8 +46,19 @@ export const useTheme = (): UseThemeReturn => {
     }, []);
 
     useEffect(() => {
-        // 初始化主题服务
-        themeService.initialize();
+        // 异步初始化主题服务
+        const initializeTheme = async () => {
+            try {
+                await themeService.initialize();
+                // 初始化完成后更新主题
+                setTheme(themeService.getAppTheme());
+                setCurrentThemeMode(themeService.getCurrentThemeMode());
+            } catch (error) {
+                console.warn('Failed to initialize theme service:', error);
+            }
+        };
+
+        initializeTheme();
 
         // 添加监听器
         themeService.addThemeChangeListener(handleThemeChange);
@@ -43,18 +71,32 @@ export const useTheme = (): UseThemeReturn => {
 
     // 设置主题模式
     const setThemeMode = useCallback(async (mode: ThemeMode) => {
-        await themeService.setThemeMode(mode);
+        try {
+            await themeService.setThemeMode(mode);
+        } catch (error) {
+            console.warn('Failed to set theme mode:', error);
+        }
     }, []);
 
     // 切换主题
     const toggleTheme = useCallback(async () => {
-        await themeService.toggleTheme();
+        try {
+            await themeService.toggleTheme();
+        } catch (error) {
+            console.warn('Failed to toggle theme:', error);
+        }
     }, []);
 
     return {
         theme,
         themeMode,
-        isDarkMode: themeService.isDarkMode(),
+        isDarkMode: (() => {
+            try {
+                return themeService.isDarkMode();
+            } catch (error) {
+                return false;
+            }
+        })(),
         setThemeMode,
         toggleTheme,
         colors: theme.currentColors,
@@ -63,7 +105,13 @@ export const useTheme = (): UseThemeReturn => {
 
 // 获取当前主题颜色的 Hook（轻量级版本）
 export const useThemeColors = () => {
-    const [colors, setColors] = useState(themeService.getAppTheme().currentColors);
+    const [colors, setColors] = useState(() => {
+        try {
+            return themeService.getAppTheme().currentColors;
+        } catch (error) {
+            return defaultAppTheme.currentColors;
+        }
+    });
 
     const handleThemeChange = useCallback((newTheme: AppTheme) => {
         setColors(newTheme.currentColors);

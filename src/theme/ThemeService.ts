@@ -12,6 +12,7 @@ class ThemeService {
     private listeners: Array<(theme: AppTheme) => void> = [];
     private appearanceSubscription: any = null;
     private static readonly STORAGE_KEY = 'app_theme_mode';
+    private isInitialized = false; // 添加初始化标志
 
     static getInstance(): ThemeService {
         if (!ThemeService.instance) {
@@ -22,6 +23,10 @@ class ThemeService {
 
     // 初始化主题服务
     async initialize(): Promise<void> {
+        if (this.isInitialized) {
+            return; // 避免重复初始化
+        }
+
         try {
             // 从存储中读取主题模式
             const savedMode = StorageService.getSimple(ThemeService.STORAGE_KEY);
@@ -38,35 +43,118 @@ class ThemeService {
 
             // 更新当前主题
             this.updateCurrentTheme();
+            this.isInitialized = true;
         } catch (error) {
             console.warn('Failed to initialize theme service:', error);
+            // 即使初始化失败，也标记为已初始化，使用默认主题
+            this.isInitialized = true;
         }
     }
 
     // 更新当前主题
     private updateCurrentTheme(): void {
-        let targetMode: 'light' | 'dark';
-        if (this.appTheme.mode === 'system') {
-            targetMode = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
-        } else {
-            targetMode = this.appTheme.mode;
+        try {
+            // 确保 typography 对象完整
+            const safeTypography = {
+                ...defaultTheme.typography,
+                fontWeight: {
+                    // 先使用默认主题的 fontWeight，然后用我们的安全默认值填补缺失的属性
+                    ...defaultTheme.typography?.fontWeight,
+                    light: defaultTheme.typography?.fontWeight?.light || '300',
+                    normal: defaultTheme.typography?.fontWeight?.normal || '400',
+                    medium: defaultTheme.typography?.fontWeight?.medium || '500',
+                    semibold: defaultTheme.typography?.fontWeight?.semibold || '600',
+                    bold: defaultTheme.typography?.fontWeight?.bold || '700',
+                }
+            };
+
+            // 更新主题
+            this.theme = {
+                ...defaultTheme,
+                typography: safeTypography,
+            };
+
+            // 根据当前模式设置颜色
+            const currentMode = this.appTheme.mode === 'system'
+                ? (Appearance.getColorScheme() || 'light')
+                : this.appTheme.mode;
+
+            if (currentMode === 'dark') {
+                this.appTheme.currentColors = this.appTheme.colors.dark;
+            } else {
+                this.appTheme.currentColors = this.appTheme.colors.light;
+            }
+
+            // 确保 appTheme 的 typography 也是完整的
+            this.appTheme.typography = safeTypography;
+
+            // 重新创建预设
+            this.presets = createStylePresets(this.theme);
+
+            // 通知监听器
+            this.notifyListeners();
+        } catch (error) {
+            console.warn('Error updating theme:', error);
+            // 即使出错也要确保有基本的主题结构
+            this.theme = {
+                ...defaultTheme,
+                typography: {
+                    ...defaultTheme.typography,
+                    fontWeight: {
+                        light: '300',
+                        normal: '400',
+                        medium: '500',
+                        semibold: '600',
+                        bold: '700',
+                    }
+                }
+            };
+            this.appTheme.typography = this.theme.typography;
         }
+    }
 
-        this.appTheme.currentColors = this.appTheme.colors[targetMode];
+    // 获取完整应用主题
+    getAppTheme(): AppTheme {
+        // 如果未初始化，确保返回安全的默认主题
+        if (!this.isInitialized) {
+            return {
+                ...defaultAppTheme,
+                typography: {
+                    ...defaultAppTheme.typography,
+                    fontWeight: {
+                        ...defaultAppTheme.typography?.fontWeight,
+                        light: defaultAppTheme.typography?.fontWeight?.light || '300',
+                        normal: defaultAppTheme.typography?.fontWeight?.normal || '400',
+                        medium: defaultAppTheme.typography?.fontWeight?.medium || '500',
+                        semibold: defaultAppTheme.typography?.fontWeight?.semibold || '600',
+                        bold: defaultAppTheme.typography?.fontWeight?.bold || '700',
+                    }
+                }
+            };
+        }
+        return this.appTheme;
+    }
 
-        // 在updateCurrentTheme方法中
-        this.theme = {
-            ...defaultTheme,
-            typography: defaultTheme.typography,
-            colors: this.appTheme.currentColors,
-            spacing: this.appTheme.spacing,
-            borderRadius: this.appTheme.borderRadius,
-            shadows: this.appTheme.shadows,
-            // 使用defaultTheme中的navigation配置
-            navigation: defaultTheme.navigation,
-        };
-        this.presets = createStylePresets(this.theme);
-        this.notifyListeners();
+    // 获取主题
+    getTheme(): StyleTheme {
+        // 如果未初始化，确保返回安全的默认主题
+        if (!this.isInitialized) {
+            return {
+                ...defaultTheme,
+                typography: {
+                    ...defaultTheme.typography,
+                    fontWeight: {
+                        ...defaultTheme.typography?.fontWeight,
+                        light: defaultTheme.typography?.fontWeight?.light || '300',
+                        normal: defaultTheme.typography?.fontWeight?.normal || '400',
+                        medium: defaultTheme.typography?.fontWeight?.medium || '500',
+                        semibold: defaultTheme.typography?.fontWeight?.semibold || '600',
+                        bold: defaultTheme.typography?.fontWeight?.bold || '700',
+                    }
+                }
+            };
+        }
+        return this.theme;
     }
 
     // 设置主题模式
@@ -85,11 +173,6 @@ class ThemeService {
     // 获取当前主题模式
     getCurrentThemeMode(): ThemeMode {
         return this.appTheme.mode;
-    }
-
-    // 获取完整应用主题
-    getAppTheme(): AppTheme {
-        return this.appTheme;
     }
 
     // 判断是否为暗色模式
@@ -134,11 +217,6 @@ class ThemeService {
     setTheme(theme: Partial<StyleTheme>): void {
         this.theme = { ...this.theme, ...theme };
         this.presets = createStylePresets(this.theme);
-    }
-
-    // 获取当前主题
-    getTheme(): StyleTheme {
-        return this.theme;
     }
 
     // 获取间距值

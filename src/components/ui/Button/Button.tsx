@@ -28,6 +28,7 @@ export interface ButtonProps {
 
     // 按钮颜色
     color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | string;
+    textColor?: string; // 新增：直接设置文本颜色
 
     // 按钮形状
     shape?: 'rounded' | 'square' | 'circle';
@@ -75,6 +76,7 @@ const Button: React.FC<ButtonProps> = ({
     variant = 'filled',
     size = 'medium',
     color = 'primary',
+    textColor, // 新增参数
     shape = 'rounded',
     disabled = false,
     loading = false,
@@ -187,21 +189,26 @@ const Button: React.FC<ButtonProps> = ({
 
     // 获取文本颜色
     const getTextColor = (): string => {
+        // 如果直接指定了文本颜色，优先使用
+        if (textColor) {
+            return textColor;
+        }
+
         const themeColor = getThemeColor();
 
         switch (variant) {
             case 'filled':
             case 'elevated':
-                // 根据背景色选择合适的文本颜色
-                if (color === 'primary') return colors.primary;
-                if (color === 'secondary') return colors.secondary;
-                if (color === 'error') return colors.error;
-                return colors.primary;
+                if (color === 'primary') return colors.buttonTextPrimary || colors.onPrimary;
+                if (color === 'secondary') return colors.buttonTextSecondary || colors.onSecondary;
+                if (color === 'error') return colors.onError;
+                return colors.buttonTextPrimary || colors.onPrimary;
             case 'outlined':
+                return colors.buttonTextOutlined || themeColor;
             case 'text':
-                return themeColor;
+                return colors.buttonTextText || themeColor;
             default:
-                return colors.surface;
+                return colors.onSurface;
         }
     };
 
@@ -236,15 +243,15 @@ const Button: React.FC<ButtonProps> = ({
     };
 
     // 获取文本样式
+    // 在 getTextStyle 函数中
     const getTextStyle = (): TextStyle => {
         const sizeConfig = getSizeConfig();
-
         return {
             color: getTextColor(),
             fontSize: sizeConfig.fontSize,
             fontWeight: bold
                 ? 'bold'
-                : (theme.typography?.fontWeight.medium || '500') as TextStyle['fontWeight'],
+                : (theme.typography?.fontWeight?.medium || '500') as TextStyle['fontWeight'],
             textAlign: 'center',
         };
     };

@@ -209,14 +209,15 @@ const createStyles = (theme: any) => StyleSheet.create({
         fontWeight: theme.typography?.fontWeight.semibold || '600',
         lineHeight: (theme.typography?.fontSize.md || 16) * (theme.typography?.lineHeight.normal || 1.5),
     },
+    // 在 createStyles 函数中，所有使用 fontWeight.medium 的地方都需要添加安全访问
     h4: {
         fontSize: theme.typography?.fontSize.md || 16,
-        fontWeight: theme.typography?.fontWeight.medium || '500',
+        fontWeight: theme.typography?.fontWeight?.medium || '500',
         lineHeight: (theme.typography?.fontSize.md || 16) * (theme.typography?.lineHeight.normal || 1.5),
     },
     h5: {
         fontSize: theme.typography?.fontSize.sm || 14,
-        fontWeight: theme.typography?.fontWeight.medium || '500',
+        fontWeight: theme.typography?.fontWeight?.medium || '500',
         lineHeight: (theme.typography?.fontSize.sm || 14) * (theme.typography?.lineHeight.normal || 1.5),
     },
     h6: {
