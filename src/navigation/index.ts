@@ -1,63 +1,20 @@
-// ===== 核心构建器 =====
-export {
-    NavigationBuilder,
-    NavigationBuilderFactory,
-    createNavigation,
-    createThemedNavigation,
-    createPlainNavigation,
-    createMinimalTabNavigation,
-    createFloatingTabNavigation,
-    createModalNavigation,
-    createTransparentNavigation,
-} from './builders';
+// 导出所有类型
+export * from './types';
 
-// ===== 组件 =====
-export {
-    StackNavigator,
-    TabNavigator,
-    NavigationContainer,
-} from './components';
+// 导出Hooks
+export * from './hooks/useSafeArea';
+export * from './hooks/useNavigation';
 
-// ===== 服务 =====
-export {
-    navigationRef,
-    NavigationService,
-    navigationService,
-    Navigation,
-} from './services';
+// 导出组件
+export * from './components/CustomTabButton';
+export * from './components/TabNavigator';
+export * from './components/NavigationContainer';
 
-// ===== 工具函数 =====
-export {
-    NavigationUtils,
-    NavigationGenerator,
-    useNavigationUtils,
-} from './utils';
+// 导出服务
+export * from './services/NavigationService';
 
-// ===== 样式和主题 =====
-export {
-    NavigationThemes,
-    StackPresets,
-    TabPresets,
-    AnimationPresets,
-    getTransitionConfig,
-} from './styles';
+// 导出构建器
+export * from './NavigationBuilder';
 
-// ===== 类型定义 =====
-export type {
-    RootStackParamList,
-    NavigationOptions,
-    TransitionMode,
-    ReactNavigationTheme,
-    StackScreenComponent,
-    TabScreenComponent,
-    ScreenComponent,
-    TabConfig,
-    StackConfig,
-    ScreenConfig,
-    TabItem,
-    NavigationProps,
-    NavigationBuilderConfig,
-} from './types';
-
-// ===== 默认导出 =====
-export { default } from './builders/NavigationBuilder';
+// 默认导出构建器创建函数
+export { createNavigation as default } from './NavigationBuilder';

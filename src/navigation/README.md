@@ -1,422 +1,276 @@
-# 🧭 Navigation 导航系统
+# 简洁导航系统使用说明
 
-现代化的 React Navigation 封装库，提供类型安全、主题化和链式调用的导航配置体验。
+一个基于 React Navigation 的简洁、易用的底部标签页导航系统，支持链式调用配置、完全自定义按钮和自动安全区域适配。
 
-## ✨ 特性
+## 🚀 特性
 
-- 🔗 **链式调用 API** - 直观的构建器模式
-- 🎨 **主题系统** - 内置深色/浅色主题支持
-- 📱 **动画预设** - 丰富的页面过渡动画
-- 🛡️ **类型安全** - 完整的 TypeScript 支持
-- 🏗️ **工厂模式** - 多种便捷创建方式
-- 🎯 **Hook 集成** - 现代化的 React Hook 支持
+- ✅ **完全自定义 TabBarButton**：每个标签页都使用自定义按钮组件
+- ✅ **自动安全区域适配**：自动获取并适配设备底部安全区域
+- ✅ **链式调用配置**：流畅的 API 设计，支持链式调用
+- ✅ **TypeScript 支持**：完整的类型定义
+- ✅ **徽章支持**：支持显示徽章和自定义颜色
+- ✅ **调试友好**：内置 console.log 调试信息
 
-## 🚀 快速开始
+## 📦 安装依赖
+
+确保你的项目已安装以下依赖：
+
+```bash
+npm install @react-navigation/native @react-navigation/bottom-tabs react-native-safe-area-context
+# 或
+yarn add @react-navigation/native @react-navigation/bottom-tabs react-native-safe-area-context
+```
+
+## 🎯 快速开始
 
 ### 基础用法
 
 ```typescript
-import { createNavigation } from '@/navigation';
-import { HomeScreen, ProfileScreen, DetailsScreen } from '@/screens';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import createNavigation from './src/navigation';
+import { HomeScreen, ProfileScreen, SettingsScreen } from './screens';
 
-// 创建应用导航
-const AppNavigation = createNavigation()
-  .addTab('home', HomeScreen, { 
-    title: '首页',
-    icon: ({ color, size }) => <Icon name="home" color={color} size={size} />
-  })
-  .addTab('profile', ProfileScreen, { 
-    title: '个人中心',
-    icon: ({ color, size }) => <Icon name="user" color={color} size={size} />
-  })
-  .addScreen('details', DetailsScreen, { title: '详情页' })
-  .buildRootNavigation();
+const App = () => {
+  const NavigationComponent = createNavigation()
+    .addTab({
+      name: 'Home',
+      component: HomeScreen,
+      label: '首页',
+      iconName: 'home',
+    })
+    .addTab({
+      name: 'Profile', 
+      component: ProfileScreen,
+      label: '个人',
+      iconName: 'person',
+      badge: '3',
+    })
+    .addTab({
+      name: 'Settings',
+      component: SettingsScreen,
+      label: '设置',
+      iconName: 'settings',
+    })
+    .build();
 
-export default function App() {
-  return <AppNavigation />;
-}
-```
-
-### 主题化导航
-
-```typescript
-import { createThemedNavigation } from '@/navigation';
-
-const ThemedNavigation = createThemedNavigation({
-  tabPreset: 'floating',
-  stackPreset: 'transparent',
-  animationPreset: 'fade'
-})
-  .addTab('home', HomeScreen)
-  .addTab('settings', SettingsScreen)
-  .buildRootNavigation();
-```
-
-## 📚 API 参考
-
-### 构建器方法
-
-#### `addTab(name, component, config?)`
-
-添加标签页屏幕。
-
-```typescript
-builder.addTab('home', HomeScreen, {
-  title: '首页',
-  icon: ({ color, size, focused }) => (
-    <Icon name="home" color={color} size={size} />
-  ),
-  badge: '5',
-  options: {
-    tabBarBadge: '新',
-    tabBarTestID: 'home-tab'
-  }
-});
-```
-
-**参数：**
-- `name: string` - 路由名称
-- `component: React.ComponentType` - 屏幕组件
-- `config?: TabBuilderConfig` - 标签页配置
-
-#### `addScreen(name, component, config?)`
-
-添加堆栈屏幕。
-
-```typescript
-builder.addScreen('details', DetailsScreen, {
-  title: '详情页',
-  transitionMode: 'modalIOS',
-  options: {
-    presentation: 'modal',
-    gestureEnabled: true
-  }
-});
-```
-
-**参数：**
-- `name: string` - 路由名称
-- `component: React.ComponentType` - 屏幕组件
-- `config?: ScreenBuilderConfig` - 屏幕配置
-
-#### `configure(config)`
-
-设置全局配置。
-
-```typescript
-builder.configure({
-  enableTheme: true,
-  tabPreset: 'minimal',
-  stackPreset: 'headerless',
-  animationPreset: 'slideHorizontal'
-});
-```
-
-### 构建方法
-
-#### `buildRootNavigation()`
-
-构建包含 `NavigationContainer` 的根导航，适用于应用入口。
-
-```typescript
-const RootNavigation = builder.buildRootNavigation();
-
-// 使用
-export default function App() {
-  return <RootNavigation />;
-}
-```
-
-#### `buildFullNavigation()`
-
-构建完整导航结构但不包含容器，需要手动包装。
-
-```typescript
-const AppNavigator = builder.buildFullNavigation();
-
-// 使用
-export default function App() {
   return (
     <NavigationContainer>
-      <AppNavigator />
+      <NavigationComponent />
     </NavigationContainer>
   );
+};
+
+export default App;
+```
+
+### 高级配置
+
+```typescript
+const NavigationComponent = createNavigation()
+  .addTabs([
+    {
+      name: 'Home',
+      component: HomeScreen,
+      label: '首页',
+      iconName: 'home',
+      iconSize: 28,
+    },
+    {
+      name: 'Messages',
+      component: MessagesScreen,
+      label: '消息',
+      iconName: 'message',
+      badge: 5,
+      badgeColor: '#FF3B30',
+    },
+    {
+      name: 'Profile',
+      component: ProfileScreen,
+      label: '我的',
+      iconName: 'person',
+    }
+  ])
+  .setInitialRoute('Home')
+  .setTabBarHeight(70)
+  .setActiveColor('#007AFF')
+  .setInactiveColor('#8E8E93')
+  .setBackgroundColor('#FFFFFF')
+  .setShowLabels(true)
+  .build();
+```
+
+## 📚 API 文档
+
+### NavigationBuilder
+
+链式调用的导航构建器，提供流畅的配置 API。
+
+#### 方法
+
+| 方法 | 参数 | 返回值 | 描述 |
+|------|------|--------|------|
+| `addTab(tab)` | `TabConfig` | `NavigationBuilder` | 添加单个标签页 |
+| `addTabs(tabs)` | `TabConfig[]` | `NavigationBuilder` | 批量添加标签页 |
+| `setInitialRoute(routeName)` | `string` | `NavigationBuilder` | 设置初始路由 |
+| `setTabBarHeight(height)` | `number` | `NavigationBuilder` | 设置标签栏高度 |
+| `setBackgroundColor(color)` | `string` | `NavigationBuilder` | 设置背景色 |
+| `setActiveColor(color)` | `string` | `NavigationBuilder` | 设置激活状态颜色 |
+| `setInactiveColor(color)` | `string` | `NavigationBuilder` | 设置非激活状态颜色 |
+| `setShowLabels(show)` | `boolean` | `NavigationBuilder` | 设置是否显示标签 |
+| `build()` | - | `React.FC` | 构建导航组件 |
+| `getConfig()` | - | `NavigatorConfig` | 获取当前配置 |
+| `reset()` | - | `NavigationBuilder` | 重置配置 |
+
+### TabConfig
+
+标签页配置接口
+
+```typescript
+interface TabConfig {
+  name: string;                    // 路由名称（必需）
+  component: ComponentType<any>;   // 页面组件（必需）
+  label?: string;                  // 显示标签
+  iconName?: string;               // 图标名称
+  iconSize?: number;               // 图标大小，默认 24
+  badge?: string | number;         // 徽章内容
+  badgeColor?: string;             // 徽章颜色，默认 '#FF3B30'
+  options?: BottomTabNavigationOptions; // 额外的导航选项
 }
 ```
 
-#### `buildTabNavigator()`
+### NavigatorConfig
 
-仅构建标签页导航器。
+导航器配置接口
 
 ```typescript
-const TabsNavigator = builder.buildTabNavigator();
+interface NavigatorConfig {
+  tabs: TabConfig[];               // 标签页列表
+  initialRouteName?: string;       // 初始路由名称
+  tabBarHeight?: number;           // 标签栏高度，默认 60
+  backgroundColor?: string;        // 背景色，默认 '#FFFFFF'
+  activeColor?: string;            // 激活颜色，默认 '#007AFF'
+  inactiveColor?: string;          // 非激活颜色，默认 '#8E8E93'
+  showLabels?: boolean;            // 是否显示标签，默认 true
+}
 ```
 
-#### `buildStackNavigator()`
+## 🎨 自定义样式
 
-仅构建堆栈导航器。
+### CustomTabButton 组件
+
+每个标签页都使用 `CustomTabButton` 组件渲染，你可以通过以下方式自定义：
 
 ```typescript
-const StackNavigator = builder.buildStackNavigator();
+// 自定义图标渲染
+const NavigationComponent = createNavigation()
+  .addTab({
+    name: 'Home',
+    component: HomeScreen,
+    label: '首页',
+    // 可以通过 children 属性传入自定义图标
+  })
+  .build();
 ```
 
-### 工厂函数
+### 样式定制
 
-#### `createNavigation(config?)`
+标签按钮的样式在 `CustomTabButton.tsx` 中定义，包含：
 
-创建基础导航构建器。
+- `container`: 按钮容器样式
+- `content`: 内容区域样式  
+- `iconContainer`: 图标容器样式
+- `defaultIcon`: 默认图标样式
+- `badge`: 徽章样式
+- `badgeText`: 徽章文字样式
+- `label`: 标签文字样式
 
-```typescript
-const builder = createNavigation({
-  enableTheme: false,
-  initialTabRoute: 'home'
-});
-```
+## 🔧 Hooks
 
-#### `createThemedNavigation(config?)`
+### useSafeArea()
 
-创建启用主题的导航构建器。
-
-```typescript
-const builder = createThemedNavigation({
-  tabPreset: 'floating',
-  stackPreset: 'modal'
-});
-```
-
-#### `createPlainNavigation(config?)`
-
-创建无主题的简洁导航构建器。
+获取完整的安全区域信息
 
 ```typescript
-const builder = createPlainNavigation();
-```
+import { useSafeArea } from './src/navigation';
 
-#### 预设工厂函数
-
-```typescript
-// 最小化标签页导航
-const builder = createMinimalTabNavigation();
-
-// 浮动标签页导航
-const builder = createFloatingTabNavigation();
-
-// 模态堆栈导航
-const builder = createModalNavigation();
-
-// 透明堆栈导航
-const builder = createTransparentNavigation();
-```
-
-## 🎨 主题系统
-
-### 使用主题 Hook
-
-```typescript
-import { useNavigationUtils } from '@/navigation';
-
-function MyScreen() {
-  const { theme, stackStyles, tabStyles, utils, generator } = useNavigationUtils();
+const MyComponent = () => {
+  const { top, bottom, left, right } = useSafeArea();
   
   return (
-    <View style={{ backgroundColor: theme.colors.background }}>
-      {/* 你的内容 */}
+    <View style={{ paddingTop: top, paddingBottom: bottom }}>
+      {/* 内容 */}
     </View>
   );
-}
+};
 ```
 
-### 主题预设
+### useBottomSafeArea()
 
-#### 标签页主题预设
-
-- `default` - 默认主题
-- `minimal` - 最小化主题
-- `floating` - 浮动主题
-
-#### 堆栈主题预设
-
-- `default` - 默认主题
-- `transparent` - 透明主题
-- `modal` - 模态主题
-- `headerless` - 无头部主题
-
-### 动画预设
-
-- `slideHorizontal` - 水平滑动
-- `slideVertical` - 垂直滑动
-- `fade` - 淡入淡出
-- `scale` - 缩放动画
-- `none` - 无动画
-
-## 🛠️ 工具函数
-
-### NavigationUtils
-
-静态工具类，提供导航相关的实用方法。
+仅获取底部安全区域高度
 
 ```typescript
-import { NavigationUtils } from '@/navigation';
+import { useBottomSafeArea } from './src/navigation';
 
-// 获取堆栈选项
-const stackOptions = NavigationUtils.getStackOptions('modal');
-
-// 获取标签页选项
-const tabOptions = NavigationUtils.getTabOptions('floating');
-
-// 创建动画堆栈
-const animatedStack = NavigationUtils.createAnimatedStack('fade');
-
-// 创建过渡动画
-const transition = NavigationUtils.createTransition('modalIOS');
+const MyComponent = () => {
+  const bottomSafeArea = useBottomSafeArea();
+  
+  return (
+    <View style={{ paddingBottom: bottomSafeArea }}>
+      {/* 内容 */}
+    </View>
+  );
+};
 ```
 
-### NavigationGenerator
+## 🐛 调试
 
-选项生成器，提供预配置的导航选项。
+系统内置了调试信息，在 `CustomTabButton` 组件中会输出：
 
-```typescript
-import { NavigationGenerator } from '@/navigation';
-
-// 堆栈选项
-const stackOptions = NavigationGenerator.stack.modal();
-const animatedOptions = NavigationGenerator.stack.animated('fade');
-
-// 标签页选项
-const tabOptions = NavigationGenerator.tab.floating();
-
-// 过渡动画
-const transition = NavigationGenerator.transition.modal();
+```javascript
+console.log('CustomTabButton rendered:', { focused, label, bottomSafeArea });
 ```
 
-## 📱 使用场景
+这可以帮助你：
+- 确认按钮是否正确渲染
+- 查看焦点状态
+- 检查安全区域高度
+- 验证标签显示
 
-### 场景 1：简单的标签页应用
+## 📱 安全区域适配
 
-```typescript
-const SimpleApp = createNavigation()
-  .addTab('home', HomeScreen, { title: '首页' })
-  .addTab('profile', ProfileScreen, { title: '我的' })
-  .buildRootNavigation();
-```
+系统自动处理设备安全区域：
 
-### 场景 2：带模态页面的应用
+1. **自动检测**：使用 `react-native-safe-area-context` 获取安全区域
+2. **动态适配**：标签栏高度 = 设置高度 + 底部安全区域
+3. **按钮适配**：每个按钮的 `paddingBottom` 会自动加上安全区域高度
 
-```typescript
-const ModalApp = createThemedNavigation()
-  .addTab('home', HomeScreen)
-  .addTab('explore', ExploreScreen)
-  .addScreen('modal', ModalScreen, {
-    transitionMode: 'modalIOS',
-    options: { presentation: 'modal' }
-  })
-  .buildRootNavigation();
-```
+## 🔄 迁移指南
 
-### 场景 3：嵌套导航
+### 从旧版导航系统迁移
+
+如果你之前使用的是复杂的导航系统，可以这样迁移：
 
 ```typescript
-// 子导航
-const SubTabs = createNavigation()
-  .addTab('tab1', Tab1Screen)
-  .addTab('tab2', Tab2Screen)
+// 旧版本（复杂）
+const navigation = createNavigation()
   .buildTabNavigator();
 
-// 主导航
-const MainApp = createNavigation()
-  .addTab('main', MainScreen)
-  .addScreen('subTabs', SubTabs)
-  .buildRootNavigation();
-```
-
-### 场景 4：自定义主题
-
-```typescript
-const CustomApp = createThemedNavigation({
-  tabPreset: 'floating',
-  stackPreset: 'transparent',
-  animationPreset: 'fade'
-})
-  .configure({
-    initialTabRoute: 'dashboard',
-    defaultTransitionMode: 'fadeAndroid'
-  })
-  .addTab('dashboard', DashboardScreen, {
-    icon: ({ color, size }) => <DashboardIcon color={color} size={size} />
-  })
-  .addTab('analytics', AnalyticsScreen, {
-    icon: ({ color, size }) => <AnalyticsIcon color={color} size={size} />
-  })
-  .buildRootNavigation();
+// 新版本（简洁）
+const NavigationComponent = createNavigation()
+  .addTab({ name: 'Home', component: HomeScreen })
+  .build();
 ```
 
 ## ⚠️ 注意事项
 
-### NavigationContainer 嵌套
+1. **SafeAreaProvider**: 确保在应用根部包裹 `SafeAreaProvider`
+2. **图标组件**: 目前使用默认的色块作为图标，你可以替换为自己的图标组件
+3. **性能**: 每次配置变更都会重新创建组件，建议在组件外部创建配置
 
-为避免 `NavigationContainer` 嵌套错误，请根据使用场景选择合适的构建方法：
+## 🤝 贡献
 
-- **应用根部**：使用 `buildRootNavigation()`
-- **手动控制容器**：使用 `buildFullNavigation()`
-- **嵌套使用**：使用 `buildTabNavigator()` 或 `buildStackNavigator()`
-
-### 类型安全
-
-所有方法都提供完整的 TypeScript 类型支持：
-
-```typescript
-// 类型安全的路由参数
-type RootStackParamList = {
-  Home: undefined;
-  Profile: { userId: string };
-  Details: { itemId: number };
-};
-
-// 在组件中使用
-function ProfileScreen({ route }: { route: RouteProp<RootStackParamList, 'Profile'> }) {
-  const { userId } = route.params; // 类型安全
-}
-```
-
-## 🔧 高级用法
-
-### 自定义导航服务
-
-```typescript
-import { NavigationService } from '@/navigation';
-
-// 编程式导航
-NavigationService.navigate('Details', { itemId: 123 });
-NavigationService.goBack();
-NavigationService.reset('Home');
-```
-
-### 动态配置
-
-```typescript
-const builder = createNavigation();
-
-// 根据条件添加屏幕
-if (userIsLoggedIn) {
-  builder.addTab('profile', ProfileScreen);
-} else {
-  builder.addScreen('login', LoginScreen);
-}
-
-const Navigation = builder.buildRootNavigation();
-```
-
-### 性能优化
-
-```typescript
-// 懒加载屏幕
-const LazyScreen = React.lazy(() => import('./LazyScreen'));
-
-const OptimizedApp = createNavigation()
-  .addTab('home', HomeScreen)
-  .addScreen('lazy', LazyScreen)
-  .buildRootNavigation();
-```
+欢迎提交 Issue 和 Pull Request 来改进这个导航系统！
 
 ## 📄 许可证
 

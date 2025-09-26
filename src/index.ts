@@ -1,6 +1,6 @@
 // 导航模块
+// export * from './navigation-old';
 export * from './navigation';
-// export * from './navigation_old';
 
 // 存储模块
 export * from './storage';

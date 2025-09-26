@@ -1,4 +1,5 @@
-// 导出所有组件
-export { StackNavigator } from './StackNavigator';
-export { TabNavigator } from './TabNavigator';
-export { NavigationContainer } from './NavigationContainer';
+export * from './CustomTabButton';
+export * from './TabNavigator';
+export * from './StackNavigator';
+export * from './RootNavigator';
+export * from './NavigationContainer';

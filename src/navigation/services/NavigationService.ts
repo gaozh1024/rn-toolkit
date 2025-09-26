@@ -1,16 +1,14 @@
 import { createNavigationContainerRef, StackActions, CommonActions } from '@react-navigation/native';
-import { ScreenComponent, RootStackParamList } from '../types';
 
-// 创建带类型的导航引用
-export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+// 创建导航引用
+export const navigationRef = createNavigationContainerRef();
 
 /**
- * 导航服务类
- * 提供全局导航操作和屏幕管理功能
+ * 简洁导航服务类
+ * 提供全局导航操作功能
  */
 class NavigationService {
   private static instance: NavigationService;
-  private screens: Map<string, React.ComponentType<any>> = new Map();
 
   static getInstance(): NavigationService {
     if (!NavigationService.instance) {
@@ -20,44 +18,20 @@ class NavigationService {
   }
 
   /**
-   * 注册屏幕组件
-   * @param screens 屏幕组件数组
-   */
-  registerScreens(screens: ScreenComponent[]): void {
-    screens.forEach(screen => {
-      this.screens.set(screen.name, screen.component);
-    });
-  }
-
-  /**
-   * 获取注册的屏幕组件
-   * @param name 屏幕名称
-   * @returns 屏幕组件或undefined
-   */
-  getScreen(name: string): React.ComponentType<any> | undefined {
-    return this.screens.get(name);
-  }
-
-  /**
-   * 获取所有注册的屏幕
-   * @returns 屏幕组件Map
-   */
-  getAllScreens(): Map<string, React.ComponentType<any>> {
-    return this.screens;
-  }
-
-  /**
    * 导航到指定屏幕
    * @param name 屏幕名称
    * @param params 传递的参数
    */
   navigate(name: string, params?: any): void {
     if (navigationRef.current?.isReady()) {
+      console.log('NavigationService: navigate to', name, params);
       const navigateAction = CommonActions.navigate({
         name,
         params,
       });
       navigationRef.current.dispatch(navigateAction);
+    } else {
+      console.warn('NavigationService: Navigation not ready');
     }
   }
 
@@ -68,7 +42,10 @@ class NavigationService {
    */
   push(name: string, params?: any): void {
     if (navigationRef.current?.isReady()) {
+      console.log('NavigationService: push to', name, params);
       navigationRef.current.dispatch(StackActions.push(name, params));
+    } else {
+      console.warn('NavigationService: Navigation not ready');
     }
   }
 
@@ -78,7 +55,10 @@ class NavigationService {
    */
   pop(count: number = 1): void {
     if (navigationRef.current?.isReady()) {
+      console.log('NavigationService: pop', count, 'screens');
       navigationRef.current.dispatch(StackActions.pop(count));
+    } else {
+      console.warn('NavigationService: Navigation not ready');
     }
   }
 
@@ -87,7 +67,10 @@ class NavigationService {
    */
   popToRoot(): void {
     if (navigationRef.current?.isReady()) {
+      console.log('NavigationService: popToRoot');
       navigationRef.current.dispatch(StackActions.popToTop());
+    } else {
+      console.warn('NavigationService: Navigation not ready');
     }
   }
 
@@ -98,7 +81,10 @@ class NavigationService {
    */
   replace(name: string, params?: any): void {
     if (navigationRef.current?.isReady()) {
+      console.log('NavigationService: replace with', name, params);
       navigationRef.current.dispatch(StackActions.replace(name, params));
+    } else {
+      console.warn('NavigationService: Navigation not ready');
     }
   }
 
@@ -108,12 +94,15 @@ class NavigationService {
    */
   reset(routes: Array<{ name: string; params?: any }>): void {
     if (navigationRef.current?.isReady()) {
+      console.log('NavigationService: reset with routes', routes);
       navigationRef.current.dispatch(
         CommonActions.reset({
           index: routes.length - 1,
           routes,
         })
       );
+    } else {
+      console.warn('NavigationService: Navigation not ready');
     }
   }
 
@@ -122,7 +111,10 @@ class NavigationService {
    */
   goBack(): void {
     if (navigationRef.current?.isReady() && navigationRef.current.canGoBack()) {
+      console.log('NavigationService: goBack');
       navigationRef.current.goBack();
+    } else {
+      console.warn('NavigationService: Cannot go back or navigation not ready');
     }
   }
 
@@ -223,5 +215,5 @@ export { NavigationService };
 // 导出单例实例
 export const navigationService = NavigationService.getInstance();
 
-// 导出别名（向后兼容）
+// 导出别名
 export { navigationService as Navigation };
