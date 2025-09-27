@@ -105,7 +105,7 @@ function createBorderRadiusStyles(borderRadius: BorderRadiusTheme): BorderRadius
 }
 
 // 创建阴影样式的辅助函数
-function createShadowStyles(): ShadowStyles {
+function createShadowStyles(colors: ColorTheme): ShadowStyles {
   return {
     // 基础阴影
     none: {
@@ -116,35 +116,35 @@ function createShadowStyles(): ShadowStyles {
       elevation: 0,
     },
     xs: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
       shadowRadius: 1,
       elevation: 1,
     },
     sm: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
       shadowRadius: 2,
       elevation: 2,
     },
     md: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.15,
       shadowRadius: 4,
       elevation: 4,
     },
     lg: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.2,
       shadowRadius: 8,
       elevation: 8,
     },
     xl: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.25,
       shadowRadius: 16,
@@ -153,28 +153,28 @@ function createShadowStyles(): ShadowStyles {
 
     // 方向阴影
     top: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 4,
     },
     bottom: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 4,
     },
     left: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: -2, height: 0 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 4,
     },
     right: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 2, height: 0 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
@@ -183,14 +183,14 @@ function createShadowStyles(): ShadowStyles {
 
     // 特殊阴影
     inner: {
-      shadowColor: '#000',
+      shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
       shadowRadius: 2,
       elevation: 0, // 内阴影在 React Native 中需要特殊处理
     },
     glow: {
-      shadowColor: '#007AFF',
+      shadowColor: colors.primary,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.3,
       shadowRadius: 8,
@@ -767,7 +767,7 @@ function createStylePresets(baseTheme: BaseTheme): StylePresets {
   return {
     layout: createLayoutStyles(),
     borderRadius: createBorderRadiusStyles(baseTheme.borderRadius),
-    shadow: createShadowStyles(),
+    shadow: createShadowStyles(baseTheme.colors),
     border: createBorderStyles(baseTheme.colors),
     spacing: createSpacingStyles(baseTheme.spacing),
     size: createSizeStyles(),

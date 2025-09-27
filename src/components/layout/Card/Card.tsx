@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../theme—old';
+import { useTheme } from '../../../theme';
 
 export interface CardProps {
   children: React.ReactNode;
@@ -11,6 +11,7 @@ export interface CardProps {
   borderRadius?: number;
   elevation?: number;
   shadowColor?: string;
+  shadowSize?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   onPress?: () => void;
   disabled?: boolean;
   testID?: string;
@@ -20,29 +21,36 @@ export const Card: React.FC<CardProps> = ({
   children,
   style,
   backgroundColor,
-  padding = 16,
-  margin = 8,
-  borderRadius = 12,
-  elevation = 2,
+  padding,
+  margin,
+  borderRadius,
+  elevation,
   shadowColor,
+  shadowSize = 'md',
   onPress,
   disabled = false,
   testID,
 }) => {
-  const { theme, colors } = useTheme();
+  const { theme, styles } = useTheme();
+
+  const paddingValue = typeof padding === 'number' ? padding : theme.spacing.md;
+  const marginValue = typeof margin === 'number' ? margin : theme.spacing.sm;
+  const borderRadiusValue = typeof borderRadius === 'number' ? borderRadius : theme.borderRadius.lg;
+  const backgroundColorValue = backgroundColor || theme.colors.card;
+
+  const shadowPreset = styles.shadow[shadowSize] || styles.shadow.md;
+  const shadowStyle: ViewStyle = {
+    ...shadowPreset,
+    shadowColor: shadowColor || theme.colors.shadow,
+  };
 
   const cardStyle: ViewStyle = {
-    backgroundColor: backgroundColor || colors.surface,
-    padding,
-    margin,
-    borderRadius,
-    // iOS 阴影
-    shadowColor: shadowColor || colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    // Android 阴影
-    elevation,
+    backgroundColor: backgroundColorValue,
+    padding: paddingValue,
+    margin: marginValue,
+    borderRadius: borderRadiusValue,
+    ...shadowStyle,
+    ...(typeof elevation === 'number' ? { elevation } : {}),
   };
 
   if (onPress) {

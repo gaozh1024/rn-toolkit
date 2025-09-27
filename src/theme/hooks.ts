@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { themeService } from './ThemeService';
-import { BaseTheme, Theme, ThemeConfig, UseThemeReturn, StylePresets } from './types';
+import { BaseTheme, Theme, ThemeConfig, UseThemeReturn, StylePresets, ThemeMode } from './types';
 
 /**
  * 主题Hook - 统一的主题使用接口
@@ -10,8 +10,8 @@ export const useTheme = (): UseThemeReturn => {
   const [isDark, setIsDark] = useState<boolean>(themeService.getIsDarkMode());
 
   useEffect(() => {
-    // 监听主题变化
-    const unsubscribe = themeService.addListener((newTheme) => {
+    // 监听主题变化（支持异步回调）
+    const unsubscribe = themeService.addListener(async (newTheme) => {
       setFullTheme(newTheme);
       setIsDark(themeService.getIsDarkMode());
     });
@@ -19,7 +19,7 @@ export const useTheme = (): UseThemeReturn => {
     return unsubscribe;
   }, []);
 
-  const updateTheme = async (config: ThemeConfig) => {
+  const updateTheme = async (config: ThemeConfig): Promise<void> => {
     try {
       await themeService.updateCurrentThemeConfig(config);
     } catch (error) {
@@ -27,7 +27,7 @@ export const useTheme = (): UseThemeReturn => {
     }
   };
 
-  const resetTheme = async () => {
+  const resetTheme = async (): Promise<void> => {
     try {
       await themeService.resetCurrentThemeConfig();
     } catch (error) {
@@ -35,9 +35,23 @@ export const useTheme = (): UseThemeReturn => {
     }
   };
 
-  const toggleDarkMode = () => {
-    themeService.toggleDarkMode();
+  const toggleDarkMode = async (): Promise<void> => {
+    try {
+      await themeService.toggleDarkMode();
+    } catch (error) {
+      console.error('Failed to toggle dark mode:', error);
+    }
   };
+
+  const setThemeMode = async (mode: ThemeMode): Promise<void> => {
+    try {
+      await themeService.setThemeMode(mode);
+    } catch (error) {
+      console.error('Failed to set theme mode:', error);
+    }
+  };
+
+  const currentMode = themeService.getCurrentMode();
 
   // 提取基础主题（用户可修改部分）
   const theme: BaseTheme = {
@@ -62,6 +76,9 @@ export const useTheme = (): UseThemeReturn => {
     resetTheme,
     isDark,
     toggleDarkMode,
+    // 新增：系统主题跟随控制
+    setThemeMode,
+    currentMode,
   };
 };
 

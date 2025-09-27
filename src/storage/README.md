@@ -60,6 +60,16 @@ const isActive = userStorage.getBoolean('isActive');
 | `get(key)` | `key: string` | `any` | 获取数据 |
 | `delete(key)` | `key: string` | `void` | 删除数据 |
 | `clear()` | - | `void` | 清空所有数据 |
+| `getString(key)` | `key: string` | `string \| null` | 获取字符串值 |
+| `getNumber(key)` | `key: string` | `number \| null` | 获取数字值 |
+| `getBoolean(key)` | `key: string` | `boolean \| null` | 获取布尔值 |
+| `getAllKeys()` | - | `string[]` | 获取所有键名 |
+| `contains(key)` | `key: string` | `boolean` | 检查是否包含指定键 |
+| `setMany(entries)` | `entries: Record<string, any>` | `void` | 批量设置键值 |
+| `getMany(keys)` | `keys: string[]` | `Record<string, any>` | 批量读取键值 |
+| `deleteMany(keys)` | `keys: string[]` | `void` | 批量删除键值 |
+| `getOrDefault(key, defaultValue)` | `key: string, defaultValue: T` | `T` | 读取失败或空值时返回默认值 |
+| `withPrefix(prefix)` | `prefix: string` | `NamespacedStorage` | 返回命名空间存储对象（键前缀工具） |
 
 #### 示例
 
@@ -89,17 +99,18 @@ console.log(profile.preferences.theme); // 'dark'
 #### 构造函数
 
 ```typescript
-constructor(id?: string)
+constructor(configOrId?: MMKVConfig | string)
 ```
 
-- `id`: 存储实例的唯一标识符，默认为 'default'
+- `configOrId`: 支持传入配置对象或字符串 id；未提供 id 时使用默认 `'default'`
+- 配置项：`MMKVConfig` 支持 `id`（实例标识）、`path`（存储目录路径）、`encryptionKey`（加密密钥）
 
 #### 方法
 
 | 方法 | 参数 | 返回值 | 描述 |
 |------|------|--------|------|
-| `set(key, value)` | `key: string, value: any` | `void` | 存储数据（自动序列化对象） |
-| `get(key)` | `key: string` | `any` | 获取数据（自动反序列化） |
+| `set(key, value)` | `key: string, value: any` | `void` | 存储数据；对 `undefined/null` 统一归一化为字符串 `'null'`；对象安全序列化（循环引用保护）；不可序列化类型（function/symbol）降级为字符串 |
+| `get(key)` | `key: string` | `any` | 获取数据；读取到 `'null'` 时返回 `null`；优先尝试 JSON 反序列化，失败则返回原始字符串 |
 | `getString(key)` | `key: string` | `string \| null` | 获取字符串值 |
 | `getNumber(key)` | `key: string` | `number \| null` | 获取数字值 |
 | `getBoolean(key)` | `key: string` | `boolean \| null` | 获取布尔值 |
@@ -167,12 +178,47 @@ interface MMKVConfig {
 ### StorageEvent 事件
 
 ```typescript
+// 事件类型
+type StorageEventType = 'set' | 'delete' | 'clear';
+
+// 事件负载
 interface StorageEvent {
-  key: string;      // 变更的键名
-  oldValue?: any;   // 旧值
-  newValue?: any;   // 新值
-  timestamp: number; // 时间戳
+  type: StorageEventType; // 事件类型
+  key: string;            // 变更的键名
+  oldValue?: any;         // 旧值
+  newValue?: any;         // 新值
+  timestamp: number;      // 时间戳
 }
+```
+
+### 存储事件监听
+
+```typescript
+import { storageService } from '@/storage';
+
+// 添加监听器
+const unsubscribe = storageService.addListener((event) => {
+  switch (event.type) {
+    case 'set':
+      console.log('[SET]', event.key, { from: event.oldValue, to: event.newValue }, event.timestamp);
+      break;
+    case 'delete':
+      console.log('[DELETE]', event.key, { from: event.oldValue }, event.timestamp);
+      break;
+    case 'clear':
+      console.log('[CLEAR]', event.key, { from: event.oldValue }, event.timestamp);
+      break;
+  }
+});
+
+// 取消订阅
+unsubscribe();
+
+// 或者按引用移除
+// storageService.removeListener(listenerRef);
+
+// 移除全部
+// storageService.removeAllListeners();
 ```
 
 ## 高级用法
@@ -219,32 +265,39 @@ allKeys.forEach(key => {
 oldStorage.clear();
 ```
 
-### 批量操作
+### 命名空间与键前缀工具
 
 ```typescript
-import { MMKVStorage } from '@/storage';
+import { storageService } from '@/storage';
 
-const storage = new MMKVStorage();
+// 创建命名空间存储
+const userNS = storageService.withPrefix('user.');
+const appNS = storageService.withPrefix('app.');
 
-// 批量设置
-const batchData = {
-  'user.name': 'John',
-  'user.email': 'john@example.com',
-  'user.age': 30,
-  'settings.theme': 'dark'
-};
+// 单条写入与读取
+userNS.set('profile', { name: 'Alice' });
+console.log(userNS.get('profile')); // { name: 'Alice' }
 
-Object.entries(batchData).forEach(([key, value]) => {
-  storage.set(key, value);
+// 批量写入与读取
+userNS.setMany({
+  token: 'abc123',
+  settings: { theme: 'dark' },
 });
+const result = userNS.getMany(['token', 'settings']);
+// result = { token: 'abc123', settings: { theme: 'dark' } }
 
-// 批量读取
-const userKeys = ['user.name', 'user.email', 'user.age'];
-const userData = userKeys.reduce((acc, key) => {
-  acc[key] = storage.get(key);
-  return acc;
-}, {} as Record<string, any>);
+// 命名空间 contains / getAllKeys
+console.log(userNS.contains('token')); // true
+console.log(userNS.getAllKeys());      // ['profile', 'token', 'settings']
+
+// 仅清理当前命名空间
+userNS.clear(); // 只清空所有 user.* 键，不影响 app.*
 ```
+
+注意事项：
+- `withPrefix` 返回的 NamespacedStorage 只作用于指定前缀的键；`clear()` 仅清理该前缀下的键。
+- 批量操作会自动进行键前缀映射，输入/输出为去前缀后的键集合。
+- 与事件机制兼容：底层会按全键名触发事件；你可通过解析键名前缀来识别命名空间。
 
 ## 最佳实践
 

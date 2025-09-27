@@ -1,10 +1,11 @@
-import { Theme, ThemeConfig, BaseTheme } from './types';
+import { Theme, ThemeConfig, BaseTheme, ThemeMode } from './types';
 import {
     lightBaseTheme,
     darkBaseTheme,
     createFullTheme
 } from './presets';
 import { storageService } from '../storage';
+import { Appearance } from 'react-native';
 
 /**
  * 主题服务类
@@ -16,17 +17,27 @@ class ThemeService {
     // 当前基础主题
     private currentBaseTheme: BaseTheme;
     // 当前主题模式
-    private currentMode: 'light' | 'dark' | 'system' = 'light';
+    private currentMode: ThemeMode = 'light';
     // 是否为深色模式
     private isDarkMode: boolean = false;
     // 浅色主题自定义配置
     private lightThemeConfig: ThemeConfig = {};
     // 深色主题自定义配置
     private darkThemeConfig: ThemeConfig = {};
-    // 主题变化监听器
-    private listeners: Array<(theme: Theme) => void> = [];
+    // 主题变化监听器（支持同步或异步回调）
+    private listeners: Array<(theme: Theme) => void | Promise<void>> = [];
     // 是否已初始化
     private isInitialized: boolean = false;
+
+    // 获取系统深色模式
+    private getSystemDark(): boolean {
+        try {
+            const scheme = Appearance.getColorScheme();
+            return scheme === 'dark';
+        } catch (e) {
+            return false;
+        }
+    }
 
     // 存储键名常量
     static readonly STORAGE_KEYS = {
@@ -50,6 +61,8 @@ class ThemeService {
      * 初始化主题服务
      * 从存储中加载用户的主题偏好和自定义配置
      */
+    private appearanceSubscription: { remove: () => void } | null = null;
+
     async initialize(): Promise<void> {
         if (this.isInitialized) {
             return;
@@ -64,6 +77,9 @@ class ThemeService {
 
             // 3. 应用当前主题
             await this.applyCurrentTheme();
+
+            // 4. 如果是系统模式，开启系统主题监听
+            this.updateAppearanceListener();
 
             this.isInitialized = true;
             console.log('ThemeService initialized successfully');
@@ -86,13 +102,13 @@ class ThemeService {
             if (storedMode) {
                 // 检查是否已经是有效的模式值
                 if (['light', 'dark', 'system'].includes(storedMode)) {
-                    this.currentMode = storedMode as 'light' | 'dark' | 'system';
+                    this.currentMode = storedMode as ThemeMode;
                 } else {
                     // 尝试JSON解析
                     try {
                         const parsedMode = JSON.parse(storedMode);
                         if (['light', 'dark', 'system'].includes(parsedMode)) {
-                            this.currentMode = parsedMode as 'light' | 'dark' | 'system';
+                            this.currentMode = parsedMode as ThemeMode;
                         } else {
                             console.warn('Invalid theme mode value:', parsedMode);
                             this.currentMode = 'light';
@@ -134,8 +150,8 @@ class ThemeService {
 
             // 根据模式确定深色模式状态
             if (this.currentMode === 'system') {
-                // 系统模式：可以在这里添加系统主题检测逻辑
-                // 暂时保持存储的深色模式状态
+                // 系统模式：使用系统主题覆盖存储状态
+                this.isDarkMode = this.getSystemDark();
             } else {
                 this.isDarkMode = this.currentMode === 'dark';
             }
@@ -151,20 +167,36 @@ class ThemeService {
      * 加载自定义主题配置
      */
     private async loadCustomThemeConfigs(): Promise<void> {
+        const parseConfig = (raw: any, key: string): ThemeConfig => {
+            try {
+                if (raw == null) return {};
+                if (typeof raw === 'object' && !Array.isArray(raw)) {
+                    return raw as ThemeConfig;
+                }
+                if (typeof raw === 'string') {
+                    const parsed = JSON.parse(raw);
+                    return (parsed && typeof parsed === 'object') ? parsed as ThemeConfig : {};
+                }
+                console.warn(`Invalid theme config type for ${key}:`, typeof raw);
+                return {};
+            } catch (e) {
+                console.warn(`Failed to parse theme config for ${key}:`, e);
+                // 清除无效的存储值，避免下次继续报错
+                storageService.delete(key);
+                return {};
+            }
+        };
+
         try {
             // 加载浅色主题自定义配置
-            const lightConfig = storageService.get(ThemeService.STORAGE_KEYS.LIGHT_THEME_CONFIG);
-            console.log('加载浅色主题自定义配置:', lightConfig);
-            if (lightConfig) {
-                this.lightThemeConfig = JSON.parse(lightConfig) as ThemeConfig;
-            }
+            const lightRaw = storageService.get(ThemeService.STORAGE_KEYS.LIGHT_THEME_CONFIG);
+            console.log('加载浅色主题自定义配置:', lightRaw);
+            this.lightThemeConfig = parseConfig(lightRaw, ThemeService.STORAGE_KEYS.LIGHT_THEME_CONFIG);
 
             // 加载深色主题自定义配置
-            const darkConfig = storageService.get(ThemeService.STORAGE_KEYS.DARK_THEME_CONFIG);
-            console.log('加载深色主题自定义配置:', darkConfig);
-            if (darkConfig) {
-                this.darkThemeConfig = JSON.parse(darkConfig) as ThemeConfig;
-            }
+            const darkRaw = storageService.get(ThemeService.STORAGE_KEYS.DARK_THEME_CONFIG);
+            console.log('加载深色主题自定义配置:', darkRaw);
+            this.darkThemeConfig = parseConfig(darkRaw, ThemeService.STORAGE_KEYS.DARK_THEME_CONFIG);
         } catch (error) {
             console.warn('Failed to load custom theme configs:', error);
             // 使用默认配置
@@ -222,7 +254,7 @@ class ThemeService {
     /**
      * 获取当前主题模式
      */
-    getCurrentMode(): 'light' | 'dark' | 'system' {
+    getCurrentMode(): ThemeMode {
         return this.currentMode;
     }
 
@@ -257,7 +289,7 @@ class ThemeService {
     /**
      * 设置主题模式
      */
-    async setThemeMode(mode: 'light' | 'dark' | 'system'): Promise<void> {
+    async setThemeMode(mode: ThemeMode): Promise<void> {
         if (this.currentMode === mode) {
             return;
         }
@@ -269,14 +301,19 @@ class ThemeService {
             this.isDarkMode = false;
         } else if (mode === 'dark') {
             this.isDarkMode = true;
+        } else if (mode === 'system') {
+            // 立即与系统主题同步
+            this.isDarkMode = this.getSystemDark();
         }
-        // system模式保持当前深色模式状态
 
         // 保存到存储
         await this.saveThemeMode();
 
         // 应用主题
         await this.applyCurrentTheme();
+
+        // 更新系统主题监听器
+        this.updateAppearanceListener();
     }
 
     /**
@@ -306,6 +343,9 @@ class ThemeService {
 
         // 应用主题
         await this.applyCurrentTheme();
+
+        // 确保监听器状态正确
+        this.updateAppearanceListener();
     }
 
     /**
@@ -421,7 +461,7 @@ class ThemeService {
     /**
      * 添加主题变化监听器
      */
-    addListener(listener: (theme: Theme) => void): () => void {
+    addListener(listener: (theme: Theme) => void | Promise<void>): () => void {
         this.listeners.push(listener);
 
         // 返回取消监听的函数
@@ -438,6 +478,32 @@ class ThemeService {
      */
     removeAllListeners(): void {
         this.listeners = [];
+    }
+
+    /**
+     * 根据当前模式管理系统主题监听器
+     */
+    private updateAppearanceListener() {
+        try {
+            // 清理旧的监听
+            if (this.appearanceSubscription) {
+                this.appearanceSubscription.remove();
+                this.appearanceSubscription = null;
+            }
+
+            if (this.currentMode === 'system') {
+                this.appearanceSubscription = Appearance.addChangeListener(async ({ colorScheme }) => {
+                    const newIsDark = colorScheme === 'dark';
+                    if (this.isDarkMode !== newIsDark) {
+                        this.isDarkMode = newIsDark;
+                        await this.saveThemeMode();
+                        await this.applyCurrentTheme();
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('Failed to update appearance listener:', e);
+        }
     }
 
     /**
@@ -460,15 +526,17 @@ class ThemeService {
 
     /**
      * 通知所有监听器
+     * - 支持异步回调：逐个 await，避免竞态与未捕获的 Promise
+     * - 捕获并记录单个监听器错误，保证其他监听器继续执行
      */
     private async notifyListeners(): Promise<void> {
-        this.listeners.forEach(listener => {
+        for (const listener of this.listeners) {
             try {
-                listener(this.currentTheme);
+                await listener(this.currentTheme);
             } catch (error) {
                 console.warn('Error in theme listener:', error);
             }
-        });
+        }
     }
 
     /**

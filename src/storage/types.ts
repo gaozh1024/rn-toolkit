@@ -27,7 +27,9 @@ export interface MMKVConfig {
 }
 
 // 存储事件类型
+export type StorageEventType = 'set' | 'delete' | 'clear';
 export interface StorageEvent {
+  type: StorageEventType;
   key: string;
   oldValue?: any;
   newValue?: any;
@@ -36,3 +38,18 @@ export interface StorageEvent {
 
 // 存储监听器类型
 export type StorageListener = (event: StorageEvent) => void;
+
+// 命名空间存储接口（键前缀工具）
+export interface NamespacedStorage {
+  readonly prefix: string;
+  set(key: string, value: any): void;
+  get(key: string): any;
+  delete(key: string): void;
+  clear(): void; // 仅清理当前命名空间下的键
+  getAllKeys(): string[]; // 返回命名空间下的键（去除前缀）
+  contains(key: string): boolean;
+  setMany(entries: Record<string, any>): void;
+  getMany(keys: string[]): Record<string, any>;
+  deleteMany(keys: string[]): void;
+  getOrDefault<T = any>(key: string, defaultValue: T): T;
+}

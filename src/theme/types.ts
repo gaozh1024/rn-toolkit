@@ -502,6 +502,9 @@ export interface Theme extends BaseTheme {
   readonly styles: StylePresets;
 }
 
+// 统一的主题模式类型别名，便于外部复用与扩展
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 // Hook返回类型
 export interface UseThemeReturn {
   // 基础主题（用户可修改部分）
@@ -510,9 +513,12 @@ export interface UseThemeReturn {
   fullTheme: Theme;
   // 样式预设（只读）
   styles: StylePresets;
-  // 主题操作方法
-  updateTheme: (config: ThemeConfig) => void;
-  resetTheme: () => void;
+  // 主题操作方法（异步）
+  updateTheme: (config: ThemeConfig) => Promise<void>;
+  resetTheme: () => Promise<void>;
   isDark: boolean;
-  toggleDarkMode: () => void;
+  toggleDarkMode: () => Promise<void>;
+  // 新增：系统主题跟随控制
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
+  currentMode: ThemeMode;
 }
