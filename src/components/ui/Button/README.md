@@ -4,7 +4,7 @@
 
 ## 特性
 
-- 🎨 **多种变体** - 填充、描边、文本、浮起等样式
+- 🎨 **多种变体** - 主要、次要、描边、文本等样式
 - 📏 **灵活尺寸** - 小、中、大三种预设尺寸
 - 🌈 **主题集成** - 自动适配亮色/暗色主题
 - 🔄 **加载状态** - 内置加载指示器
@@ -40,10 +40,10 @@ function BasicExample() {
 function VariantExample() {
   return (
     <>
-      <Button variant="filled" title="填充按钮" />
-      <Button variant="outlined" title="描边按钮" />
+      <Button variant="primary" title="主要按钮" />
+      <Button variant="secondary" title="次要按钮" />
+      <Button variant="outline" title="描边按钮" />
       <Button variant="text" title="文本按钮" />
-      <Button variant="elevated" title="浮起按钮" />
     </>
   );
 }
@@ -74,6 +74,7 @@ function ColorExample() {
       <Button color="success" title="成功按钮" />
       <Button color="warning" title="警告按钮" />
       <Button color="error" title="错误按钮" />
+      <Button color="info" title="信息按钮" />
       <Button color="#FF6B6B" title="自定义颜色" />
     </>
   );
@@ -90,15 +91,17 @@ function ColorExample() {
 | title | string | - | 按钮文本 |
 | style | ViewStyle \| ViewStyle[] | - | 按钮样式 |
 | textStyle | TextStyle \| TextStyle[] | - | 文本样式 |
-| variant | 'filled' \| 'outlined' \| 'text' \| 'elevated' | 'filled' | 按钮变体 |
+| variant | 'primary' \| 'secondary' \| 'outline' \| 'text' | 'primary' | 按钮变体 |
 | size | 'small' \| 'medium' \| 'large' | 'medium' | 按钮大小 |
-| color | string \| 主题颜色键 | 'primary' | 按钮颜色 |
+| color | 'primary' \| 'secondary' \| 'success' \| 'warning' \| 'error' \| 'info' \| string | 'primary' | 按钮颜色 |
+| textColor | string | - | 文本颜色 |
 | shape | 'rounded' \| 'square' \| 'circle' | 'rounded' | 按钮形状 |
 | disabled | boolean | false | 是否禁用 |
 | loading | boolean | false | 是否显示加载状态 |
+| bold | boolean | false | 文本是否加粗 |
 | icon | ReactNode | - | 图标 |
 | iconPosition | 'left' \| 'right' | 'left' | 图标位置 |
-| fullWidth | boolean | false | 是否全宽 |
+| fullWidth | boolean | true | 是否全宽 |
 | touchType | 'opacity' \| 'highlight' \| 'pressable' | 'opacity' | 触摸反馈类型 |
 | underlayColor | string | - | 高亮颜色 |
 | onPress | (event) => void | - | 点击事件 |
@@ -112,10 +115,10 @@ function ColorExample() {
 
 ### 按钮变体说明
 
-- **filled**: 填充按钮，有背景色
-- **outlined**: 描边按钮，透明背景带边框
+- **primary**: 主要按钮，使用主题主色作为背景
+- **secondary**: 次要按钮，使用主题次色作为背景
+- **outline**: 描边按钮，透明背景带边框
 - **text**: 文本按钮，无背景无边框
-- **elevated**: 浮起按钮，有阴影效果
 
 ### 主题颜色
 
@@ -134,19 +137,18 @@ function ColorExample() {
 ### 带图标的按钮
 
 ```tsx
-import { Button } from 'rn-toolkit';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Button, Icon } from 'rn-toolkit';
 
 function IconButtonExample() {
   return (
     <>
       <Button
-        title="左图标"
+        title="添加"
         icon={<Icon name="add" size={20} color="white" />}
         iconPosition="left"
       />
       <Button
-        title="右图标"
+        title="下一步"
         icon={<Icon name="arrow-forward" size={20} color="white" />}
         iconPosition="right"
       />
@@ -203,7 +205,7 @@ function FullWidthExample() {
     <Button
       title="全宽按钮"
       fullWidth
-      variant="filled"
+      variant="primary"
       color="primary"
     />
   );
@@ -218,15 +220,14 @@ function CustomStyleExample() {
     <Button
       title="自定义样式"
       style={{
-        backgroundColor: 'linear-gradient(45deg, #FF6B6B, #4ECDC4)',
         borderRadius: 25,
         paddingHorizontal: 30,
       }}
       textStyle={{
         fontSize: 18,
         fontWeight: 'bold',
-        color: 'white',
       }}
+      color="#FF6B6B"
     />
   );
 }
@@ -246,13 +247,29 @@ function TouchTypeExample() {
 }
 ```
 
+### 主题颜色示例
+
+```tsx
+function ThemeColorExample() {
+  return (
+    <>
+      <Button variant="primary" color="primary" title="主色按钮" />
+      <Button variant="secondary" color="secondary" title="辅助色按钮" />
+      <Button variant="outline" color="success" title="成功描边按钮" />
+      <Button variant="text" color="error" title="错误文本按钮" />
+    </>
+  );
+}
+```
+
 ## 注意事项
 
 1. **主题依赖**: 组件依赖 ThemeService，确保在使用前已正确初始化主题服务
-2. **图标组件**: 图标需要单独安装和配置，如 react-native-vector-icons
+2. **图标组件**: 建议使用 rn-toolkit 提供的 Icon 组件，已集成主题支持
 3. **性能优化**: 对于频繁重渲染的场景，建议使用 React.memo 包装
 4. **可访问性**: 重要按钮建议设置 accessibilityLabel 和 accessibilityHint
 5. **加载状态**: 在加载状态下，按钮会自动禁用点击事件
+6. **主题适配**: 按钮会自动适配深色/浅色主题，无需手动处理
 
 ## 样式定制
 
@@ -273,4 +290,66 @@ function TouchTypeExample() {
     textTransform: 'uppercase',
   }}
 />
+```
+
+## 完整示例
+
+```tsx
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { Button, Icon } from 'rn-toolkit';
+
+const ButtonDemo = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleAsyncAction = async () => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setLoading(false);
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* 基础按钮 */}
+      <Button title="基础按钮" onPress={() => console.log('点击')} />
+      
+      {/* 不同变体 */}
+      <Button variant="primary" title="主要按钮" />
+      <Button variant="secondary" title="次要按钮" />
+      <Button variant="outline" title="描边按钮" />
+      <Button variant="text" title="文本按钮" />
+      
+      {/* 不同颜色 */}
+      <Button color="success" title="成功按钮" />
+      <Button color="warning" title="警告按钮" />
+      <Button color="error" title="错误按钮" />
+      
+      {/* 带图标 */}
+      <Button
+        title="添加项目"
+        icon={<Icon name="add" size={20} color="white" />}
+        iconPosition="left"
+      />
+      
+      {/* 加载状态 */}
+      <Button
+        title="异步操作"
+        loading={loading}
+        onPress={handleAsyncAction}
+      />
+      
+      {/* 禁用状态 */}
+      <Button title="禁用按钮" disabled />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 20,
+    gap: 16,
+  },
+});
+
+export default ButtonDemo;
 ```

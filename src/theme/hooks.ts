@@ -19,12 +19,20 @@ export const useTheme = (): UseThemeReturn => {
     return unsubscribe;
   }, []);
 
-  const updateTheme = (config: ThemeConfig) => {
-    themeService.updateTheme(config);
+  const updateTheme = async (config: ThemeConfig) => {
+    try {
+      await themeService.updateCurrentThemeConfig(config);
+    } catch (error) {
+      console.error('Failed to update theme:', error);
+    }
   };
 
-  const resetTheme = () => {
-    themeService.resetTheme();
+  const resetTheme = async () => {
+    try {
+      await themeService.resetCurrentThemeConfig();
+    } catch (error) {
+      console.error('Failed to reset theme:', error);
+    }
   };
 
   const toggleDarkMode = () => {

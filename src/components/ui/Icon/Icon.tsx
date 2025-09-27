@@ -1,6 +1,7 @@
 import React from 'react';
 import { TextStyle, ViewStyle } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useThemeColors } from '../../../theme';
 
 // 自定义图标组件类型
 export type CustomIconComponent = React.ComponentType<{
@@ -23,8 +24,8 @@ export interface IconProps {
     type?: IconType;
     /** 图标大小 */
     size?: number;
-    /** 图标颜色 */
-    color?: string;
+    /** 图标颜色 - 支持主题颜色和自定义颜色 */
+    color?: 'primary' | 'secondary' | 'text' | 'textSecondary' | 'textDisabled' | 'error' | 'warning' | 'success' | 'info' | string;
     /** 自定义样式 */
     style?: TextStyle | ViewStyle;
     /** 点击事件 */
@@ -82,12 +83,52 @@ export const Icon: React.FC<IconProps> = ({
     name,
     type = 'ionicons',
     size = 24,
-    color = '#000000',
+    color = 'text',
     style,
     onPress,
     disabled = false,
     testID,
 }) => {
+    const colors = useThemeColors();
+
+    // 获取图标颜色
+    const getIconColor = (): string => {
+        // 如果是自定义颜色值（十六进制或RGB）
+        if (typeof color === 'string' && (color.startsWith('#') || color.startsWith('rgb'))) {
+            return color;
+        }
+
+        // 如果组件被禁用，使用禁用颜色
+        if (disabled) {
+            return colors.textDisabled;
+        }
+
+        // 根据主题颜色名称获取对应颜色
+        switch (color) {
+            case 'primary':
+                return colors.primary;
+            case 'secondary':
+                return colors.secondary;
+            case 'text':
+                return colors.text;
+            case 'textSecondary':
+                return colors.textSecondary;
+            case 'textDisabled':
+                return colors.textDisabled;
+            case 'error':
+                return colors.error;
+            case 'warning':
+                return colors.warning;
+            case 'success':
+                return colors.success;
+            case 'info':
+                return colors.info;
+            default:
+                // 如果是其他字符串，直接使用（可能是自定义颜色名）
+                return typeof color === 'string' ? color : colors.text;
+        }
+    };
+
     let IconComponent: CustomIconComponent;
 
     // 使用默认的 Ionicons
@@ -106,7 +147,7 @@ export const Icon: React.FC<IconProps> = ({
     const iconProps = {
         name,
         size,
-        color: disabled ? '#CCCCCC' : color,
+        color: getIconColor(),
         style,
         onPress: disabled ? undefined : onPress,
         testID,

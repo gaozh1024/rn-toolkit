@@ -782,9 +782,18 @@ function createFullTheme(baseTheme: BaseTheme): Theme {
   };
 }
 
+// 导出样式创建函数
+export {
+  createLayoutStyles,
+  createBorderRadiusStyles,
+  createShadowStyles,
+  createBorderStyles,
+  createSpacingStyles,
+  createSizeStyles,
+  createStylePresets,
+  createFullTheme
+};
+
 // 导出完整主题
 export const lightTheme: Theme = createFullTheme(lightBaseTheme);
 export const darkTheme: Theme = createFullTheme(darkBaseTheme);
-
-// 导出基础主题（向后兼容）
-export { lightBaseTheme as lightBase, darkBaseTheme as darkBase };

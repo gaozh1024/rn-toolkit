@@ -145,7 +145,7 @@ const Text: React.FC<TextProps> = ({
                 normal: '400',
                 medium: '500',
                 semibold: '600',
-                bold: '700',
+                bold: 'bold',
             };
             return weightMap[weight] || '400';
         }
@@ -217,7 +217,7 @@ const Text: React.FC<TextProps> = ({
         ...(Array.isArray(style) ? Object.assign({}, ...style) : style),
     };
 
-    console.log('combinedStyle', children, combinedStyle,);
+    console.log('RNText style', children, combinedStyle);
     return (
         <RNText
             style={combinedStyle}

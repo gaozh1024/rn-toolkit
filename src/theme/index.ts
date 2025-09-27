@@ -7,8 +7,6 @@ export {
   darkTheme,
   lightBaseTheme,
   darkBaseTheme,
-  lightBase,
-  darkBase
 } from './presets';
 
 // 导出服务

@@ -43,8 +43,9 @@ export interface ButtonProps {
     icon?: React.ReactNode;
     iconPosition?: 'left' | 'right';
 
-    // 全宽按钮
+    // 宽度控制
     fullWidth?: boolean;
+    flex?: boolean;
 
     // 触摸反馈类型
     touchType?: 'opacity' | 'highlight' | 'pressable';
@@ -82,7 +83,9 @@ const Button: React.FC<ButtonProps> = ({
     bold = false,
     icon,
     iconPosition = 'left',
-    fullWidth = true,
+    // 宽度控制
+    fullWidth = false,
+    flex = false,
     touchType = 'opacity',
     underlayColor,
     onPress,
@@ -107,7 +110,8 @@ const Button: React.FC<ButtonProps> = ({
         const variantStyle = getVariantStyle();
         const shapeStyle = getShapeStyle();
         const disabledStyle = disabled ? { opacity: 0.6 } : {};
-        const fullWidthStyle: any = fullWidth ? { width: '100%' } : {};
+        const widthStyle = getWidthStyle();
+        const heightStyle = getHeightStyle();
 
         return {
             ...baseStyle,
@@ -115,7 +119,8 @@ const Button: React.FC<ButtonProps> = ({
             ...variantStyle,
             ...shapeStyle,
             ...disabledStyle,
-            ...fullWidthStyle,
+            ...widthStyle,
+            ...heightStyle,
         };
     };
 
@@ -125,6 +130,31 @@ const Button: React.FC<ButtonProps> = ({
         ...layout.center,
         minHeight: 40,
     });
+
+    // 获取宽度样式
+    const getWidthStyle = (): ViewStyle => {
+        if (flex) {
+            return { flex: 1 };
+        }
+        if (fullWidth) {
+            return { width: '100%' };
+        }
+        return {};
+    };
+
+    // 获取高度样式
+    const getHeightStyle = (): ViewStyle => {
+        switch (size) {
+            case 'small':
+                return { maxHeight: theme.button.secondary.height - 8 };
+            case 'medium':
+                return { maxHeight: theme.button.primary.height };
+            case 'large':
+                return { maxHeight: theme.button.primary.height + 8 };
+            default:
+                return { maxHeight: theme.button.primary.height };
+        }
+    };
 
     // 获取尺寸样式
     const getSizeStyle = (): ViewStyle => {
