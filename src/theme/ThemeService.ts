@@ -290,6 +290,18 @@ class ThemeService {
      * 设置主题模式
      */
     async setThemeMode(mode: ThemeMode): Promise<void> {
+        // 参数验证
+        if (!mode || typeof mode !== 'string') {
+            console.warn('Invalid theme mode provided:', mode);
+            return;
+        }
+
+        // 验证模式有效性
+        if (!['light', 'dark', 'system'].includes(mode)) {
+            console.warn('Invalid theme mode value:', mode);
+            return;
+        }
+
         if (this.currentMode === mode) {
             return;
         }
@@ -327,6 +339,12 @@ class ThemeService {
      * 设置深色模式
      */
     async setDarkMode(isDark: boolean): Promise<void> {
+        // 参数验证
+        if (typeof isDark !== 'boolean') {
+            console.warn('Invalid dark mode flag provided:', isDark);
+            return;
+        }
+
         if (this.isDarkMode === isDark) {
             return;
         }
@@ -363,14 +381,24 @@ class ThemeService {
      * 更新浅色主题配置
      */
     async updateLightThemeConfig(config: Partial<ThemeConfig>): Promise<void> {
+        // 参数校验
+        if (!config || typeof config !== 'object') {
+            console.warn('Invalid light theme config provided:', config);
+            return;
+        }
+
         // 深度合并配置
         this.lightThemeConfig = this.deepMergeConfig(this.lightThemeConfig, config);
 
-        // 保存到存储
-        storageService.set(
-            ThemeService.STORAGE_KEYS.LIGHT_THEME_CONFIG,
-            JSON.stringify(this.lightThemeConfig)
-        );
+        // 保存到存储（JSON.stringify 可能抛错，包裹 try/catch）
+        try {
+            storageService.set(
+                ThemeService.STORAGE_KEYS.LIGHT_THEME_CONFIG,
+                JSON.stringify(this.lightThemeConfig)
+            );
+        } catch (e) {
+            console.warn('Failed to persist light theme config, skipping storage write:', e);
+        }
 
         // 如果当前是浅色模式，应用主题
         if (!this.isDarkMode) {
@@ -382,14 +410,24 @@ class ThemeService {
      * 更新深色主题配置
      */
     async updateDarkThemeConfig(config: Partial<ThemeConfig>): Promise<void> {
+        // 参数校验
+        if (!config || typeof config !== 'object') {
+            console.warn('Invalid dark theme config provided:', config);
+            return;
+        }
+
         // 深度合并配置
         this.darkThemeConfig = this.deepMergeConfig(this.darkThemeConfig, config);
 
-        // 保存到存储
-        storageService.set(
-            ThemeService.STORAGE_KEYS.DARK_THEME_CONFIG,
-            JSON.stringify(this.darkThemeConfig)
-        );
+        // 保存到存储（JSON.stringify 可能抛错，包裹 try/catch）
+        try {
+            storageService.set(
+                ThemeService.STORAGE_KEYS.DARK_THEME_CONFIG,
+                JSON.stringify(this.darkThemeConfig)
+            );
+        } catch (e) {
+            console.warn('Failed to persist dark theme config, skipping storage write:', e);
+        }
 
         // 如果当前是深色模式，应用主题
         if (this.isDarkMode) {

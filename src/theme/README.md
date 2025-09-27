@@ -294,13 +294,20 @@ return (
 
 ```typescript
 const {
-  theme,        // 当前主题对象
-  updateTheme,  // 更新主题配置
-  resetTheme,   // 重置主题
-  isDark,       // 是否为深色模式
-  toggleDarkMode // 切换深色模式
+  theme,         // 当前基础主题（用户可修改部分）
+  fullTheme,     // 完整主题（包含样式预设 styles）
+  styles,        // 样式预设（只读）
+  updateTheme,   // 更新当前模式的主题配置（持久化）
+  resetTheme,    // 重置当前模式的主题配置（持久化）
+  isDark,        // 是否为深色模式
+  toggleDarkMode,// 切换深色模式（非 system 模式下生效）
+  setThemeMode,  // 设置主题模式：'light' | 'dark' | 'system'
+  currentMode,   // 当前主题模式
 } = useTheme();
 ```
+
+注意：
+- 当 `currentMode` 为 `system` 时，深色状态由系统主题覆盖，不受 `toggleDarkMode` 控制。
 
 ### useStyles()
 
@@ -385,32 +392,38 @@ const responsiveConfig = {
 updateTheme(responsiveConfig);
 ```
 
-### 3. 主题持久化
+### 3. 主题持久化（内置）
 
+说明：
+- ThemeService 已内置持久化，无需手动使用 AsyncStorage。它通过 rn-toolkit 的 storageService（MMKV）在本地保存主题模式、深色标记与自定义配置，并在初始化时自动恢复。
+- 存储键名：`rn_toolkit_theme_mode`、`rn_toolkit_dark_mode`、`rn_toolkit_light_theme_config`、`rn_toolkit_dark_theme_config`。
+
+用法示例：
 ```typescript
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from 'rn-toolkit';
 
-// 保存主题配置
-const saveThemeConfig = async (config: ThemeConfig) => {
-  try {
-    await AsyncStorage.setItem('themeConfig', JSON.stringify(config));
-  } catch (error) {
-    console.error('保存主题配置失败:', error);
-  }
-};
+const { setThemeMode, toggleDarkMode, currentMode, isDark, updateTheme } = useTheme();
 
-// 加载主题配置
-const loadThemeConfig = async () => {
-  try {
-    const config = await AsyncStorage.getItem('themeConfig');
-    if (config) {
-      updateTheme(JSON.parse(config));
-    }
-  } catch (error) {
-    console.error('加载主题配置失败:', error);
-  }
-};
+await setThemeMode('system');  // 跟随系统
+await setThemeMode('dark');    // 切换到深色
+await toggleDarkMode();        // 在非 system 模式下切换浅/深
+
+console.log(currentMode); // 'light' | 'dark' | 'system'
+console.log(isDark);      // boolean
+
+// 自定义主题配置（会被持久化，异常写入将被安全捕获）
+await updateTheme({
+  colors: { primary: '#FF6B6B' },
+});
 ```
+
+健壮性与一致性：
+- 主题模式以原始字符串存储，深色标记以布尔存储；读取时按类型校验并忽略无效值。
+- 在 `system` 模式下，深色状态始终以系统主题覆盖存储标记。
+- 自定义主题配置通过内部机制分别持久化浅色/深色配置；写入异常会被安全捕获并记录警告，不影响主题应用。
+
+迁移提示：
+- 历史版本若曾以 JSON 字符串写入 `mode`/`dark`，无需手动迁移；当前读取逻辑已兼容，并在遇到无效值时回退到默认值并给出告警。
 
 ## 最佳实践
 
@@ -553,7 +566,24 @@ import {
   ButtonTheme,
   InputTheme,
   UseThemeReturn,
+  ThemeMode,
 } from 'rn-toolkit';
+
+// ThemeMode 类型
+type ThemeMode = 'light' | 'dark' | 'system';
+
+// useTheme 返回类型（简要）
+interface UseThemeReturn {
+  theme: BaseTheme;
+  fullTheme: Theme;
+  styles: StylePresets;
+  updateTheme: (config: ThemeConfig) => Promise<void>;
+  resetTheme: () => Promise<void>;
+  isDark: boolean;
+  toggleDarkMode: () => Promise<void>;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
+  currentMode: ThemeMode;
+}
 ```
 
 ## 注意事项
