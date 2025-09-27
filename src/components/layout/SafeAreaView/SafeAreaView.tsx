@@ -1,7 +1,7 @@
 import React from 'react';
 import { ViewStyle, StyleProp } from 'react-native';
 import { SafeAreaView as RNSafeAreaView, Edge } from 'react-native-safe-area-context';
-import { useTheme } from '../../../theme';
+import { useTheme } from '../../../theme—old';
 
 export interface SafeAreaViewProps {
   children: React.ReactNode;

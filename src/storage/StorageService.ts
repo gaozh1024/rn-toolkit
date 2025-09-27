@@ -16,22 +16,23 @@ class StorageService {
   }
 
   // MMKV存储方法（用于简单数据）
-  setSimple(key: string, value: any): void {
+  set(key: string, value: any): void {
     this.mmkvStorage.set(key, value);
   }
 
-  getSimple(key: string): any {
+  get(key: string): any {
     return this.mmkvStorage.get(key);
   }
 
-  deleteSimple(key: string): void {
+  delete(key: string): void {
     this.mmkvStorage.delete(key);
   }
 
-  clearSimple(): void {
+  clear(): void {
     this.mmkvStorage.clear();
   }
 
 }
-
-export default StorageService.getInstance();
+const storageService = StorageService.getInstance();
+export { storageService }
+export default storageService;

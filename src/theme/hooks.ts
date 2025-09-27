@@ -1,190 +1,190 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ViewStyle, TextStyle } from 'react-native';
-import { CSSStyles, AppTheme, ThemeMode } from './types';
-import themeService from './ThemeService';
-import { defaultAppTheme } from './presets';
+import { useState, useEffect } from 'react';
+import { themeService } from './ThemeService';
+import { BaseTheme, Theme, ThemeConfig, UseThemeReturn, StylePresets } from './types';
 
-// 使用样式的主要 Hook
-export const useStyles = (): CSSStyles => {
-    return useMemo(() => themeService.getCSS(), []);
-};
-
-// 完整的主题管理 Hook
-export interface UseThemeReturn {
-    theme: AppTheme;
-    themeMode: ThemeMode;
-    isDarkMode: boolean;
-    setThemeMode: (mode: ThemeMode) => Promise<void>;
-    toggleTheme: () => Promise<void>;
-    colors: AppTheme['currentColors'];
-}
-
-// 创建安全的默认主题
-const createSafeTheme = (): AppTheme => {
-    try {
-        return themeService.getAppTheme();
-    } catch (error) {
-        console.warn('Theme service not initialized, using default theme');
-        return defaultAppTheme;
-    }
-};
-
+/**
+ * 主题Hook - 统一的主题使用接口
+ */
 export const useTheme = (): UseThemeReturn => {
-    const [theme, setTheme] = useState<AppTheme>(createSafeTheme);
-    const [themeMode, setCurrentThemeMode] = useState<ThemeMode>(() => {
-        try {
-            return themeService.getCurrentThemeMode();
-        } catch (error) {
-            return 'system';
-        }
+  const [fullTheme, setFullTheme] = useState<Theme>(themeService.getCurrentTheme());
+  const [isDark, setIsDark] = useState<boolean>(themeService.getIsDarkMode());
+
+  useEffect(() => {
+    // 监听主题变化
+    const unsubscribe = themeService.addListener((newTheme) => {
+      setFullTheme(newTheme);
+      setIsDark(themeService.getIsDarkMode());
     });
 
-    // 主题变化监听器
-    const handleThemeChange = useCallback((newTheme: AppTheme) => {
-        setTheme(newTheme);
-        setCurrentThemeMode(newTheme.mode);
-    }, []);
+    return unsubscribe;
+  }, []);
 
-    useEffect(() => {
-        // 异步初始化主题服务
-        const initializeTheme = async () => {
-            try {
-                await themeService.initialize();
-                // 初始化完成后更新主题
-                setTheme(themeService.getAppTheme());
-                setCurrentThemeMode(themeService.getCurrentThemeMode());
-            } catch (error) {
-                console.warn('Failed to initialize theme service:', error);
-            }
-        };
+  const updateTheme = (config: ThemeConfig) => {
+    themeService.updateTheme(config);
+  };
 
-        initializeTheme();
+  const resetTheme = () => {
+    themeService.resetTheme();
+  };
 
-        // 添加监听器
-        themeService.addThemeChangeListener(handleThemeChange);
+  const toggleDarkMode = () => {
+    themeService.toggleDarkMode();
+  };
 
-        // 清理函数
-        return () => {
-            themeService.removeThemeChangeListener(handleThemeChange);
-        };
-    }, [handleThemeChange]);
+  // 提取基础主题（用户可修改部分）
+  const theme: BaseTheme = {
+    colors: fullTheme.colors,
+    navigation: fullTheme.navigation,
+    text: fullTheme.text,
+    button: fullTheme.button,
+    input: fullTheme.input,
+    spacing: fullTheme.spacing,
+    borderRadius: fullTheme.borderRadius,
+    shadow: fullTheme.shadow,
+  };
 
-    // 设置主题模式
-    const setThemeMode = useCallback(async (mode: ThemeMode) => {
-        try {
-            await themeService.setThemeMode(mode);
-        } catch (error) {
-            console.warn('Failed to set theme mode:', error);
-        }
-    }, []);
+  // 样式预设（只读）
+  const styles: StylePresets = fullTheme.styles;
 
-    // 切换主题
-    const toggleTheme = useCallback(async () => {
-        try {
-            await themeService.toggleTheme();
-        } catch (error) {
-            console.warn('Failed to toggle theme:', error);
-        }
-    }, []);
-
-    return {
-        theme,
-        themeMode,
-        isDarkMode: (() => {
-            try {
-                return themeService.isDarkMode();
-            } catch (error) {
-                return false;
-            }
-        })(),
-        setThemeMode,
-        toggleTheme,
-        colors: theme.currentColors,
-    };
+  return {
+    theme,
+    fullTheme,
+    styles,
+    updateTheme,
+    resetTheme,
+    isDark,
+    toggleDarkMode,
+  };
 };
 
-// 获取当前主题颜色的 Hook（轻量级版本）
+/**
+ * 获取基础主题的Hook（用户可修改部分）
+ */
+export const useBaseTheme = (): BaseTheme => {
+  const { theme } = useTheme();
+  return theme;
+};
+
+/**
+ * 获取样式预设的Hook（只读）
+ */
+export const useStyles = (): StylePresets => {
+  const { styles } = useTheme();
+  return styles;
+};
+
+/**
+ * 获取布局样式的Hook
+ */
+export const useLayoutStyles = () => {
+  const { styles } = useTheme();
+  return styles.layout;
+};
+
+/**
+ * 获取圆角样式的Hook
+ */
+export const useBorderRadiusStyles = () => {
+  const { styles } = useTheme();
+  return styles.borderRadius;
+};
+
+/**
+ * 获取阴影样式的Hook
+ */
+export const useShadowStyles = () => {
+  const { styles } = useTheme();
+  return styles.shadow;
+};
+
+/**
+ * 获取边框样式的Hook
+ */
+export const useBorderStyles = () => {
+  const { styles } = useTheme();
+  return styles.border;
+};
+
+/**
+ * 获取间距样式的Hook
+ */
+export const useSpacingStyles = () => {
+  const { styles } = useTheme();
+  return styles.spacing;
+};
+
+/**
+ * 获取尺寸样式的Hook
+ */
+export const useSizeStyles = () => {
+  const { styles } = useTheme();
+  return styles.size;
+};
+
+// =============================================================================
+// 向后兼容的Hook（获取基础主题的特定部分）
+// =============================================================================
+
+/**
+ * 获取颜色主题的Hook
+ */
 export const useThemeColors = () => {
-    const [colors, setColors] = useState(() => {
-        try {
-            return themeService.getAppTheme().currentColors;
-        } catch (error) {
-            return defaultAppTheme.currentColors;
-        }
-    });
-
-    const handleThemeChange = useCallback((newTheme: AppTheme) => {
-        setColors(newTheme.currentColors);
-    }, []);
-
-    useEffect(() => {
-        themeService.addThemeChangeListener(handleThemeChange);
-        return () => {
-            themeService.removeThemeChangeListener(handleThemeChange);
-        };
-    }, [handleThemeChange]);
-
-    return colors;
+  const { theme } = useTheme();
+  return theme.colors;
 };
 
-// 主题模式选择器 Hook
-export const useThemeMode = () => {
-    const [themeMode, setCurrentThemeMode] = useState<ThemeMode>(themeService.getCurrentThemeMode());
-
-    const handleThemeChange = useCallback((newTheme: AppTheme) => {
-        setCurrentThemeMode(newTheme.mode);
-    }, []);
-
-    useEffect(() => {
-        themeService.addThemeChangeListener(handleThemeChange);
-        return () => {
-            themeService.removeThemeChangeListener(handleThemeChange);
-        };
-    }, [handleThemeChange]);
-
-    const setThemeMode = useCallback(async (mode: ThemeMode) => {
-        await themeService.setThemeMode(mode);
-    }, []);
-
-    const toggleTheme = useCallback(async () => {
-        await themeService.toggleTheme();
-    }, []);
-
-    return {
-        themeMode,
-        setThemeMode,
-        toggleTheme,
-        isDarkMode: themeService.isDarkMode(),
-    };
+/**
+ * 获取导航主题的Hook
+ */
+export const useNavigationTheme = () => {
+  const { theme } = useTheme();
+  return theme.navigation;
 };
 
-// 组合样式的 Hook
-export const useCombinedStyles = (
-    ...styles: (ViewStyle | TextStyle | undefined | null | false)[]
-): ViewStyle | TextStyle => {
-    return useMemo(() => themeService.combine(...styles), [styles]);
+/**
+ * 获取文本样式的Hook
+ */
+export const useTextStyles = () => {
+  const { theme } = useTheme();
+  return theme.text;
 };
 
-// 条件样式的 Hook
-export const useConditionalStyle = (
-    condition: boolean,
-    style: ViewStyle | TextStyle
-): ViewStyle | TextStyle | {} => {
-    return useMemo(() => themeService.when(condition, style), [condition, style]);
+/**
+ * 获取按钮样式的Hook
+ */
+export const useButtonStyles = () => {
+  const { theme } = useTheme();
+  return theme.button;
 };
 
-// 响应式样式 Hook（基于屏幕尺寸）
-export const useResponsiveStyles = (
-    styles: {
-        small?: ViewStyle | TextStyle;
-        medium?: ViewStyle | TextStyle;
-        large?: ViewStyle | TextStyle;
-    },
-    screenWidth: number
-): ViewStyle | TextStyle => {
-    return useMemo(() => {
-        if (screenWidth < 768 && styles.small) return styles.small;
-        if (screenWidth < 1024 && styles.medium) return styles.medium;
-        return styles.large || {};
-    }, [styles, screenWidth]);
+/**
+ * 获取输入框样式的Hook
+ */
+export const useInputStyles = () => {
+  const { theme } = useTheme();
+  return theme.input;
+};
+
+/**
+ * 获取间距主题的Hook
+ */
+export const useSpacing = () => {
+  const { theme } = useTheme();
+  return theme.spacing;
+};
+
+/**
+ * 获取圆角主题的Hook
+ */
+export const useBorderRadius = () => {
+  const { theme } = useTheme();
+  return theme.borderRadius;
+};
+
+/**
+ * 获取阴影主题的Hook
+ */
+export const useShadow = () => {
+  const { theme } = useTheme();
+  return theme.shadow;
 };

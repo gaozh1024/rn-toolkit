@@ -1,11 +1,11 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { RootNavigatorConfig } from '../types';
+import { NavigatorConfig } from '../types';
 import { TabNavigator } from './TabNavigator';
 
 const RootStack = createStackNavigator();
 
-export const RootNavigator: React.FC<RootNavigatorConfig> = ({
+export const RootNavigator: React.FC<NavigatorConfig> = ({
   tabs,
   stacks = [],
   modals = [],
@@ -32,7 +32,7 @@ export const RootNavigator: React.FC<RootNavigatorConfig> = ({
         name="MainTabs"
         component={TabsComponent}
       />
-      
+
       {/* 堆栈页面 */}
       {stacks.map((stack) => (
         <RootStack.Screen
@@ -42,7 +42,7 @@ export const RootNavigator: React.FC<RootNavigatorConfig> = ({
           options={stack.options}
         />
       ))}
-      
+
       {/* 模态页面 */}
       {modals.map((modal) => (
         <RootStack.Screen

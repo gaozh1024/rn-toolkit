@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp, ScrollView } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '../../../theme—old';
 
 export interface ContainerProps {
   children: React.ReactNode;

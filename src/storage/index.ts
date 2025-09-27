@@ -8,6 +8,6 @@ export * from './StorageService';
 export type * from './types';
 
 // 重新导出 react-native-mmkv 的类型（如果需要直接使用）
-export type { MMKV, MMKVConfiguration } from 'react-native-mmkv';
+export type { MMKV } from 'react-native-mmkv';
 
 

@@ -1,290 +1,244 @@
-import { ViewStyle, TextStyle, Appearance, DimensionValue } from 'react-native';
-import { StyleTheme, SpacingSize, ColorTheme, CSSStyles, StyleGenerators, AppTheme, ThemeMode } from './types';
-import { defaultTheme, defaultAppTheme, createStylePresets } from './presets';
-import StorageService from '../storage/StorageService';
-
+import { Theme, ThemeConfig, BaseTheme } from './types';
+import { lightTheme, darkTheme, lightBaseTheme, darkBaseTheme } from './presets';
+import { storageService } from '../storage';
 
 class ThemeService {
-    private static instance: ThemeService;
-    private theme: StyleTheme = defaultTheme;
-    private appTheme: AppTheme = defaultAppTheme;
-    private presets = createStylePresets(this.theme);
-    private listeners: Array<(theme: AppTheme) => void> = [];
-    private appearanceSubscription: any = null;
-    private static readonly STORAGE_KEY = 'app_theme_mode';
-    private isInitialized = false; // 添加初始化标志
+    private currentTheme: Theme = lightTheme;
+    private currentBaseTheme: BaseTheme = lightBaseTheme;
+    private isDarkMode: boolean = false;
+    private listeners: Array<(theme: Theme) => void> = [];
+    private isInitialized: boolean = false;
 
-    static getInstance(): ThemeService {
-        if (!ThemeService.instance) {
-            ThemeService.instance = new ThemeService();
-        }
-        return ThemeService.instance;
-    }
+    // 深色模式存储键名
+    static DARK_THEME = 'rn_toolkit_dark_mode';
+    // 主题存储键名
+    static STORAGE_KEY = 'rn_toolkit_theme';
 
-    // 初始化主题服务
+    /**
+     * 初始化主题服务（从缓存加载设置）
+     */
     async initialize(): Promise<void> {
-        if (this.isInitialized) {
-            return; // 避免重复初始化
-        }
+        if (this.isInitialized) return;
 
         try {
-            // 从存储中读取主题模式
-            const savedMode = StorageService.getSimple(ThemeService.STORAGE_KEY);
-            if (savedMode && ['light', 'dark', 'system'].includes(savedMode)) {
-                this.appTheme.mode = savedMode as ThemeMode;
+            // 从存储中加载深色模式偏好
+            const storedDarkMode = storageService.get(ThemeService.DARK_THEME);
+            console.log('storedDarkMode', storedDarkMode);
+            if (storedDarkMode !== null) {
+                this.isDarkMode = JSON.parse(storedDarkMode);
             }
 
-            // 监听系统主题变化
-            this.appearanceSubscription = Appearance.addChangeListener(({ colorScheme }) => {
-                if (this.appTheme.mode === 'system') {
-                    this.updateCurrentTheme();
-                }
-            });
-
-            // 更新当前主题
-            this.updateCurrentTheme();
-            this.isInitialized = true;
-        } catch (error) {
-            console.warn('Failed to initialize theme service:', error);
-            // 即使初始化失败，也标记为已初始化，使用默认主题
-            this.isInitialized = true;
-        }
-    }
-
-    // 更新当前主题
-    private updateCurrentTheme(): void {
-        try {
-            // 确保 typography 对象完整
-            const safeTypography = {
-                ...defaultTheme.typography,
-                fontWeight: {
-                    // 先使用默认主题的 fontWeight，然后用我们的安全默认值填补缺失的属性
-                    ...defaultTheme.typography?.fontWeight,
-                    light: defaultTheme.typography?.fontWeight?.light || '300',
-                    normal: defaultTheme.typography?.fontWeight?.normal || '400',
-                    medium: defaultTheme.typography?.fontWeight?.medium || '500',
-                    semibold: defaultTheme.typography?.fontWeight?.semibold || '600',
-                    bold: defaultTheme.typography?.fontWeight?.bold || '700',
-                }
-            };
-
-            // 更新主题
-            this.theme = {
-                ...defaultTheme,
-                typography: safeTypography,
-            };
-
-            // 根据当前模式设置颜色
-            const currentMode = this.appTheme.mode === 'system'
-                ? (Appearance.getColorScheme() || 'light')
-                : this.appTheme.mode;
-
-            if (currentMode === 'dark') {
-                this.appTheme.currentColors = this.appTheme.colors.dark;
+            // 从存储中加载自定义主题配置
+            const storedThemeConfig = storageService.get(ThemeService.STORAGE_KEY);
+            if (storedThemeConfig) {
+                const config: ThemeConfig = JSON.parse(storedThemeConfig);
+                this.currentBaseTheme = this.mergeBaseTheme(
+                    this.isDarkMode ? darkBaseTheme : lightBaseTheme,
+                    config
+                );
             } else {
-                this.appTheme.currentColors = this.appTheme.colors.light;
+                this.currentBaseTheme = this.isDarkMode ? darkBaseTheme : lightBaseTheme;
             }
 
-            // 确保 appTheme 的 typography 也是完整的
-            this.appTheme.typography = safeTypography;
-
-            // 重新创建预设
-            this.presets = createStylePresets(this.theme);
-
-            // 通知监听器
-            this.notifyListeners();
+            // 重新生成完整主题
+            this.regenerateTheme();
+            this.isInitialized = true;
         } catch (error) {
-            console.warn('Error updating theme:', error);
-            // 即使出错也要确保有基本的主题结构
-            this.theme = {
-                ...defaultTheme,
-                typography: {
-                    ...defaultTheme.typography,
-                    fontWeight: {
-                        light: '300',
-                        normal: '400',
-                        medium: '500',
-                        semibold: '600',
-                        bold: '700',
-                    }
-                }
-            };
-            this.appTheme.typography = this.theme.typography;
+            console.warn('Failed to load theme from storage:', error);
+            // 使用默认主题
+            this.currentTheme = this.isDarkMode ? darkTheme : lightTheme;
+            this.currentBaseTheme = this.isDarkMode ? darkBaseTheme : lightBaseTheme;
+            this.isInitialized = true;
         }
     }
 
-    // 获取完整应用主题
-    getAppTheme(): AppTheme {
-        // 如果未初始化，确保返回安全的默认主题
-        if (!this.isInitialized) {
-            return {
-                ...defaultAppTheme,
-                typography: {
-                    ...defaultAppTheme.typography,
-                    fontWeight: {
-                        ...defaultAppTheme.typography?.fontWeight,
-                        light: defaultAppTheme.typography?.fontWeight?.light || '300',
-                        normal: defaultAppTheme.typography?.fontWeight?.normal || '400',
-                        medium: defaultAppTheme.typography?.fontWeight?.medium || '500',
-                        semibold: defaultAppTheme.typography?.fontWeight?.semibold || '600',
-                        bold: defaultAppTheme.typography?.fontWeight?.bold || '700',
-                    }
-                }
-            };
+    /**
+     * 获取当前主题
+     */
+    getCurrentTheme(): Theme {
+        return this.currentTheme;
+    }
+
+    /**
+     * 获取当前基础主题
+     */
+    getCurrentBaseTheme(): BaseTheme {
+        return this.currentBaseTheme;
+    }
+
+    /**
+     * 获取是否为深色模式
+     */
+    getIsDarkMode(): boolean {
+        return this.isDarkMode;
+    }
+
+    /**
+     * 设置主题
+     */
+    async setTheme(theme: Theme): Promise<void> {
+        this.currentTheme = theme;
+        await this.notifyListeners();
+    }
+
+    /**
+     * 更新主题配置
+     */
+    async updateTheme(config: ThemeConfig): Promise<void> {
+        this.currentBaseTheme = this.mergeBaseTheme(this.currentBaseTheme, config);
+        this.regenerateTheme();
+
+        // 保存到存储
+        storageService.set(ThemeService.STORAGE_KEY, JSON.stringify(config));
+        await this.notifyListeners();
+    }
+
+    /**
+     * 切换深色模式
+     */
+    async toggleDarkMode(): Promise<void> {
+        this.isDarkMode = !this.isDarkMode;
+        await this.applyDarkModeChange();
+    }
+
+    /**
+     * 设置深色模式
+     */
+    async setDarkMode(isDark: boolean): Promise<void> {
+        if (this.isDarkMode !== isDark) {
+            this.isDarkMode = isDark;
+            await this.applyDarkModeChange();
         }
-        return this.appTheme;
     }
 
-    // 获取主题
-    getTheme(): StyleTheme {
-        // 如果未初始化，确保返回安全的默认主题
-        if (!this.isInitialized) {
-            return {
-                ...defaultTheme,
-                typography: {
-                    ...defaultTheme.typography,
-                    fontWeight: {
-                        ...defaultTheme.typography?.fontWeight,
-                        light: defaultTheme.typography?.fontWeight?.light || '300',
-                        normal: defaultTheme.typography?.fontWeight?.normal || '400',
-                        medium: defaultTheme.typography?.fontWeight?.medium || '500',
-                        semibold: defaultTheme.typography?.fontWeight?.semibold || '600',
-                        bold: defaultTheme.typography?.fontWeight?.bold || '700',
-                    }
-                }
-            };
-        }
-        return this.theme;
+    /**
+     * 重置主题
+     */
+    async resetTheme(): Promise<void> {
+        this.currentBaseTheme = this.isDarkMode ? darkBaseTheme : lightBaseTheme;
+        this.regenerateTheme();
+
+        // 清除存储的自定义配置
+        storageService.delete(ThemeService.STORAGE_KEY);
+        await this.notifyListeners();
     }
 
-    // 设置主题模式
-    async setThemeMode(mode: ThemeMode): Promise<void> {
-        this.appTheme.mode = mode;
-        StorageService.setSimple(ThemeService.STORAGE_KEY, mode);
-        this.updateCurrentTheme();
-    }
-
-    // 切换主题
-    async toggleTheme(): Promise<void> {
-        const newMode: ThemeMode = this.appTheme.mode === 'light' ? 'dark' : 'light';
-        await this.setThemeMode(newMode);
-    }
-
-    // 获取当前主题模式
-    getCurrentThemeMode(): ThemeMode {
-        return this.appTheme.mode;
-    }
-
-    // 判断是否为暗色模式
-    isDarkMode(): boolean {
-        return this.appTheme.currentColors === this.appTheme.colors.dark;
-    }
-
-    // 添加主题变化监听器
-    addThemeChangeListener(listener: (theme: AppTheme) => void): void {
+    /**
+     * 添加主题变化监听器
+     */
+    addListener(listener: (theme: Theme) => void): () => void {
         this.listeners.push(listener);
-    }
 
-    // 移除主题变化监听器
-    removeThemeChangeListener(listener: (theme: AppTheme) => void): void {
-        const index = this.listeners.indexOf(listener);
-        if (index > -1) {
-            this.listeners.splice(index, 1);
-        }
-    }
-
-    // 通知监听器
-    private notifyListeners(): void {
-        this.listeners.forEach(listener => {
-            try {
-                listener(this.appTheme);
-            } catch (error) {
-                console.warn('Theme listener error:', error);
+        // 返回取消监听的函数
+        return () => {
+            const index = this.listeners.indexOf(listener);
+            if (index > -1) {
+                this.listeners.splice(index, 1);
             }
-        });
+        };
     }
 
-    // 清理资源
-    cleanup(): void {
-        if (this.appearanceSubscription) {
-            this.appearanceSubscription.remove();
-            this.appearanceSubscription = null;
+    /**
+     * 应用深色模式变化
+     */
+    private async applyDarkModeChange(): Promise<void> {
+        // 保存深色模式偏好
+        storageService.set(ThemeService.DARK_THEME, JSON.stringify(this.isDarkMode));
+
+        // 更新基础主题
+        const baseTheme = this.isDarkMode ? darkBaseTheme : lightBaseTheme;
+
+        // 如果有自定义配置，需要重新应用
+        const storedConfig = storageService.get(ThemeService.STORAGE_KEY);
+        if (storedConfig) {
+            const config: ThemeConfig = JSON.parse(storedConfig);
+            this.currentBaseTheme = this.mergeBaseTheme(baseTheme, config);
+        } else {
+            this.currentBaseTheme = baseTheme;
         }
-        this.listeners = [];
+
+        this.regenerateTheme();
+        await this.notifyListeners();
     }
 
-    // 设置主题
-    setTheme(theme: Partial<StyleTheme>): void {
-        this.theme = { ...this.theme, ...theme };
-        this.presets = createStylePresets(this.theme);
+    /**
+     * 重新生成完整主题
+     */
+    private regenerateTheme(): void {
+        // 这里应该调用 createFullTheme 函数来生成完整主题
+        // 由于我们需要导入 createFullTheme，先简单处理
+        this.currentTheme = this.isDarkMode ? darkTheme : lightTheme;
     }
 
-    // 获取间距值
-    private getSpacingValue(value: SpacingSize | number): number {
-        if (typeof value === 'number') return value;
-        return this.theme.spacing[value];
+    /**
+     * 通知所有监听器
+     */
+    private async notifyListeners(): Promise<void> {
+        this.listeners.forEach(listener => listener(this.currentTheme));
     }
 
-    // 获取颜色值
-    private getColorValue(color: keyof ColorTheme | string): string {
-        if (typeof color === 'string' && color.startsWith('#')) return color;
-        return this.theme.colors[color as keyof ColorTheme] || color;
+    /**
+     * 深度合并基础主题配置
+     */
+    private mergeBaseTheme(baseTheme: BaseTheme, config: ThemeConfig): BaseTheme {
+        const merged = { ...baseTheme };
+
+        if (config.colors) {
+            merged.colors = { ...merged.colors, ...config.colors };
+        }
+
+        if (config.navigation) {
+            merged.navigation = { ...merged.navigation, ...config.navigation };
+        }
+
+        if (config.text) {
+            merged.text = { ...merged.text, ...config.text };
+        }
+
+        if (config.button) {
+            merged.button = {
+                ...merged.button,
+                primary: { ...merged.button.primary, ...config.button.primary },
+                secondary: { ...merged.button.secondary, ...config.button.secondary },
+                outline: { ...merged.button.outline, ...config.button.outline },
+                text: { ...merged.button.text, ...config.button.text },
+                disabled: { ...merged.button.disabled, ...config.button.disabled },
+            };
+        }
+
+        if (config.input) {
+            merged.input = {
+                ...merged.input,
+                default: { ...merged.input.default, ...config.input.default },
+                focused: { ...merged.input.focused, ...config.input.focused },
+                error: { ...merged.input.error, ...config.input.error },
+                disabled: { ...merged.input.disabled, ...config.input.disabled },
+                label: { ...merged.input.label, ...config.input.label },
+                helperText: { ...merged.input.helperText, ...config.input.helperText },
+                errorText: { ...merged.input.errorText, ...config.input.errorText },
+            };
+        }
+
+        if (config.spacing) {
+            merged.spacing = { ...merged.spacing, ...config.spacing };
+        }
+
+        if (config.borderRadius) {
+            merged.borderRadius = { ...merged.borderRadius, ...config.borderRadius };
+        }
+
+        if (config.shadow) {
+            merged.shadow = { ...merged.shadow, ...config.shadow };
+        }
+
+        return merged;
     }
 
-    // 创建样式生成器
-    private createGenerators(): StyleGenerators {
-        return {
-            // 内边距
-            p: (value) => ({ padding: this.getSpacingValue(value) }),
-            pt: (value) => ({ paddingTop: this.getSpacingValue(value) }),
-            pb: (value) => ({ paddingBottom: this.getSpacingValue(value) }),
-            pl: (value) => ({ paddingLeft: this.getSpacingValue(value) }),
-            pr: (value) => ({ paddingRight: this.getSpacingValue(value) }),
-            px: (value) => ({ paddingHorizontal: this.getSpacingValue(value) }),
-            py: (value) => ({ paddingVertical: this.getSpacingValue(value) }),
-
-            // 外边距
-            m: (value) => ({ margin: this.getSpacingValue(value) }),
-            mt: (value) => ({ marginTop: this.getSpacingValue(value) }),
-            mb: (value) => ({ marginBottom: this.getSpacingValue(value) }),
-            ml: (value) => ({ marginLeft: this.getSpacingValue(value) }),
-            mr: (value) => ({ marginRight: this.getSpacingValue(value) }),
-            mx: (value) => ({ marginHorizontal: this.getSpacingValue(value) }),
-            my: (value) => ({ marginVertical: this.getSpacingValue(value) }),
-
-            // 尺寸
-            w: (value: DimensionValue) => ({ width: value }),
-            h: (value: DimensionValue) => ({ height: value }),
-            size: (value: DimensionValue) => ({ width: value, height: value }),
-
-            // 颜色
-            bg: (color) => ({ backgroundColor: this.getColorValue(color) }),
-            color: (color) => ({ color: this.getColorValue(color) }),
-            borderColor: (color) => ({ borderColor: this.getColorValue(color) }),
-
-            // 透明度
-            opacity: (value) => ({ opacity: value }),
-        };
-    }
-
-    // 获取完整的CSS样式对象
-    getCSS(): CSSStyles {
-        return {
-            ...this.presets,
-            ...this.createGenerators(),
-        };
-    }
-
-    // 组合多个样式
-    combine(...styles: (ViewStyle | TextStyle | undefined | null | false)[]): ViewStyle | TextStyle {
-        return Object.assign({}, ...styles.filter(Boolean));
-    }
-
-    // 条件样式
-    when(condition: boolean, style: ViewStyle | TextStyle): ViewStyle | TextStyle | {} {
-        return condition ? style : {};
-    }
 }
 
-export { ThemeService };
-export default ThemeService.getInstance();
+export const themeService = new ThemeService();
+
+// 自动初始化
+themeService.initialize().catch(error => {
+    console.warn('Failed to initialize theme service:', error);
+});

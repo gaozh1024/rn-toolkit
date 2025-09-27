@@ -15,8 +15,6 @@ export const CustomTabButton: React.FC<CustomTabButtonProps> = ({
 }) => {
   const bottomSafeArea = useBottomSafeArea();
   
-  console.log('CustomTabButton rendered:', { focused, label, bottomSafeArea });
-
   return (
     <TouchableOpacity
       style={[

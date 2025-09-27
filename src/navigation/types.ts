@@ -39,18 +39,8 @@ export interface CustomTabButtonProps {
 
 export interface NavigatorConfig {
   tabs: TabConfig[];
-  initialRouteName?: string;
-  tabBarHeight?: number;
-  backgroundColor?: string;
-  activeColor?: string;
-  inactiveColor?: string;
-  showLabels?: boolean;
-}
-
-export interface RootNavigatorConfig {
-  tabs: TabConfig[];
-  stacks: StackConfig[];
-  modals: StackConfig[];
+  stacks?: StackConfig[];
+  modals?: StackConfig[];
   initialRouteName?: string;
   tabBarHeight?: number;
   backgroundColor?: string;

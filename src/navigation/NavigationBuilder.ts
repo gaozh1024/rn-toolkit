@@ -1,5 +1,5 @@
 import React from 'react';
-import { TabConfig, NavigatorConfig, RootNavigatorConfig, StackConfig } from './types';
+import { TabConfig, NavigatorConfig, StackConfig } from './types';
 import { TabNavigator } from './components/TabNavigator';
 import { RootNavigator } from './components/RootNavigator';
 
@@ -7,7 +7,7 @@ import { RootNavigator } from './components/RootNavigator';
  * 简单导航构建器 - 支持链式调用
  */
 export class NavigationBuilder {
-  private config: RootNavigatorConfig = {
+  private config: NavigatorConfig = {
     tabs: [],
     stacks: [],
     modals: [],
@@ -33,6 +33,7 @@ export class NavigationBuilder {
    * 添加堆栈页面
    */
   addStack(stack: StackConfig): NavigationBuilder {
+    this.config.stacks = this.config.stacks || [];
     this.config.stacks.push(stack);
     return this;
   }
@@ -41,6 +42,7 @@ export class NavigationBuilder {
    * 批量添加堆栈页面
    */
   addStacks(stacks: StackConfig[]): NavigationBuilder {
+    this.config.stacks = this.config.stacks || [];
     this.config.stacks.push(...stacks);
     return this;
   }
@@ -49,6 +51,7 @@ export class NavigationBuilder {
    * 添加模态页面
    */
   addModal(modal: StackConfig): NavigationBuilder {
+    this.config.modals = this.config.modals || [];
     this.config.modals.push(modal);
     return this;
   }
@@ -57,6 +60,7 @@ export class NavigationBuilder {
    * 批量添加模态页面
    */
   addModals(modals: StackConfig[]): NavigationBuilder {
+    this.config.modals = this.config.modals || [];
     this.config.modals.push(...modals);
     return this;
   }
@@ -118,16 +122,8 @@ export class NavigationBuilder {
     }
 
     // 如果只有标签页，使用简单的TabNavigator
-    if (this.config.stacks.length === 0 && this.config.modals.length === 0) {
-      return () => React.createElement(TabNavigator, {
-        tabs: this.config.tabs,
-        initialRouteName: this.config.initialRouteName,
-        tabBarHeight: this.config.tabBarHeight,
-        backgroundColor: this.config.backgroundColor,
-        activeColor: this.config.activeColor,
-        inactiveColor: this.config.inactiveColor,
-        showLabels: this.config.showLabels,
-      });
+    if ((this.config.stacks || []).length === 0 && (this.config.modals || []).length === 0) {
+      return () => React.createElement(TabNavigator, this.config);
     }
 
     // 如果有其他类型的页面，使用RootNavigator
@@ -142,21 +138,13 @@ export class NavigationBuilder {
       throw new Error('至少需要添加一个标签页');
     }
 
-    return () => React.createElement(TabNavigator, {
-      tabs: this.config.tabs,
-      initialRouteName: this.config.initialRouteName,
-      tabBarHeight: this.config.tabBarHeight,
-      backgroundColor: this.config.backgroundColor,
-      activeColor: this.config.activeColor,
-      inactiveColor: this.config.inactiveColor,
-      showLabels: this.config.showLabels,
-    });
+    return () => React.createElement(TabNavigator, this.config);
   }
 
   /**
    * 获取当前配置
    */
-  getConfig(): RootNavigatorConfig {
+  getConfig(): NavigatorConfig {
     return { ...this.config };
   }
 

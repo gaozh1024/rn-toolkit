@@ -2,7 +2,7 @@ import React from 'react';
 import { ViewStyle, StyleProp, StatusBar } from 'react-native';
 import { SafeAreaView } from '../SafeAreaView/SafeAreaView';
 import { Container } from '../Container/Container';
-import { useTheme } from '../../../theme';
+import { useTheme } from '../../../theme—old';
 import { Edge } from 'react-native-safe-area-context';
 
 export interface ScreenProps {

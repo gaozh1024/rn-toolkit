@@ -1,7 +1,7 @@
-import { Platform, StatusBar, StatusBarStyle } from 'react-native';
-import styleService from '../theme/ThemeService';
-import { AppTheme } from '../theme/types';
-import StorageService from '../storage/StorageService';
+import { Platform, StatusBar } from 'react-native';
+import styleService from '../theme—old/ThemeService';
+import { AppTheme } from '../theme—old/types';
+import { storageService } from '../storage';
 
 export type StatusBarStyleType = 'default' | 'light-content' | 'dark-content';
 export type StatusBarAnimation = 'none' | 'fade' | 'slide';
@@ -47,7 +47,7 @@ class StatusBarService {
   static async initialize(): Promise<void> {
     try {
       // 从存储中读取配置
-      const savedConfig = StorageService.getSimple(this.STORAGE_KEY);
+      const savedConfig = storageService.get(this.STORAGE_KEY);
       if (savedConfig) {
         this.currentConfig = {
           ...this.currentConfig,
@@ -299,7 +299,7 @@ class StatusBarService {
    */
   private static saveConfig(): void {
     try {
-      StorageService.setSimple(this.STORAGE_KEY, this.currentConfig);
+      storageService.set(this.STORAGE_KEY, this.currentConfig);
     } catch (error) {
       console.warn('StatusBarService: Failed to save config:', error);
     }

@@ -7,11 +7,10 @@ import {
     View,
     ViewStyle,
     TextStyle,
-    StyleSheet,
     ActivityIndicator,
     GestureResponderEvent
 } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme, useThemeColors, useLayoutStyles, useSpacingStyles } from '../../../theme';
 
 export interface ButtonProps {
     // 基础属性
@@ -21,14 +20,14 @@ export interface ButtonProps {
     textStyle?: TextStyle | TextStyle[];
 
     // 按钮变体
-    variant?: 'filled' | 'outlined' | 'text' | 'elevated';
+    variant?: 'primary' | 'secondary' | 'outline' | 'text';
 
     // 按钮大小
     size?: 'small' | 'medium' | 'large';
 
     // 按钮颜色
     color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | string;
-    textColor?: string; // 新增：直接设置文本颜色
+    textColor?: string;
 
     // 按钮形状
     shape?: 'rounded' | 'square' | 'circle';
@@ -73,10 +72,10 @@ const Button: React.FC<ButtonProps> = ({
     title,
     style,
     textStyle,
-    variant = 'filled',
+    variant = 'primary',
     size = 'medium',
     color = 'primary',
-    textColor, // 新增参数
+    textColor,
     shape = 'rounded',
     disabled = false,
     loading = false,
@@ -96,17 +95,19 @@ const Button: React.FC<ButtonProps> = ({
     testID,
     ...props
 }) => {
-    const { theme, colors } = useTheme();
-    const styles = createStyles(theme);
+    const { theme } = useTheme();
+    const colors = useThemeColors();
+    const layout = useLayoutStyles();
+    const spacing = useSpacingStyles();
 
     // 获取按钮样式
     const getButtonStyle = (): ViewStyle => {
-        const baseStyle = styles.base;
-        const sizeStyle = styles[size];
+        const baseStyle = getBaseStyle();
+        const sizeStyle = getSizeStyle();
         const variantStyle = getVariantStyle();
         const shapeStyle = getShapeStyle();
-        const disabledStyle = disabled ? styles.disabled : {};
-        const fullWidthStyle = fullWidth ? styles.fullWidth : {};
+        const disabledStyle = disabled ? { opacity: 0.6 } : {};
+        const fullWidthStyle: any = fullWidth ? { width: '100%' } : {};
 
         return {
             ...baseStyle,
@@ -118,39 +119,77 @@ const Button: React.FC<ButtonProps> = ({
         };
     };
 
+    // 获取基础样式
+    const getBaseStyle = (): ViewStyle => ({
+        ...layout.row,
+        ...layout.center,
+        minHeight: 40,
+    });
+
+    // 获取尺寸样式
+    const getSizeStyle = (): ViewStyle => {
+        switch (size) {
+            case 'small':
+                return {
+                    minHeight: theme.button.secondary.height - 8,
+                    ...spacing.pxSm,
+                };
+            case 'medium':
+                return {
+                    minHeight: theme.button.primary.height,
+                    ...spacing.pxMd,
+                };
+            case 'large':
+                return {
+                    minHeight: theme.button.primary.height + 8,
+                    ...spacing.pxLg,
+                };
+            default:
+                return {
+                    minHeight: theme.button.primary.height,
+                    ...spacing.pxMd,
+                };
+        }
+    };
+
     // 获取变体样式
     const getVariantStyle = (): ViewStyle => {
         const themeColor = getThemeColor();
 
         switch (variant) {
-            case 'filled':
+            case 'primary':
                 return {
-                    backgroundColor: themeColor,
-                    borderWidth: 0,
+                    backgroundColor: theme.button.primary.backgroundColor,
+                    borderWidth: theme.button.primary.borderWidth,
+                    borderColor: theme.button.primary.borderColor,
+                    borderRadius: theme.button.primary.borderRadius,
                 };
-            case 'outlined':
+            case 'secondary':
                 return {
-                    backgroundColor: 'transparent',
+                    backgroundColor: theme.button.secondary.backgroundColor,
                     borderWidth: 1,
-                    borderColor: themeColor,
+                    borderColor: theme.button.secondary.borderColor,
+                    borderRadius: theme.button.secondary.borderRadius,
+                };
+            case 'outline':
+                return {
+                    backgroundColor: theme.button.outline.backgroundColor,
+                    borderWidth: 1,
+                    borderColor: theme.button.outline.borderColor,
+                    borderRadius: theme.button.outline.borderRadius,
                 };
             case 'text':
                 return {
-                    backgroundColor: 'transparent',
+                    backgroundColor: theme.button.text.backgroundColor,
                     borderWidth: 0,
+                    borderRadius: theme.button.text.borderRadius,
                 };
-            case 'elevated':
+            default:
                 return {
                     backgroundColor: themeColor,
                     borderWidth: 0,
-                    elevation: 4,
-                    shadowColor: colors.shadow,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 4,
+                    borderRadius: theme.borderRadius.md,
                 };
-            default:
-                return {};
         }
     };
 
@@ -161,7 +200,7 @@ const Button: React.FC<ButtonProps> = ({
         switch (shape) {
             case 'rounded':
                 return {
-                    borderRadius: theme.borderRadius?.md || 8,
+                    borderRadius: theme.borderRadius.md,
                 };
             case 'square':
                 return {
@@ -184,31 +223,41 @@ const Button: React.FC<ButtonProps> = ({
             return color;
         }
 
-        return colors[color as keyof typeof colors] || colors.primary;
+        switch (color) {
+            case 'primary':
+                return colors.primary;
+            case 'secondary':
+                return colors.secondary;
+            case 'success':
+                return colors.success;
+            case 'warning':
+                return colors.warning;
+            case 'error':
+                return colors.error;
+            case 'info':
+                return colors.info;
+            default:
+                return colors.primary;
+        }
     };
 
     // 获取文本颜色
     const getTextColor = (): string => {
-        // 如果直接指定了文本颜色，优先使用
         if (textColor) {
             return textColor;
         }
 
-        const themeColor = getThemeColor();
-
         switch (variant) {
-            case 'filled':
-            case 'elevated':
-                if (color === 'primary') return colors.buttonTextPrimary || colors.onPrimary;
-                if (color === 'secondary') return colors.buttonTextSecondary || colors.onSecondary;
-                if (color === 'error') return colors.onError;
-                return colors.buttonTextPrimary || colors.onPrimary;
-            case 'outlined':
-                return colors.buttonTextOutlined || themeColor;
+            case 'primary':
+                return theme.button.primary.textColor;
+            case 'secondary':
+                return theme.button.secondary.textColor;
+            case 'outline':
+                return theme.button.outline.textColor;
             case 'text':
-                return colors.buttonTextText || themeColor;
+                return theme.button.text.textColor;
             default:
-                return colors.onSurface;
+                return theme.button.primary.textColor;
         }
     };
 
@@ -217,41 +266,40 @@ const Button: React.FC<ButtonProps> = ({
         switch (size) {
             case 'small':
                 return {
-                    height: 32,
-                    paddingHorizontal: theme.spacing?.sm || 12,
-                    fontSize: theme.typography?.fontSize.sm || 14,
+                    height: theme.button.secondary.height - 8,
+                    paddingHorizontal: theme.spacing.sm,
+                    fontSize: theme.button.secondary.fontSize - 2,
                 };
             case 'medium':
                 return {
-                    height: 40,
-                    paddingHorizontal: theme.spacing?.md || 16,
-                    fontSize: theme.typography?.fontSize.md || 16,
+                    height: theme.button.primary.height,
+                    paddingHorizontal: theme.spacing.md,
+                    fontSize: theme.button.primary.fontSize,
                 };
             case 'large':
                 return {
-                    height: 48,
-                    paddingHorizontal: theme.spacing?.lg || 20,
-                    fontSize: theme.typography?.fontSize.lg || 18,
+                    height: theme.button.primary.height + 8,
+                    paddingHorizontal: theme.spacing.lg,
+                    fontSize: theme.button.primary.fontSize + 2,
                 };
             default:
                 return {
-                    height: 40,
-                    paddingHorizontal: theme.spacing?.md || 16,
-                    fontSize: theme.typography?.fontSize.md || 16,
+                    height: theme.button.primary.height,
+                    paddingHorizontal: theme.spacing.md,
+                    fontSize: theme.button.primary.fontSize,
                 };
         }
     };
 
     // 获取文本样式
-    // 在 getTextStyle 函数中
     const getTextStyle = (): TextStyle => {
         const sizeConfig = getSizeConfig();
         return {
             color: getTextColor(),
             fontSize: sizeConfig.fontSize,
             fontWeight: bold
-                ? 'bold'
-                : (theme.typography?.fontWeight?.medium || '500') as TextStyle['fontWeight'],
+                ? theme.button.primary.fontWeight
+                : theme.button.secondary.fontWeight,
             textAlign: 'center',
         };
     };
@@ -263,14 +311,14 @@ const Button: React.FC<ButtonProps> = ({
 
         if (loading) {
             return (
-                <View style={styles.contentContainer}>
+                <View style={[layout.row, layout.center]}>
                     <ActivityIndicator
                         size="small"
                         color={textColor}
-                        style={styles.loadingIndicator}
+                        style={spacing.mrXs}
                     />
                     {content && (
-                        <Text style={[getTextStyle(), textStyle, styles.loadingText]}>
+                        <Text style={[getTextStyle(), textStyle, { opacity: 0.7 }]}>
                             {content}
                         </Text>
                     )}
@@ -279,9 +327,9 @@ const Button: React.FC<ButtonProps> = ({
         }
 
         return (
-            <View style={styles.contentContainer}>
+            <View style={[layout.row, layout.center]}>
                 {icon && iconPosition === 'left' && (
-                    <View style={styles.iconLeft}>
+                    <View style={spacing.mrXs}>
                         {icon}
                     </View>
                 )}
@@ -291,7 +339,7 @@ const Button: React.FC<ButtonProps> = ({
                     </Text>
                 )}
                 {icon && iconPosition === 'right' && (
-                    <View style={styles.iconRight}>
+                    <View style={spacing.mlXs}>
                         {icon}
                     </View>
                 )}
@@ -330,7 +378,7 @@ const Button: React.FC<ButtonProps> = ({
             <Pressable
                 style={({ pressed }) => [
                     finalStyle,
-                    pressed && !isDisabled && styles.pressed
+                    pressed && !isDisabled && { opacity: 0.8 }
                 ]}
                 onPress={onPress}
                 onPressIn={onPressIn}
@@ -368,54 +416,5 @@ const Button: React.FC<ButtonProps> = ({
         </TouchableOpacity>
     );
 };
-
-const createStyles = (theme: any) => StyleSheet.create({
-    base: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 40,
-        paddingHorizontal: theme.spacing?.md || 16,
-        borderRadius: theme.borderRadius?.md || 8,
-    },
-    small: {
-        minHeight: 32,
-        paddingHorizontal: theme.spacing?.sm || 12,
-    },
-    medium: {
-        minHeight: 40,
-        paddingHorizontal: theme.spacing?.md || 16,
-    },
-    large: {
-        minHeight: 48,
-        paddingHorizontal: theme.spacing?.lg || 20,
-    },
-    disabled: {
-        opacity: 0.6,
-    },
-    fullWidth: {
-        width: '100%',
-    },
-    pressed: {
-        opacity: 0.8,
-    },
-    contentContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    iconLeft: {
-        marginRight: theme.spacing?.xs || 8,
-    },
-    iconRight: {
-        marginLeft: theme.spacing?.xs || 8,
-    },
-    loadingIndicator: {
-        marginRight: theme.spacing?.xs || 8,
-    },
-    loadingText: {
-        opacity: 0.7,
-    },
-});
 
 export default Button;

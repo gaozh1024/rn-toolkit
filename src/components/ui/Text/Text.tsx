@@ -1,14 +1,14 @@
 import React from 'react';
-import { Text as RNText, TextStyle, StyleSheet, StyleProp } from 'react-native';
-import { useTheme } from '../../../theme';
+import { Text as RNText, TextStyle, StyleProp } from 'react-native';
+import { useTheme, useThemeColors } from '../../../theme';
 
 export interface TextProps {
     // 基础属性
     children?: React.ReactNode;
-    style?: StyleProp<TextStyle>;  // 修改为 StyleProp<TextStyle>
+    style?: StyleProp<TextStyle>;
 
     // 文本变体
-    variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2' | 'caption' | 'overline';
+    variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body1' | 'body2' | 'caption' | 'overline' | 'button' | 'link';
 
     // 字体大小
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
@@ -17,7 +17,7 @@ export interface TextProps {
     weight?: 'light' | 'normal' | 'medium' | 'semibold' | 'bold';
 
     // 文本颜色
-    color?: 'primary' | 'secondary' | 'onBackground' | 'onSurface' | 'error' | 'warning' | 'success' | 'info' | 'disabled' | 'placeholder' | string;
+    color?: 'primary' | 'secondary' | 'text' | 'textSecondary' | 'textDisabled' | 'error' | 'warning' | 'success' | 'info' | string;
 
     // 文本对齐
     align?: 'left' | 'center' | 'right' | 'justify';
@@ -63,7 +63,7 @@ const Text: React.FC<TextProps> = ({
     variant = 'body1',
     size,
     weight,
-    color = 'onBackground',
+    color = 'text',
     align = 'left',
     lineHeight,
     decoration = 'none',
@@ -79,34 +79,39 @@ const Text: React.FC<TextProps> = ({
     testID,
     ...props
 }) => {
-    const { theme, colors } = useTheme();
-    const styles = createStyles(theme);
+    const { theme, isDark } = useTheme();
+    console.log('isDark', isDark);
+    const colors = useThemeColors();
 
     // 获取变体样式
     const getVariantStyle = (): TextStyle => {
         switch (variant) {
             case 'h1':
-                return styles.h1;
+                return theme.text.h1;
             case 'h2':
-                return styles.h2;
+                return theme.text.h2;
             case 'h3':
-                return styles.h3;
+                return theme.text.h3;
             case 'h4':
-                return styles.h4;
+                return theme.text.h4;
             case 'h5':
-                return styles.h5;
+                return theme.text.h5;
             case 'h6':
-                return styles.h6;
+                return theme.text.h6;
             case 'body1':
-                return styles.body1;
+                return theme.text.body1;
             case 'body2':
-                return styles.body2;
+                return theme.text.body2;
             case 'caption':
-                return styles.caption;
+                return theme.text.caption;
             case 'overline':
-                return styles.overline;
+                return theme.text.overline;
+            case 'button':
+                return theme.text.button;
+            case 'link':
+                return theme.text.link;
             default:
-                return styles.body1;
+                return theme.text.body1;
         }
     };
 
@@ -117,21 +122,36 @@ const Text: React.FC<TextProps> = ({
         }
 
         if (size) {
-            return theme.typography?.fontSize[size] || theme.typography?.fontSize.md || 16;
+            // 从spacing主题中获取对应的数值作为字体大小
+            const sizeMap = {
+                xs: 12,
+                sm: 14,
+                md: 16,
+                lg: 18,
+                xl: 24,
+            };
+            return sizeMap[size] || 16;
         }
 
         // 如果没有指定size，使用variant的默认大小
-        return getVariantStyle().fontSize || theme.typography?.fontSize.md || 16;
+        return getVariantStyle().fontSize || 16;
     };
 
     // 获取字体粗细
-    const getFontWeight = (): string => {
+    const getFontWeight = (): TextStyle['fontWeight'] => {
         if (weight) {
-            return theme.typography?.fontWeight[weight] || theme.typography?.fontWeight.normal || '400';
+            const weightMap: Record<string, TextStyle['fontWeight']> = {
+                light: '300',
+                normal: '400',
+                medium: '500',
+                semibold: '600',
+                bold: '700',
+            };
+            return weightMap[weight] || '400';
         }
 
         // 如果没有指定weight，使用variant的默认粗细
-        return getVariantStyle().fontWeight?.toString() || theme.typography?.fontWeight.normal || '400';
+        return getVariantStyle().fontWeight || '400';
     };
 
     // 获取文本颜色
@@ -140,7 +160,28 @@ const Text: React.FC<TextProps> = ({
             return color;
         }
 
-        return colors[color as keyof typeof colors] || colors.onBackground;
+        switch (color) {
+            case 'primary':
+                return colors.primary;
+            case 'secondary':
+                return colors.secondary;
+            case 'text':
+                return colors.text;
+            case 'textSecondary':
+                return colors.textSecondary;
+            case 'textDisabled':
+                return colors.textDisabled;
+            case 'error':
+                return colors.error;
+            case 'warning':
+                return colors.warning;
+            case 'success':
+                return colors.success;
+            case 'info':
+                return colors.info;
+            default:
+                return colors.text;
+        }
     };
 
     // 获取行高
@@ -149,17 +190,22 @@ const Text: React.FC<TextProps> = ({
             return lineHeight;
         }
 
-        if (lineHeight && theme.typography?.lineHeight) {
-            return getFontSize() * theme.typography.lineHeight[lineHeight as keyof typeof theme.typography.lineHeight];
+        if (lineHeight) {
+            const lineHeightMap = {
+                tight: 1.2,
+                normal: 1.5,
+                relaxed: 1.8,
+            };
+            return getFontSize() * (lineHeightMap[lineHeight] || 1.5);
         }
 
-        return undefined;
+        // 使用variant的默认行高
+        return getVariantStyle().lineHeight;
     };
 
     // 组合样式
-    // 组合样式
     const combinedStyle: TextStyle = {
-        ...styles.base,
+        fontFamily: 'System',
         ...getVariantStyle(),
         fontSize: getFontSize(),
         fontWeight: getFontWeight(),
@@ -171,6 +217,7 @@ const Text: React.FC<TextProps> = ({
         ...(Array.isArray(style) ? Object.assign({}, ...style) : style),
     };
 
+    console.log('combinedStyle', children, combinedStyle,);
     return (
         <RNText
             style={combinedStyle}
@@ -189,64 +236,5 @@ const Text: React.FC<TextProps> = ({
         </RNText>
     );
 };
-
-const createStyles = (theme: any) => StyleSheet.create({
-    base: {
-        fontFamily: 'System',
-    },
-    h1: {
-        fontSize: theme.typography?.fontSize.xl || 24,
-        fontWeight: theme.typography?.fontWeight.bold || '700',
-        lineHeight: (theme.typography?.fontSize.xl || 24) * (theme.typography?.lineHeight.tight || 1.2),
-    },
-    h2: {
-        fontSize: theme.typography?.fontSize.lg || 18,
-        fontWeight: theme.typography?.fontWeight.bold || '700',
-        lineHeight: (theme.typography?.fontSize.lg || 18) * (theme.typography?.lineHeight.tight || 1.2),
-    },
-    h3: {
-        fontSize: theme.typography?.fontSize.md || 16,
-        fontWeight: theme.typography?.fontWeight.semibold || '600',
-        lineHeight: (theme.typography?.fontSize.md || 16) * (theme.typography?.lineHeight.normal || 1.5),
-    },
-    // 在 createStyles 函数中，所有使用 fontWeight.medium 的地方都需要添加安全访问
-    h4: {
-        fontSize: theme.typography?.fontSize.md || 16,
-        fontWeight: theme.typography?.fontWeight?.medium || '500',
-        lineHeight: (theme.typography?.fontSize.md || 16) * (theme.typography?.lineHeight.normal || 1.5),
-    },
-    h5: {
-        fontSize: theme.typography?.fontSize.sm || 14,
-        fontWeight: theme.typography?.fontWeight?.medium || '500',
-        lineHeight: (theme.typography?.fontSize.sm || 14) * (theme.typography?.lineHeight.normal || 1.5),
-    },
-    h6: {
-        fontSize: theme.typography?.fontSize.sm || 14,
-        fontWeight: theme.typography?.fontWeight.normal || '400',
-        lineHeight: (theme.typography?.fontSize.sm || 14) * (theme.typography?.lineHeight.normal || 1.5),
-    },
-    body1: {
-        fontSize: theme.typography?.fontSize.md || 16,
-        fontWeight: theme.typography?.fontWeight.normal || '400',
-        lineHeight: (theme.typography?.fontSize.md || 16) * (theme.typography?.lineHeight.normal || 1.5),
-    },
-    body2: {
-        fontSize: theme.typography?.fontSize.sm || 14,
-        fontWeight: theme.typography?.fontWeight.normal || '400',
-        lineHeight: (theme.typography?.fontSize.sm || 14) * (theme.typography?.lineHeight.normal || 1.5),
-    },
-    caption: {
-        fontSize: theme.typography?.fontSize.xs || 12,
-        fontWeight: theme.typography?.fontWeight.normal || '400',
-        lineHeight: (theme.typography?.fontSize.xs || 12) * (theme.typography?.lineHeight.normal || 1.5),
-    },
-    overline: {
-        fontSize: theme.typography?.fontSize.xs || 12,
-        fontWeight: theme.typography?.fontWeight.medium || '500',
-        lineHeight: (theme.typography?.fontSize.xs || 12) * (theme.typography?.lineHeight.normal || 1.5),
-        textTransform: 'uppercase',
-        letterSpacing: 1.5,
-    },
-});
 
 export default Text;

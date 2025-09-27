@@ -1,5 +1,5 @@
 import { useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
-import { useTheme } from '../../../theme';
+import { useTheme } from '../../../theme—old';
 
 export interface SafeAreaConfig {
   edges?: Edge[];

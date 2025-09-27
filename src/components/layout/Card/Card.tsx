@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '../../../theme—old';
 
 export interface CardProps {
   children: React.ReactNode;

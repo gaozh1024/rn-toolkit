@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, TextStyle, StyleProp } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '../../../theme—old';
 import { Text } from '../../ui/Text';
 
 export interface SectionProps {

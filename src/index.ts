@@ -9,7 +9,7 @@ export * from './storage';
 export * from './utils';
 
 // 样式
-export * from './theme';
+export * from './theme—old';
 
 // 动画 (如果需要)
 // export * from './animation';
