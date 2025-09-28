@@ -1,12 +1,16 @@
 export { AnimationService } from './AnimationService';
-export { useAnimation } from './hooks';
+export { useAnimation, useColorInterpolation, useSharedValue, useAnimatedStyle, useFadeAnimation, useScaleAnimation, useSlideAnimation, useSequenceAnimation } from './hooks';
 export { AnimationPresets } from './presets';
+export * from './color';
 export type {
     AnimationConfig,
     AnimationPreset,
     SpringConfig,
     AnimationDirection,
-    EasingFunction
+    EasingFunction,
+    InterpolatorOptions,
+    InterpolatorPreset,
+    ColorSpace
 } from './types';
 
 // 默认导出

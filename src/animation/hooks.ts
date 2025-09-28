@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Animated } from 'react-native';
+import { interpolateColorJS } from './color';
+import type { ColorSpace } from './types';
 
 export const useAnimation = () => {
     const [isReanimatedAvailable, setIsReanimatedAvailable] = useState(false);
@@ -217,4 +219,24 @@ export const useSequenceAnimation = () => {
     }, []);
 
     return { runSequence };
+};
+
+// 颜色插值 Hook（Animated 路径优先）：将 0→1 进度映射到颜色字符串
+export const useColorInterpolation = (
+    progress: Animated.Value,
+    inputRange: number[] = [0, 1],
+    outputColors: string[] = ['#000000', '#ffffff'],
+    colorSpace: ColorSpace = 'RGB'
+) => {
+    const [color, setColor] = useState(outputColors[0]);
+
+    useEffect(() => {
+        const id = progress.addListener(({ value }) => {
+            const c = interpolateColorJS(value, inputRange, outputColors, colorSpace);
+            setColor(c);
+        });
+        return () => progress.removeListener(id);
+    }, [progress, inputRange.join(','), outputColors.join(','), colorSpace]);
+
+    return color;
 };

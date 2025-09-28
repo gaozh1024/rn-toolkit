@@ -24,12 +24,7 @@ npm install react-native-reanimated
 
 ### 1. 初始化动画服务
 
-```typescript
-import { AnimationService } from '@gaozh1024/rn-toolkit';
-
-// 在应用启动时初始化
-await AnimationService.initializeReanimated();
-```
+无需手动初始化。AnimationService 在模块加载时会自动检测并初始化 Reanimated（若可用）。
 
 ### 2. 使用动画服务
 
@@ -42,9 +37,11 @@ const MyComponent = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // 创建淡入动画
-    const animation = AnimationService.fadeIn(300);
-    animation.start();
+    // 创建淡入动画（传入已有 Animated.Value，避免重建数值导致状态丢失）
+    const preset = AnimationService.fadeIn(fadeAnim, 300);
+    if (preset.type === 'animated') {
+      preset.animation.start();
+    }
   }, []);
 
   return (
@@ -67,7 +64,9 @@ const MyComponent = () => {
 
   const handleFadeIn = () => {
     const animation = fadeIn(300);
-    animation.start();
+    if (animation && typeof (animation as any).start === 'function') {
+      (animation as any).start();
+    }
   };
 
   return (
@@ -92,7 +91,9 @@ const MyComponent = () => {
     
     // 使用弹跳进入动画
     const bounceAnimation = AnimationPresets.bounceIn(500);
-    bounceAnimation.animation.start();
+    if (bounceAnimation.type === 'animated') {
+      bounceAnimation.animation.start();
+    }
   }, []);
 
   return <View>{/* 你的内容 */}</View>;
@@ -117,7 +118,9 @@ const MyComponent = () => {
 - `duration` (可选): 动画持续时间，默认 300ms
 - `delay` (可选): 延迟时间，默认 0ms
 
-**返回:** 动画对象
+**返回:** AnimationPreset（统一返回类型）。
+- 当 `type === 'reanimated'` 时，`animation` 为 Reanimated 的动画节点（通常用于 shared value/animated style，不调用 start/stop）
+- 当 `type === 'animated'` 时，`animation` 为 `Animated.CompositeAnimation`，可调用 `start()/stop()`
 
 ##### `fadeOut(duration?: number)`
 创建淡出动画。
@@ -153,6 +156,10 @@ const MyComponent = () => {
 ##### `rotate(duration?, repeat?)`
 创建旋转动画。
 
+语义说明：
+- Reanimated 路径下返回的是数值动画（0→360），需要在样式层映射为 `'deg'` 字符串，比如配合 `interpolateDeg` 或模板字符串：`transform: [{ rotate: `${value}deg` }]`。
+- Animated 路径下建议配合 `Animated.Value.interpolate` 将 0→1 的归一化进度转换成 `'deg'` 字符串。
+
 **参数:**
 - `duration` (可选): 动画持续时间，默认 1000ms
 - `repeat` (可选): 是否重复，默认 true
@@ -161,7 +168,27 @@ const MyComponent = () => {
 创建序列动画。
 
 **参数:**
-- `animations`: 动画数组
+- `animations`: 动画数组（支持传入 AnimationPreset 或原始动画对象）
+
+**返回:** AnimationPreset（统一返回类型）
+
+##### `parallel(stopTogether?, ...animations)`
+并行动画（同时开始）。
+
+**参数:**
+- `stopTogether` (可选): Animated 路径下是否一起停止，默认 true
+- `animations`: 动画数组（支持传入 AnimationPreset 或原始动画对象）
+
+**返回:** AnimationPreset（Animated 路径为 Animated.parallel 返回值；Reanimated 路径为动画数组，由调用方赋值到各自 sharedValue）
+
+##### `stagger(delayMs, ...animations)`
+交错并行动画（依次延迟启动）。
+
+**参数:**
+- `delayMs`: 相邻动画的延迟毫秒数
+- `animations`: 动画数组（支持传入 AnimationPreset 或原始动画对象）
+
+**返回:** AnimationPreset（Animated 路径为 Animated.stagger 返回值；Reanimated 路径为通过 withDelay 包装的动画数组）
 
 ##### `repeat(animation, numberOfReps?, reverse?)`
 创建重复动画。
@@ -170,6 +197,28 @@ const MyComponent = () => {
 - `animation`: 要重复的动画
 - `numberOfReps` (可选): 重复次数，-1 为无限重复，默认 -1
 - `reverse` (可选): 是否反向，默认 false
+
+##### `loop(value?, duration?, iterations?, reverse?)`
+创建循环动画（0→1 归一化循环），适合旋转加载、进度条等。
+
+**参数:**
+
+##### 插值器（Interpolators）
+提供丰富的插值工具，兼容 Animated 与 Reanimated 两条路径。
+
+- `interpolate(inputRange: number[], outputRange: number[], options?)`: 数值插值（如透明度、位移等）
+- `interpolateDeg(inputRange: number[], outputRangeDeg: number[], options?)`: 角度插值（'deg' 字符串输出，用于旋转）
+- `interpolateColor(inputRange: number[], outputColors: string[], colorSpace?)`: 颜色插值（Reanimated 原生支持；Animated 可用返回配置在样式层实现）
+
+使用说明：
+- 当返回 `type === 'reanimated'` 时，获取 `config` 后在 `useAnimatedStyle` 中使用 `interpolate` 或 `interpolateColor` 应用到 sharedValue。
+- 当返回 `type === 'animated'` 时，`value` 为插值配置对象，可配合 `Animated.Value.interpolate` 或在样式层基于归一化进度手动映射。
+- `value` (可选): Animated.Value（Animated 路径下必须提供或将自动创建新值）
+- `duration` (可选): 单次 0→1 的时长，默认 1000ms
+- `iterations` (可选): 循环次数，-1 表示无限循环，默认 -1
+- `reverse` (可选): 是否往返（0→1→0 为一轮），默认 false
+
+**返回:** AnimationPreset（Animated 路径返回 Animated.loop(timing/sequence)；Reanimated 路径返回 withRepeat(withTiming(...))）
 
 ### useAnimation Hook
 
@@ -284,8 +333,10 @@ const FadeInExample = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const animation = AnimationService.fadeIn(500);
-    animation.start();
+    const preset = AnimationService.fadeIn(fadeAnim, 500);
+    if (preset.type === 'animated') {
+      preset.animation.start();
+    }
   }, []);
 
   return (
@@ -307,8 +358,10 @@ const SlideInExample = () => {
   const slideAnim = useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
-    const animation = AnimationService.slideIn('left', 100, 300);
-    animation.start();
+    const preset = AnimationService.slideIn(slideAnim, 'left', 100, 300);
+    if (preset.type === 'animated') {
+      preset.animation.start();
+    }
   }, []);
 
   return (
@@ -330,12 +383,14 @@ const SpringExample = () => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const animation = AnimationService.spring(1, {
+    const preset = AnimationService.spring(scaleAnim, 1, {
       damping: 10,
       stiffness: 100,
       mass: 1
     });
-    animation.start();
+    if (preset.type === 'animated') {
+      preset.animation.start();
+    }
   }, []);
 
   return (
@@ -358,11 +413,13 @@ const SequenceExample = () => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const fadeIn = AnimationService.fadeIn(300);
-    const scaleIn = AnimationService.scale(1, 300);
+    const fadeIn = AnimationService.fadeIn(fadeAnim, 300);
+    const scaleIn = AnimationService.scale(scaleAnim, 1, 300);
     
-    const sequence = AnimationService.sequence(fadeIn, scaleIn);
-    sequence.start();
+    const seqPreset = AnimationService.sequence(fadeIn, scaleIn);
+    if (seqPreset.type === 'animated') {
+      seqPreset.animation.start();
+    }
   }, []);
 
   return (
@@ -376,7 +433,175 @@ const SequenceExample = () => {
 };
 ```
 
-### 使用预设动画
+### 并行动画
+
+```typescript
+import React, { useRef, useEffect } from 'react';
+import { View, Animated } from 'react-native';
+import { AnimationService } from '@gaozh1024/rn-toolkit';
+
+const ParallelExample = () => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateX = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    const fadeIn = AnimationService.fadeIn(fadeAnim, 400);
+    const slideIn = AnimationService.slideIn(translateX, 'left', 100, 400);
+    const preset = AnimationService.parallel(true, fadeIn, slideIn);
+    if (preset.type === 'animated') {
+      preset.animation.start();
+    }
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX }] }}>
+      <View style={{ width: 100, height: 100, backgroundColor: 'orange' }} />
+    </Animated.View>
+  );
+};
+```
+
+### 交错并行动画（stagger）
+
+```typescript
+import React, { useRef, useEffect } from 'react';
+import { View, Animated } from 'react-native';
+import { AnimationService } from '@gaozh1024/rn-toolkit';
+
+const StaggerExample = () => {
+  const x1 = useRef(new Animated.Value(-100)).current;
+  const x2 = useRef(new Animated.Value(-100)).current;
+  const x3 = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    const a1 = AnimationService.slideIn(x1, 'left', 100, 300);
+    const a2 = AnimationService.slideIn(x2, 'left', 100, 300);
+    const a3 = AnimationService.slideIn(x3, 'left', 100, 300);
+    const preset = AnimationService.stagger(150, a1, a2, a3);
+    if (preset.type === 'animated') {
+      preset.animation.start();
+    }
+  }, []);
+
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      <Animated.View style={{ transform: [{ translateX: x1 }] }}>
+        <View style={{ width: 50, height: 50, backgroundColor: 'red' }} />
+      </Animated.View>
+      <Animated.View style={{ transform: [{ translateX: x2 }] }}>
+        <View style={{ width: 50, height: 50, backgroundColor: 'green' }} />
+      </Animated.View>
+      <Animated.View style={{ transform: [{ translateX: x3 }] }}>
+        <View style={{ width: 50, height: 50, backgroundColor: 'blue' }} />
+      </Animated.View>
+    </View>
+  );
+};
+```
+
+### 循环动画（Spinner / Loading）
+
+```typescript
+import React, { useRef, useEffect } from 'react';
+import { View, Animated } from 'react-native';
+import { AnimationService } from '@gaozh1024/rn-toolkit';
+
+const SpinnerExample = () => {
+  const rotateValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // 方式一：使用通用 loop（0→1 归一化循环）
+    const preset = AnimationService.loop(rotateValue, 800, -1, false);
+    if (preset.type === 'animated') {
+      preset.animation.start();
+    }
+
+    // 方式二：使用 rotate（直接创建旋转动画）
+    // const rotatePreset = AnimationService.rotate(rotateValue, 800, true);
+    // if (rotatePreset.type === 'animated') rotatePreset.animation.start();
+
+    // Reanimated 提示：如在 Reanimated 路径，需将数值映射到 'deg' 字符串，可使用 interpolateDeg：
+    // const progress = useSharedValue(0);
+    // progress.value = withRepeat(withTiming(1, { duration: 800 }), -1, false);
+    // const cfg = AnimationService.interpolateDeg([0, 1], [0, 360]);
+    // const style = useAnimatedStyle(() => {
+    //   const { interpolate } = require('react-native-reanimated');
+    //   const rotate = interpolate(progress.value, cfg.config.inputRange, cfg.config.outputRange);
+    //   return { transform: [{ rotate }] };
+    // });
+  }, []);
+
+  const spin = rotateValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+
+  return (
+    <Animated.View style={{ transform: [{ rotate: spin }] }}>
+      <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 4, borderColor: '#ccc', borderTopColor: '#333' }} />
+    </Animated.View>
+  );
+};
+```
+
+### 插值器使用示例
+
+- 角度插值（Reanimated）
+```typescript
+import { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import { AnimationService } from '@gaozh1024/rn-toolkit';
+
+const progress = useSharedValue(0);
+const interp = AnimationService.interpolateDeg([0, 1], [0, 360]);
+const style = useAnimatedStyle(() => {
+  const { interpolate } = require('react-native-reanimated');
+  const rotate = interpolate(progress.value, interp.config.inputRange, interp.config.outputRange);
+  return { transform: [{ rotate }] };
+});
+```
+
+- 颜色插值（Reanimated）
+```typescript
+import { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+
+const progress = useSharedValue(0);
+const style = useAnimatedStyle(() => {
+  const { interpolateColor } = require('react-native-reanimated');
+  const color = interpolateColor(progress.value, [0, 1], ['#ff0000', '#0000ff']);
+  return { backgroundColor: color };
+});
+```
+
+- 角度插值（Animated 降级）
+```typescript
+import { Animated } from 'react-native';
+const progress = new Animated.Value(0);
+const rotate = progress.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+```
+
+- 颜色插值（Animated 路径，内置 JS Helper）
+```typescript
+import { Animated } from 'react-native';
+import { useEffect } from 'react';
+import { interpolateColorJS } from '@gaozh1024/rn-toolkit';
+
+const progress = new Animated.Value(0);
+useEffect(() => {
+  Animated.timing(progress, { toValue: 1, duration: 1500, useNativeDriver: false }).start();
+}, []);
+
+// 在渲染时计算颜色（不依赖 Reanimated）
+const color = interpolateColorJS((progress as any)._value ?? 0, [0, 1], ['#ff0000', '#0000ff']);
+```
+
+- 颜色插值 Hook（Animated 路径）
+```typescript
+import { Animated } from 'react-native';
+import { useColorInterpolation } from '@gaozh1024/rn-toolkit';
+
+const progress = new Animated.Value(0);
+const color = useColorInterpolation(progress, [0, 1], ['#ff0000', '#0000ff']);
+```### 使用预设动画
 
 ```typescript
 import React, { useEffect } from 'react';
@@ -394,7 +619,9 @@ const PresetExample = () => {
     // 滑动+淡入组合
     setTimeout(() => {
       const slideWithFade = AnimationPresets.slideInWithFade('right', 400);
-      slideWithFade.animation.start();
+      if (slideWithFade.type === 'animated') {
+        slideWithFade.animation.start();
+      }
     }, 1000);
   }, []);
 
@@ -443,7 +670,7 @@ import { AnimationService, AnimationPresets } from '@gaozh1024/rn-toolkit';
 const App = () => {
   useEffect(() => {
     const initAnimation = async () => {
-      await AnimationService.initializeReanimated();
+      // AnimationService 会自动初始化
       await AnimationPresets.initialize();
     };
     initAnimation();
@@ -464,11 +691,16 @@ const App = () => {
 
 ```typescript
 useEffect(() => {
-  const animation = AnimationService.fadeIn(300);
-  animation.start();
+  // 假设有一个 Animated.Value 引用，如 fadeAnim
+  const preset = AnimationService.fadeIn(fadeAnim, 300);
+  if (preset.type === 'animated') {
+    preset.animation.start();
+  }
 
   return () => {
-    animation.stop(); // 清理动画
+    if (preset.type === 'animated' && preset.animation.stop) {
+      preset.animation.stop(); // 清理动画
+    }
   };
 }, []);
 ```
@@ -482,7 +714,7 @@ useEffect(() => {
    - 如果需要完整功能，请安装 `react-native-reanimated`
 
 2. **动画不工作**
-   - 确保调用了 `initializeReanimated()`
+   - 确认 `react-native-reanimated` 已正确安装（可选）
    - 检查是否正确设置了动画值
 
 3. **性能问题**

@@ -55,6 +55,9 @@ declare module 'react-native-reanimated' {
     callback?: (finished?: boolean) => void
   ): number;
 
+  // Delay an animation by the specified milliseconds
+  export function withDelay(delayMs: number, animation: number): number;
+
   export function withSequence(...animations: number[]): number;
 
   export function runOnJS<Args extends any[], Return>(
@@ -84,8 +87,16 @@ declare module 'react-native-reanimated' {
     value: number,
     inputRange: number[],
     outputRange: number[],
-    extrapolate?: 'extend' | 'clamp' | 'identity'
+    options?: { extrapolate?: 'extend' | 'clamp' | 'identity'; extrapolateLeft?: 'extend' | 'clamp' | 'identity'; extrapolateRight?: 'extend' | 'clamp' | 'identity' }
   ): number;
+
+  // Interpolate colors across an input range
+  export function interpolateColor(
+    value: number,
+    inputRange: number[],
+    outputColors: string[],
+    colorSpace?: 'RGB' | 'HSV'
+  ): string;
 
   export function cancelAnimation(sharedValue: { value: any }): void;
 }

@@ -12,7 +12,7 @@ export * from './utils';
 export * from './theme';
 
 // 动画 (如果需要)
-// export * from './animation';
+export * from './animation';
 
 // UI 组件 (新增)
 export * from './components';
