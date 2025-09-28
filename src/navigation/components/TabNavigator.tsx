@@ -16,20 +16,26 @@ export const TabNavigator: React.FC<NavigatorConfig> = ({
   showLabels = true,
 }) => {
   const bottomSafeArea = useBottomSafeArea();
-  
+
   const getTabBarButton = (tab: TabConfig) => {
-    return (props: any) => (
-      <CustomTabButton
-        {...props}
-        focused={props.accessibilityState?.selected || false}
-        label={showLabels ? (tab.label || tab.name) : undefined}
-        iconName={tab.iconName}
-        iconSize={tab.iconSize}
-        badge={tab.badge}
-        badgeColor={tab.badgeColor}
-        onPress={props.onPress}
-      />
-    );
+    return (rawProps: any) => {
+      const { onPress } = rawProps || {};
+   
+      return (
+        <CustomTabButton
+          focused={rawProps['aria-selected']}
+          label={showLabels ? (tab.label || tab.name) : undefined}
+          iconName={tab.iconName}
+          activeIconName={tab.activeIconName}
+          iconSize={tab.iconSize}
+          badge={tab.badge}
+          badgeColor={tab.badgeColor}
+          activeColor={tab.activeColor ?? activeColor}
+          inactiveColor={tab.inactiveColor ?? inactiveColor}
+          onPress={onPress}
+        />
+      );
+    };
   };
 
   return (

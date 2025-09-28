@@ -1,7 +1,8 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
-import { NavigatorConfig } from '../types';
+import { createStackNavigator, CardStyleInterpolators, TransitionPresets } from '@react-navigation/stack';
+import { NavigatorConfig, TransitionMode } from '../types';
 import { TabNavigator } from './TabNavigator';
+import { StackNavigator } from './StackNavigator';
 
 const RootStack = createStackNavigator();
 
@@ -10,6 +11,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
   stacks = [],
   modals = [],
   initialRouteName,
+  transitionMode = 'ios',
   ...tabConfig
 }) => {
   // 创建标签导航器组件
@@ -21,6 +23,36 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
     />
   );
 
+  const getTransitionOptions = (mode: TransitionMode) => {
+    switch (mode) {
+      case 'fade':
+        return {
+          headerShown: false,
+          ...TransitionPresets.FadeFromBottomAndroid,
+          cardStyleInterpolator: CardStyleInterpolators.forFadeFromCenter,
+        } as const;
+      case 'bottom':
+        return {
+          headerShown: false,
+          ...TransitionPresets.ModalSlideFromBottomIOS,
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          presentation: 'modal' as const,
+        } as const;
+      case 'none':
+        return {
+          headerShown: false,
+          animationEnabled: false,
+        } as const;
+      case 'ios':
+      default:
+        return {
+          headerShown: false,
+          ...TransitionPresets.SlideFromRightIOS,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        } as const;
+    }
+  };
+
   return (
     <RootStack.Navigator
       screenOptions={{
@@ -31,6 +63,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
       <RootStack.Screen
         name="MainTabs"
         component={TabsComponent}
+        options={getTransitionOptions(transitionMode)}
       />
 
       {/* 堆栈页面 */}
@@ -38,8 +71,14 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
         <RootStack.Screen
           key={stack.name}
           name={stack.name}
-          component={stack.component}
-          options={stack.options}
+          children={() => (
+            <StackNavigator
+              stacks={[stack]}
+              initialRouteName={stack.name}
+              transitionMode={stack.transitionMode || transitionMode}
+            />
+          )}
+          options={getTransitionOptions(stack.transitionMode || transitionMode)}
         />
       ))}
 
@@ -51,6 +90,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
           component={modal.component}
           options={{
             presentation: 'modal',
+            ...getTransitionOptions(transitionMode),
             ...modal.options,
           }}
         />

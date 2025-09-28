@@ -120,7 +120,7 @@ const NavigationComponent = createNavigation()
 | `setShowLabels(show)` | `boolean` | `NavigationBuilder` | 设置是否显示标签 |
 | `build()` | - | `React.FC` | 构建导航组件 |
 | `getConfig()` | - | `NavigatorConfig` | 获取当前配置 |
-| `reset()` | - | `NavigationBuilder` | 重置配置 |
+| `reset()` | `routes: Array<{ name: string; params?: any }>` | `NavigationService`/Hook | 重置导航堆栈到指定路由数组 |
 
 ### TabConfig
 

@@ -73,7 +73,7 @@ export const useNavigation = () => {
         pop: (count: number = 1) => navigationService.pop(count),
         popToRoot: () => navigationService.popToRoot(),
         replace: (name: string, params?: any) => navigationService.replace(name, params),
-        reset: (state: any) => navigationService.reset(state),
+        reset: (routes: Array<{ name: string; params?: any }>) => navigationService.reset(routes),
         goBack: () => navigationService.goBack(),
 
         // 状态查询

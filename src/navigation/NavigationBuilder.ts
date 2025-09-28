@@ -1,5 +1,5 @@
 import React from 'react';
-import { TabConfig, NavigatorConfig, StackConfig } from './types';
+import { TabConfig, NavigatorConfig, StackConfig, TransitionMode } from './types';
 import { TabNavigator } from './components/TabNavigator';
 import { RootNavigator } from './components/RootNavigator';
 
@@ -35,6 +35,18 @@ export class NavigationBuilder {
   addStack(stack: StackConfig): NavigationBuilder {
     this.config.stacks = this.config.stacks || [];
     this.config.stacks.push(stack);
+    return this;
+  }
+
+  /**
+   * 设置指定堆栈页面的过渡动画
+   */
+  setStackTransition(name: string, mode: TransitionMode): NavigationBuilder {
+    this.config.stacks = this.config.stacks || [];
+    const idx = this.config.stacks.findIndex(s => s.name === name);
+    if (idx >= 0) {
+      this.config.stacks[idx] = { ...this.config.stacks[idx], transitionMode: mode };
+    }
     return this;
   }
 
@@ -102,6 +114,14 @@ export class NavigationBuilder {
    */
   setInactiveColor(color: string): NavigationBuilder {
     this.config.inactiveColor = color;
+    return this;
+  }
+
+  /**
+   * 设置全局过渡动画模式
+   */
+  setTransitionMode(mode: TransitionMode): NavigationBuilder {
+    this.config.transitionMode = mode;
     return this;
   }
 

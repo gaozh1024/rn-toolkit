@@ -1,20 +1,26 @@
 import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { CustomTabButtonProps } from '../types';
 import { useBottomSafeArea } from '../hooks/useSafeArea';
+import { Icon, Text } from '../../components/ui';
 
 export const CustomTabButton: React.FC<CustomTabButtonProps> = ({
   focused,
   label,
   iconName,
+  activeIconName,
   iconSize = 24,
   badge,
   badgeColor = '#FF3B30',
+  activeColor = '#007AFF',
+  inactiveColor = '#8E8E93',
   onPress,
   children,
 }) => {
   const bottomSafeArea = useBottomSafeArea();
-  
+  const tintColor = focused ? activeColor : inactiveColor;
+  const displayIconName = focused ? (activeIconName || iconName) : iconName;
+  console.log('Nav Tab', label, focused, activeColor)
   return (
     <TouchableOpacity
       style={[
@@ -28,16 +34,20 @@ export const CustomTabButton: React.FC<CustomTabButtonProps> = ({
         {/* 图标区域 */}
         <View style={styles.iconContainer}>
           {children || (
-            <View style={[
-              styles.defaultIcon,
-              { 
-                width: iconSize, 
-                height: iconSize,
-                backgroundColor: focused ? '#007AFF' : '#8E8E93'
-              }
-            ]} />
+            displayIconName ? (
+              <Icon name={displayIconName} size={iconSize} color={tintColor} />
+            ) : (
+              <View style={[
+                styles.defaultIcon,
+                {
+                  width: iconSize,
+                  height: iconSize,
+                  backgroundColor: tintColor,
+                }
+              ]} />
+            )
           )}
-          
+
           {/* 徽章 */}
           {badge && (
             <View style={[styles.badge, { backgroundColor: badgeColor }]}>
@@ -45,13 +55,10 @@ export const CustomTabButton: React.FC<CustomTabButtonProps> = ({
             </View>
           )}
         </View>
-        
+
         {/* 标签 */}
         {label && (
-          <Text style={[
-            styles.label,
-            { color: focused ? '#007AFF' : '#8E8E93' }
-          ]}>
+          <Text style={[styles.label, { color: tintColor }]}>
             {label}
           </Text>
         )}

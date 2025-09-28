@@ -101,10 +101,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
     p, pv, ph, pt, pb, pl, pr,
     ...props
 }, ref) => {
-    const { theme, isDark } = useTheme();
-    if (__DEV__) {
-        console.log('isDark', isDark);
-    }
+    const { theme } = useTheme();
     const colors = theme.colors;
 
     // 解析 spacing 值（优先主题刻度，支持数字像素）
@@ -288,9 +285,6 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
         ...(typeof transform !== 'undefined' ? { textTransform: transform } : {}),
     };
 
-    if (__DEV__) {
-        console.log('RNText style', children, baseStyle, style);
-    }
     return (
         <RNText
             ref={ref}
