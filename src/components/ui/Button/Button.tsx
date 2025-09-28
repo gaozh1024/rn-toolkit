@@ -75,7 +75,7 @@ const Button: React.FC<ButtonProps> = ({
     textStyle,
     variant = 'primary',
     size = 'medium',
-    color = 'primary',
+    color,
     textColor,
     shape = 'rounded',
     disabled = false,
@@ -189,14 +189,14 @@ const Button: React.FC<ButtonProps> = ({
         switch (variant) {
             case 'primary':
                 return {
-                    backgroundColor: theme.button.primary.backgroundColor,
+                    backgroundColor: themeColor || theme.button.primary.backgroundColor,
                     borderWidth: theme.button.primary.borderWidth,
                     borderColor: theme.button.primary.borderColor,
                     borderRadius: theme.button.primary.borderRadius,
                 };
             case 'secondary':
                 return {
-                    backgroundColor: theme.button.secondary.backgroundColor,
+                    backgroundColor: themeColor || theme.button.secondary.backgroundColor,
                     borderWidth: 1,
                     borderColor: theme.button.secondary.borderColor,
                     borderRadius: theme.button.secondary.borderRadius,
@@ -205,12 +205,12 @@ const Button: React.FC<ButtonProps> = ({
                 return {
                     backgroundColor: theme.button.outline.backgroundColor,
                     borderWidth: 1,
-                    borderColor: theme.button.outline.borderColor,
+                    borderColor: themeColor || theme.button.outline.borderColor,
                     borderRadius: theme.button.outline.borderRadius,
                 };
             case 'text':
                 return {
-                    backgroundColor: theme.button.text.backgroundColor,
+                    backgroundColor: themeColor || theme.button.text.backgroundColor,
                     borderWidth: 0,
                     borderRadius: theme.button.text.borderRadius,
                 };
@@ -247,9 +247,12 @@ const Button: React.FC<ButtonProps> = ({
         }
     };
 
-    // 获取主题颜色
-    const getThemeColor = (): string => {
-        if (color.startsWith('#') || color.startsWith('rgb')) {
+    // 获取主题颜色（未提供 color 时返回 undefined，使各变体保持主题默认）
+    const getThemeColor = (): string | undefined => {
+        if (!color) {
+            return undefined;
+        }
+        if (typeof color === 'string' && (color.startsWith('#') || color.startsWith('rgb'))) {
             return color;
         }
 
@@ -267,7 +270,8 @@ const Button: React.FC<ButtonProps> = ({
             case 'info':
                 return colors.info;
             default:
-                return colors.primary;
+                // 允许传入平台支持的命名颜色或自定义字符串
+                return String(color);
         }
     };
 
@@ -287,7 +291,33 @@ const Button: React.FC<ButtonProps> = ({
             case 'text':
                 return theme.button.text.textColor;
             default:
+                // 对自定义 variant，保持与 primary 相同的对比策略
                 return theme.button.primary.textColor;
+        }
+    };
+
+    // 获取高亮模式下的 UnderlayColor，保证在未提供 color/underlayColor 时也有合理回退
+    const getUnderlayColor = (): string => {
+        if (underlayColor) {
+            return underlayColor;
+        }
+
+        const themeColor = getThemeColor();
+        if (themeColor) {
+            return `${themeColor}20`;
+        }
+
+        switch (variant) {
+            case 'primary':
+                return `${theme.button.primary.backgroundColor}20`;
+            case 'secondary':
+                return `${theme.button.secondary.backgroundColor}20`;
+            case 'outline':
+                return `${theme.button.outline.borderColor}20`;
+            case 'text':
+                return `${theme.button.text.backgroundColor}20`;
+            default:
+                return `${colors.primary}20`;
         }
     };
 
@@ -391,7 +421,7 @@ const Button: React.FC<ButtonProps> = ({
                 onPressOut={onPressOut}
                 onLongPress={onLongPress}
                 disabled={isDisabled}
-                underlayColor={underlayColor || `${getThemeColor()}20`}
+                underlayColor={getUnderlayColor()}
                 accessibilityLabel={accessibilityLabel}
                 accessibilityHint={accessibilityHint}
                 accessibilityRole={accessibilityRole}

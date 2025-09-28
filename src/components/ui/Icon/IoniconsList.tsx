@@ -1,3 +1,4 @@
+import React from 'react';
 import Icon from "./Icon";
 
 // 常用的 Ionicons 图标名称类型定义
