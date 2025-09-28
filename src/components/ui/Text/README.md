@@ -75,10 +75,10 @@ function CustomStyleExample() {
 |------|------|--------|------|
 | children | ReactNode | - | 文本内容 |
 | style | TextStyle \| TextStyle[] | - | 自定义样式 |
-| variant | 'h1' \| 'h2' \| 'h3' \| 'h4' \| 'h5' \| 'h6' \| 'body1' \| 'body2' \| 'caption' \| 'overline' | 'body1' | 文本变体 |
+| variant | 'h1' \| 'h2' \| 'h3' \| 'h4' \| 'h5' \| 'h6' \| 'body1' \| 'body2' \| 'caption' \| 'overline' \| 'button' \| 'link' | 'body1' | 文本变体 |
 | size | 'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| number | - | 字体大小 |
 | weight | 'light' \| 'normal' \| 'medium' \| 'semibold' \| 'bold' | - | 字体粗细 |
-| color | string \| 主题颜色键 | 'onBackground' | 文本颜色 |
+| color | 'primary' \| 'secondary' \| 'text' \| 'textSecondary' \| 'textDisabled' \| 'error' \| 'warning' \| 'success' \| 'info' \| string | 'text' | 文本颜色 |
 | align | 'left' \| 'center' \| 'right' \| 'justify' | 'left' | 文本对齐 |
 | lineHeight | 'tight' \| 'normal' \| 'relaxed' \| number | - | 行高 |
 | decoration | 'none' \| 'underline' \| 'line-through' | 'none' | 文本装饰 |
@@ -92,6 +92,20 @@ function CustomStyleExample() {
 | onPress | () => void | - | 点击事件 |
 | onLongPress | () => void | - | 长按事件 |
 | testID | string | - | 测试ID |
+| m | 'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| 'xxl' \| number | - | 外边距（全方向） |
+| mv | 同上 | - | 外边距（垂直） |
+| mh | 同上 | - | 外边距（水平） |
+| mt | 同上 | - | 外边距（上） |
+| mb | 同上 | - | 外边距（下） |
+| ml | 同上 | - | 外边距（左） |
+| mr | 同上 | - | 外边距（右） |
+| p | 同上 | - | 内边距（全方向） |
+| pv | 同上 | - | 内边距（垂直） |
+| ph | 同上 | - | 内边距（水平） |
+| pt | 同上 | - | 内边距（上） |
+| pb | 同上 | - | 内边距（下） |
+| pl | 同上 | - | 内边距（左） |
+| pr | 同上 | - | 内边距（右） |
 
 ### 文本变体说明
 
@@ -100,20 +114,21 @@ function CustomStyleExample() {
 - **body2**: 次要正文样式，稍小
 - **caption**: 说明文字样式
 - **overline**: 上标样式，通常用于标签
+- **button**: 按钮文本样式，适配 Button 组件的文字规范
+- **link**: 链接文本样式，通常带有高亮颜色与下划线
 
 ### 主题颜色
 
 支持以下主题颜色键：
 - `primary` - 主色
 - `secondary` - 辅助色
-- `onBackground` - 背景上的文本色（默认）
-- `onSurface` - 表面上的文本色
+- `text` - 主文本色（默认）
+- `textSecondary` - 次文本色
+- `textDisabled` - 禁用文本色
 - `error` - 错误色
 - `warning` - 警告色
 - `success` - 成功色
 - `info` - 信息色
-- `disabled` - 禁用色
-- `placeholder` - 占位符色
 
 也可以使用自定义颜色值（如 `#FF6B6B`）。
 

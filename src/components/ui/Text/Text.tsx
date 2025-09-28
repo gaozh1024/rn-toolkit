@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text as RNText, TextStyle, StyleProp } from 'react-native';
-import { useTheme, useThemeColors } from '../../../theme';
+import { useTheme } from '../../../theme';
+
+type SpacingSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | number;
 
 export interface TextProps {
     // 基础属性
@@ -55,19 +57,36 @@ export interface TextProps {
 
     // 测试ID
     testID?: string;
+
+    // 间距（基于主题 spacing，亦可传数字像素）
+    m?: SpacingSize;
+    mv?: SpacingSize; // marginVertical
+    mh?: SpacingSize; // marginHorizontal
+    mt?: SpacingSize;
+    mb?: SpacingSize;
+    ml?: SpacingSize;
+    mr?: SpacingSize;
+
+    p?: SpacingSize;
+    pv?: SpacingSize; // paddingVertical
+    ph?: SpacingSize; // paddingHorizontal
+    pt?: SpacingSize;
+    pb?: SpacingSize;
+    pl?: SpacingSize;
+    pr?: SpacingSize;
 }
 
-const Text: React.FC<TextProps> = ({
+const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
     children,
     style,
     variant = 'body1',
     size,
     weight,
-    color = 'text',
-    align = 'left',
+    color,
+    align,
     lineHeight,
-    decoration = 'none',
-    transform = 'none',
+    decoration,
+    transform,
     selectable = false,
     numberOfLines,
     ellipsizeMode = 'tail',
@@ -77,13 +96,43 @@ const Text: React.FC<TextProps> = ({
     onPress,
     onLongPress,
     testID,
+    // spacing shortcuts
+    m, mv, mh, mt, mb, ml, mr,
+    p, pv, ph, pt, pb, pl, pr,
     ...props
-}) => {
+}, ref) => {
     const { theme, isDark } = useTheme();
-    console.log('isDark', isDark);
-    const colors = useThemeColors();
+    if (__DEV__) {
+        console.log('isDark', isDark);
+    }
+    const colors = theme.colors;
 
-    // 获取变体样式
+    // 解析 spacing 值（优先主题刻度，支持数字像素）
+    const getSpacingValue = (value: SpacingSize | undefined): number | undefined => {
+        if (value == null) return undefined;
+        if (typeof value === 'number') return value;
+        const s = theme.spacing as any;
+        return s[value] ?? undefined;
+    };
+
+    const spacingMemo = useMemo(() => ({
+        m: getSpacingValue(m),
+        mv: getSpacingValue(mv),
+        mh: getSpacingValue(mh),
+        mt: getSpacingValue(mt),
+        mb: getSpacingValue(mb),
+        ml: getSpacingValue(ml),
+        mr: getSpacingValue(mr),
+        p: getSpacingValue(p),
+        pv: getSpacingValue(pv),
+        ph: getSpacingValue(ph),
+        pt: getSpacingValue(pt),
+        pb: getSpacingValue(pb),
+        pl: getSpacingValue(pl),
+        pr: getSpacingValue(pr),
+    }), [theme.spacing, m, mv, mh, mt, mb, ml, mr, p, pv, ph, pt, pb, pl, pr]);
+
+    // 获取变体样式（memo）
     const getVariantStyle = (): TextStyle => {
         switch (variant) {
             case 'h1':
@@ -115,6 +164,8 @@ const Text: React.FC<TextProps> = ({
         }
     };
 
+    const variantStyle = useMemo(getVariantStyle, [theme, variant]);
+
     // 获取字体大小
     const getFontSize = (): number => {
         if (typeof size === 'number') {
@@ -122,22 +173,29 @@ const Text: React.FC<TextProps> = ({
         }
 
         if (size) {
-            // 从spacing主题中获取对应的数值作为字体大小
             const sizeMap = {
                 xs: 12,
                 sm: 14,
                 md: 16,
                 lg: 18,
                 xl: 24,
-            };
-            return sizeMap[size] || 16;
+            } as const;
+            return sizeMap[size as keyof typeof sizeMap] || 16;
         }
 
-        // 如果没有指定size，使用variant的默认大小
-        return getVariantStyle().fontSize || 16;
+        return variantStyle.fontSize || 16;
     };
 
-    // 获取字体粗细
+    const fontSizeMemo = useMemo(getFontSize, [size, variantStyle]);
+
+    // 获取字体粗细（统一数值映射）
+    const normalizeFontWeight = (fw: TextStyle['fontWeight'] | undefined): TextStyle['fontWeight'] => {
+        if (!fw) return '400';
+        if (fw === 'normal') return '400';
+        if (fw === 'bold') return '700';
+        return fw;
+    };
+
     const getFontWeight = (): TextStyle['fontWeight'] => {
         if (weight) {
             const weightMap: Record<string, TextStyle['fontWeight']> = {
@@ -145,87 +203,103 @@ const Text: React.FC<TextProps> = ({
                 normal: '400',
                 medium: '500',
                 semibold: '600',
-                bold: 'bold',
+                bold: '700',
             };
-            return weightMap[weight] || '400';
+            const mapped = weightMap[weight];
+            if (!mapped) {
+                if (__DEV__) {
+                    console.warn('Invalid weight provided:', weight);
+                }
+                return normalizeFontWeight(variantStyle.fontWeight);
+            }
+            return mapped;
         }
 
-        // 如果没有指定weight，使用variant的默认粗细
-        return getVariantStyle().fontWeight || '400';
+        return normalizeFontWeight(variantStyle.fontWeight);
     };
 
-    // 获取文本颜色
+    const fontWeightMemo = useMemo(getFontWeight, [weight, variantStyle]);
+
+    // 获取文本颜色（支持 hex、rgb(a)、hsl(a)、transparent 与命名颜色；优先主题键）
     const getTextColor = (): string => {
-        if (color.startsWith('#') || color.startsWith('rgb')) {
-            return color;
+        if (!color || typeof color !== 'string') {
+            return colors.text;
         }
-
-        switch (color) {
-            case 'primary':
-                return colors.primary;
-            case 'secondary':
-                return colors.secondary;
-            case 'text':
-                return colors.text;
-            case 'textSecondary':
-                return colors.textSecondary;
-            case 'textDisabled':
-                return colors.textDisabled;
-            case 'error':
-                return colors.error;
-            case 'warning':
-                return colors.warning;
-            case 'success':
-                return colors.success;
-            case 'info':
-                return colors.info;
-            default:
-                return colors.text;
+        const c = color.trim();
+        // 优先：如果主题中存在同名颜色键（支持用户自定义键），直接返回
+        if (Object.prototype.hasOwnProperty.call(colors, c)) {
+            return (colors as any)[c];
         }
+        // 兼容常见颜色字面量
+        const isHex = /^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(c);
+        const isFuncColor = /^(rgb|rgba|hsl|hsla)\(/i.test(c);
+        if (isHex || isFuncColor || c.toLowerCase() === 'transparent') {
+            return c;
+        }
+        // 兜底返回原字符串（RN 支持部分命名颜色）
+        return c;
     };
+
+    const textColorMemo = useMemo(getTextColor, [color, colors]); // 依赖 colors 引用，主题更新或自定义颜色键变化会触发重新计算
 
     // 获取行高
     const getLineHeight = (): number | undefined => {
         if (typeof lineHeight === 'number') {
             return lineHeight;
         }
-
         if (lineHeight) {
             const lineHeightMap = {
                 tight: 1.2,
                 normal: 1.5,
                 relaxed: 1.8,
-            };
-            return getFontSize() * (lineHeightMap[lineHeight] || 1.5);
+            } as const;
+            return fontSizeMemo * (lineHeightMap[lineHeight as keyof typeof lineHeightMap] || 1.5);
         }
-
-        // 使用variant的默认行高
-        return getVariantStyle().lineHeight;
+        return variantStyle.lineHeight;
     };
 
-    // 组合样式
-    const combinedStyle: TextStyle = {
-        fontFamily: 'System',
-        ...getVariantStyle(),
-        fontSize: getFontSize(),
-        fontWeight: getFontWeight(),
-        color: getTextColor(),
-        textAlign: align,
-        lineHeight: getLineHeight(),
-        textDecorationLine: decoration,
-        textTransform: transform,
-        ...(Array.isArray(style) ? Object.assign({}, ...style) : style),
+    const lineHeightMemo = useMemo(getLineHeight, [lineHeight, fontSizeMemo, variantStyle]);
+
+    // 默认行高计算（当变体未定义且未显式传入时）
+    const getDefaultLineHeightForVariant = (): number => {
+        const sizeValue = fontSizeMemo;
+        if (typeof variant === 'string' && variant.startsWith('h')) {
+            return Math.round(sizeValue * 1.25);
+        }
+        if (variant === 'caption' || variant === 'overline' || variant === 'button' || variant === 'link') {
+            return Math.round(sizeValue * 1.3);
+        }
+        return Math.round(sizeValue * 1.5);
     };
 
-    console.log('RNText style', children, combinedStyle);
+    const defaultLineHeightMemo = useMemo(getDefaultLineHeightForVariant, [variant, fontSizeMemo]);
+
+    // 组合样式（仅内部样式，用户样式通过数组传递以保留 StyleSheet 引用）
+
+    const baseStyle: TextStyle = {
+        ...variantStyle,
+        fontSize: fontSizeMemo,
+        fontWeight: fontWeightMemo,
+        // 颜色优先级：用户传入 > 变体定义 > 默认 text
+        ...(color ? { color: textColorMemo } : (!variantStyle.color ? { color: colors.text } : {})),
+        ...(typeof align !== 'undefined' ? { textAlign: align } : {}),
+        ...(typeof lineHeight !== 'undefined' ? { lineHeight: lineHeightMemo } : (!variantStyle.lineHeight ? { lineHeight: defaultLineHeightMemo } : {})),
+        ...(typeof decoration !== 'undefined' ? { textDecorationLine: decoration } : {}),
+        ...(typeof transform !== 'undefined' ? { textTransform: transform } : {}),
+    };
+
+    if (__DEV__) {
+        console.log('RNText style', children, baseStyle, style);
+    }
     return (
         <RNText
-            style={combinedStyle}
+            ref={ref}
+            style={[baseStyle, style]}
             selectable={selectable}
             numberOfLines={numberOfLines}
             ellipsizeMode={ellipsizeMode}
             allowFontScaling={allowFontScaling}
-            minimumFontScale={minimumFontScale}
+            {...(adjustsFontSizeToFit ? { minimumFontScale } : {})}
             adjustsFontSizeToFit={adjustsFontSizeToFit}
             onPress={onPress}
             onLongPress={onLongPress}
@@ -235,6 +309,8 @@ const Text: React.FC<TextProps> = ({
             {children}
         </RNText>
     );
-};
+});
+
+Text.displayName = 'Text';
 
 export default Text;
