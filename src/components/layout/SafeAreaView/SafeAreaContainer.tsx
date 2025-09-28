@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ViewStyle, StyleProp } from 'react-native';
 import { SafeAreaView } from './SafeAreaView';
 import { Edge } from 'react-native-safe-area-context';
-import { useTheme } from '../../../theme—old';
+import { useTheme } from '../../../theme/hooks';
 
 export interface SafeAreaContainerProps {
   children: React.ReactNode;
@@ -25,10 +25,11 @@ export const SafeAreaContainer: React.FC<SafeAreaContainerProps> = ({
   statusBarBackgroundColor,
   testID,
 }) => {
-  const theme = useTheme();
+  const { theme } = useTheme();
+  const colors = theme.colors;
 
   const statusBarStyle: ViewStyle = showStatusBar ? {
-    backgroundColor: statusBarBackgroundColor || theme.colors.primary,
+    backgroundColor: statusBarBackgroundColor || colors.primary,
     height: 0, // 由 SafeAreaView 自动处理
   } : {};
 

@@ -1,12 +1,11 @@
 // 导航模块
-// export * from './navigation-old';
 export * from './navigation';
 
 // 存储模块
 export * from './storage';
 
-// 工具函数
-export * from './utils';
+// statusbar 模块
+export * from './statusbar';
 
 // 样式
 export * from './theme';

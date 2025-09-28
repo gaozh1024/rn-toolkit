@@ -9,11 +9,10 @@ import {
     TouchableWithoutFeedback,
     BackHandler,
     StatusBar,
-    Platform,
     ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../../theme—old';
+import { useTheme } from '../../../theme';
 
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -68,7 +67,9 @@ export const Modal: React.FC<ModalProps> = ({
     backgroundColor,
     maskColor,
 }) => {
-    const { theme, colors } = useTheme();
+    const { theme, isDark } = useTheme();
+    const colors = theme.colors;
+
     const insets = useSafeAreaInsets();
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -251,7 +252,7 @@ export const Modal: React.FC<ModalProps> = ({
         <View style={styles.overlay}>
             <StatusBar
                 backgroundColor="rgba(0,0,0,0.5)"
-                barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'}
+                barStyle={isDark ? 'light-content' : 'dark-content'}
                 translucent
             />
 

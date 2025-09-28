@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp, ScrollView } from 'react-native';
-import { useTheme } from '../../../theme—old';
+import { useTheme } from '../../../theme/hooks';
 
 export interface ContainerProps {
   children: React.ReactNode;
@@ -25,7 +25,8 @@ export const Container: React.FC<ContainerProps> = ({
   scrollViewProps,
   testID,
 }) => {
-  const { theme, colors } = useTheme();
+  const { theme } = useTheme();
+  const colors = theme.colors;
 
   const paddingStyle = typeof padding === 'number'
     ? { padding }

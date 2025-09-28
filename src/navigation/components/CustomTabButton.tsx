@@ -20,7 +20,7 @@ export const CustomTabButton: React.FC<CustomTabButtonProps> = ({
   const bottomSafeArea = useBottomSafeArea();
   const tintColor = focused ? activeColor : inactiveColor;
   const displayIconName = focused ? (activeIconName || iconName) : iconName;
-  console.log('Nav Tab', label, focused, activeColor)
+
   return (
     <TouchableOpacity
       style={[

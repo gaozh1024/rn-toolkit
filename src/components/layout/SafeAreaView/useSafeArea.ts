@@ -1,5 +1,5 @@
 import { useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
-import { useTheme } from '../../../theme—old';
+import { useTheme } from '../../../theme/hooks';
 
 export interface SafeAreaConfig {
   edges?: Edge[];
@@ -13,7 +13,9 @@ export interface SafeAreaConfig {
 
 export const useSafeArea = (config?: SafeAreaConfig) => {
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
+  const { theme } = useTheme();
+  // const colors = theme.colors;
+
   const { edges = ['top', 'bottom', 'left', 'right'], additionalPadding = {} } = config || {};
 
   const safeAreaStyle = {
