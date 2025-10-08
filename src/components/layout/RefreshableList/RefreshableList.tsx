@@ -1,3 +1,4 @@
+// 文件：RefreshableList.tsx，接口：RefreshableListProps
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
     FlatList,
@@ -10,6 +11,7 @@ import {
     type NativeSyntheticEvent,
     type NativeScrollEvent,
     StyleSheet,
+    RefreshControl,
 } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 import { Icon } from '../../ui';
@@ -19,16 +21,21 @@ export interface RefreshableListProps<T> extends Omit<FlatListProps<T>,
     // 刷新
     refreshing?: boolean;
     onRefresh?: () => Promise<void> | void;
-    enablePullToRefresh?: boolean; // 是否启用自定义下拉刷新头（默认 true）
-    refreshThreshold?: number;     // 触发刷新阈值（默认 80）
+    enablePullToRefresh?: boolean; // 是否启用下拉刷新（native/custom 都受控）
+    refreshMode?: 'native' | 'custom' | 'auto'; // 默认 auto：传入自定义头自动切到 custom
+    refreshThreshold?: number;     // custom 模式触发阈值（默认 80）
     renderRefreshHeader?: (state: { pullDistance: number; threshold: number; refreshing: boolean }) => React.ReactNode;
-    refreshIconName?: string;      // 使用内置 Icon 指示器（优先级低于 renderRefreshHeader）
-    refreshImageSource?: any;      // 自定义图片指示器（优先级低于 renderRefreshHeader）
+    refreshIconName?: string;      // custom 模式默认图标
+    refreshImageSource?: any;      // custom 模式自定义图片
+    refreshTintColor?: string;     // native iOS 指示器颜色
+    refreshTitle?: string;         // native iOS 文本
+    refreshColors?: string[];      // native Android 指示器颜色
+    refreshProgressOffset?: number;// native 指示器顶部偏移
 
     // 加载更多 / 翻页
     onEndReached?: () => Promise<void> | void;
-    loadingMore?: boolean;         // 底部加载中状态
-    noMore?: boolean;              // 是否无更多数据
+    loadingMore?: boolean;
+    noMore?: boolean;
     onEndReachedThreshold?: number;
     footerLoadingText?: string;
     footerNoMoreText?: string;
@@ -43,6 +50,7 @@ export interface RefreshableListProps<T> extends Omit<FlatListProps<T>,
     contentPadding?: number;
 }
 
+// 文件：RefreshableList.tsx，函数：RefreshableList
 export function RefreshableList<T>(props: RefreshableListProps<T>) {
     const {
         data,
@@ -51,10 +59,15 @@ export function RefreshableList<T>(props: RefreshableListProps<T>) {
         refreshing = false,
         onRefresh,
         enablePullToRefresh = true,
+        refreshMode = 'auto',
         refreshThreshold = 80,
         renderRefreshHeader,
         refreshIconName = 'refresh',
         refreshImageSource,
+        refreshTintColor,
+        refreshTitle,
+        refreshColors,
+        refreshProgressOffset,
         onEndReached,
         loadingMore = false,
         noMore = false,
@@ -79,42 +92,54 @@ export function RefreshableList<T>(props: RefreshableListProps<T>) {
     const { theme } = useTheme();
     const colors = theme.colors;
 
+    // 自动模式：提供自定义头则使用 custom，否则 native
+    const effectiveMode = useMemo<'native' | 'custom'>(() => {
+        if (refreshMode === 'native' || refreshMode === 'custom') return refreshMode;
+        const hasCustom = !!renderRefreshHeader || !!refreshImageSource || !!refreshIconName;
+        return hasCustom ? 'custom' : 'native';
+    }, [refreshMode, renderRefreshHeader, refreshImageSource, refreshIconName]);
+
+    // 将拉动距离的状态放在组件顶层
     const [pullDistance, setPullDistance] = useState(0);
     const isDraggingRef = useRef(false);
 
-    useEffect(() => {
-        // 刷新结束后复位下拉头高度
-        if (!refreshing) {
-            setPullDistance(0);
-        }
-    }, [refreshing]);
+    useEffect(() => { if (!refreshing) setPullDistance(0); }, [refreshing]);
 
     const onScrollBeginDrag = useCallback(() => {
-        isDraggingRef.current = true;
-    }, []);
+        if (effectiveMode === 'custom') isDraggingRef.current = true;
+    }, [effectiveMode]);
 
     const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-        if (!enablePullToRefresh || !isDraggingRef.current) return;
+        if (effectiveMode !== 'custom' || !enablePullToRefresh || !isDraggingRef.current) return;
         const y = e.nativeEvent.contentOffset.y;
-        if (y <= 0) {
-            setPullDistance(Math.max(0, -y));
-        } else {
-            setPullDistance(0);
-        }
-    }, [enablePullToRefresh]);
+        if (y <= 0) setPullDistance(Math.max(0, -y)); else setPullDistance(0);
+    }, [effectiveMode, enablePullToRefresh]);
 
     const onScrollEndDrag = useCallback(() => {
         isDraggingRef.current = false;
-        if (!enablePullToRefresh || refreshing) return;
-        if (pullDistance >= refreshThreshold) {
-            onRefresh?.();
-        }
-    }, [enablePullToRefresh, refreshing, pullDistance, refreshThreshold, onRefresh]);
+        if (effectiveMode !== 'custom' || !enablePullToRefresh || refreshing) return;
+        if (pullDistance >= refreshThreshold) onRefresh?.();
+    }, [effectiveMode, enablePullToRefresh, refreshing, pullDistance, refreshThreshold, onRefresh]);
 
+    // 原生刷新控件
+    const refreshControlEl = useMemo(() => {
+        if (effectiveMode !== 'native' || !enablePullToRefresh || !onRefresh) return undefined;
+        return (
+            <RefreshControl
+                refreshing={!!refreshing}
+                onRefresh={() => onRefresh?.()}
+                tintColor={refreshTintColor}
+                title={refreshTitle}
+                colors={refreshColors}
+                progressViewOffset={refreshProgressOffset}
+            />
+        );
+    }, [effectiveMode, enablePullToRefresh, refreshing, onRefresh, refreshTintColor, refreshTitle, refreshColors, refreshProgressOffset]);
+
+    // 自定义刷新头
     const HeaderComponent = useMemo<React.ComponentType<any> | React.ReactElement | null>(() => {
-        if (!enablePullToRefresh) return null;
+        if (!enablePullToRefresh || effectiveMode !== 'custom') return null;
         const height = Math.min(pullDistance, refreshThreshold);
-    
         const content = renderRefreshHeader
             ? renderRefreshHeader({ pullDistance, threshold: refreshThreshold, refreshing })
             : (
@@ -122,58 +147,47 @@ export function RefreshableList<T>(props: RefreshableListProps<T>) {
                     {refreshImageSource ? (
                         <Image source={refreshImageSource} style={styles.headerImage} />
                     ) : (
-                        <Icon name={refreshIconName} size={24} color={colors.primary} />
+                        <Icon name={refreshIconName} size={24} />
                     )}
-                    <Text style={[styles.headerText, { color: colors.text }]}>
-                        {refreshing
-                            ? '正在刷新...'
-                            : pullDistance >= refreshThreshold
-                                ? '释放刷新'
-                                : '下拉刷新'}
+                    <Text style={styles.headerText}>
+                        {refreshing ? '正在刷新...' : pullDistance >= refreshThreshold ? '释放刷新' : '下拉刷新'}
                     </Text>
                 </View>
             );
-    
-        return (
-            <View style={[styles.headerContainer, { height }]}>
-                {content}
-            </View>
-        );
-    }, [enablePullToRefresh, pullDistance, refreshThreshold, refreshing, renderRefreshHeader, refreshImageSource, refreshIconName, colors]);
+        return (<View style={[styles.headerContainer, { height }]}>{content}</View>);
+    }, [enablePullToRefresh, effectiveMode, pullDistance, refreshThreshold, refreshing, renderRefreshHeader, refreshImageSource, refreshIconName]);
 
+    // 底部与空态
     const FooterComponent = useMemo<React.ComponentType<any> | React.ReactElement | null>(() => {
         if (loadingMore) {
             return footerLoadingComponent ?? (
                 <View style={styles.footer}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={[styles.footerText, { color: colors.text }]}>{footerLoadingText}</Text>
+                    <ActivityIndicator size="small" color={colors.textSecondary} />
+                    <Text style={[styles.footerText, { color: colors.textSecondary }]}>{footerLoadingText}</Text>
                 </View>
             );
         }
         if (noMore) {
             return footerNoMoreComponent ?? (
                 <View style={styles.footer}>
-                    <Text style={[styles.footerText, { color: colors.text }]}>{footerNoMoreText}</Text>
+                    <Text style={[styles.footerText, { color: colors.textSecondary }]}>{footerNoMoreText}</Text>
                 </View>
             );
         }
         return null;
-    }, [loadingMore, noMore, footerLoadingComponent, footerNoMoreComponent, footerLoadingText, footerNoMoreText, colors]);
+    }, [loadingMore, noMore, footerLoadingComponent, footerNoMoreComponent, footerLoadingText, footerNoMoreText, colors.textSecondary]);
 
     const EmptyComponent = useMemo<React.ComponentType<any> | React.ReactElement | null>(() => {
         if (emptyComponent) return emptyComponent;
         return (
             <View style={styles.empty}>
-                <Text style={[styles.emptyText, { color: colors.text }]}>{emptyText}</Text>
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{emptyText}</Text>
             </View>
         );
-    }, [emptyComponent, emptyText, colors]);
+    }, [emptyComponent, emptyText, colors.textSecondary]);
 
     const mergedContentContainerStyle = useMemo(() => {
-        return [
-            contentContainerStyle,
-            contentPadding != null ? { padding: contentPadding } : null,
-        ];
+        return [contentContainerStyle, contentPadding != null ? { padding: contentPadding } : null];
     }, [contentContainerStyle, contentPadding]);
 
     return (
@@ -186,6 +200,7 @@ export function RefreshableList<T>(props: RefreshableListProps<T>) {
             ListHeaderComponent={HeaderComponent}
             ListFooterComponent={FooterComponent}
             ListEmptyComponent={EmptyComponent}
+            refreshControl={refreshControlEl}
             onScrollBeginDrag={onScrollBeginDrag}
             onScroll={onScroll}
             onScrollEndDrag={onScrollEndDrag}
