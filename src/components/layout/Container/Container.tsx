@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ViewStyle, StyleProp, ScrollView } from 'react-native';
+import { View, ViewStyle, StyleProp, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 
 export interface ContainerProps {
@@ -46,17 +46,41 @@ export const Container: React.FC<ContainerProps> = ({
       marginRight: margin.right,
     };
 
-  const containerStyle: ViewStyle = {
+  const viewStyle: ViewStyle = {
     flex,
     backgroundColor: backgroundColor || colors.background,
-    ...paddingStyle,
     ...marginStyle,
   };
+
+  // 从 props.padding 构建内容层内边距
+  let contentPaddingStyle: ViewStyle = { ...paddingStyle };
+
+  // 若用户在 style 中设置了 padding，滚动模式下将其转移到 contentContainerStyle
+  const flattened = StyleSheet.flatten(style) as ViewStyle | undefined;
+  const styleWithoutPadding: StyleProp<ViewStyle> = flattened
+    ? [{
+        ...flattened,
+        padding: undefined,
+        paddingTop: undefined,
+        paddingBottom: undefined,
+        paddingLeft: undefined,
+        paddingRight: undefined,
+      }]
+    : undefined;
+
+  if (flattened) {
+    if (flattened.padding !== undefined) contentPaddingStyle.padding = flattened.padding;
+    if (flattened.paddingTop !== undefined) contentPaddingStyle.paddingTop = flattened.paddingTop;
+    if (flattened.paddingBottom !== undefined) contentPaddingStyle.paddingBottom = flattened.paddingBottom;
+    if (flattened.paddingLeft !== undefined) contentPaddingStyle.paddingLeft = flattened.paddingLeft;
+    if (flattened.paddingRight !== undefined) contentPaddingStyle.paddingRight = flattened.paddingRight;
+  }
 
   if (scrollable) {
     return (
       <ScrollView
-        style={[containerStyle, style]}
+        style={[viewStyle, styleWithoutPadding]}
+        contentContainerStyle={contentPaddingStyle}
         testID={testID}
         showsVerticalScrollIndicator={false}
         {...scrollViewProps}
@@ -67,7 +91,7 @@ export const Container: React.FC<ContainerProps> = ({
   }
 
   return (
-    <View style={[containerStyle, style]} testID={testID}>
+    <View style={[viewStyle, contentPaddingStyle, style]} testID={testID}>
       {children}
     </View>
   );
