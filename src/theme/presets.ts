@@ -449,6 +449,7 @@ export const lightBaseTheme: BaseTheme = {
 
     // 文本色
     text: '#1C1C1E',
+    subtext: '#6C6C70',
     textSecondary: '#6C6C70',
     textDisabled: '#C7C7CC',
 
@@ -664,6 +665,7 @@ export const darkBaseTheme: BaseTheme = {
 
     // 文本色
     text: '#FFFFFF',
+    subtext: '#8E8E93',
     textSecondary: '#8E8E93',
     textDisabled: '#48484A',
 

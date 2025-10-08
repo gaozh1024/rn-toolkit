@@ -19,6 +19,7 @@ export interface ColorTheme {
 
   // 文本色
   text: string;
+  subtext: string;
   textSecondary: string;
   textDisabled: string;
 
