@@ -1,8 +1,7 @@
 import React from 'react';
 import { NavigationContainer as RNNavigationContainer } from '@react-navigation/native';
 import { navigationRef } from '../services/NavigationService';
-import { ToastContainer } from '../../components/feedback/Toast';
-import { LoadingOverlayContainer } from '../../components/feedback';
+import { DialogContainer, LoadingOverlayContainer, ToastContainer } from '../../components/feedback';
 import { SafeAreaProvider } from '../../components/layout/SafeAreaView';
 
 interface NavigationContainerProps {
@@ -40,6 +39,7 @@ export const NavigationContainer: React.FC<NavigationContainerProps> = ({
         {children}
         <ToastContainer />
         <LoadingOverlayContainer />
+        <DialogContainer />
       </RNNavigationContainer>
     </SafeAreaProvider>
   );
