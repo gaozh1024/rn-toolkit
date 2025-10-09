@@ -2,5 +2,6 @@
 export * from './Modal';
 export * from './Toast';
 export * from './LoadingOverlay';
+export * from './Snackbar';
 export * from './Dialog';
 export * from './ActionSheet';
