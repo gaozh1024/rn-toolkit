@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { createStackNavigator, CardStyleInterpolators, TransitionPresets } from '@react-navigation/stack';
 import { NavigatorConfig, TransitionMode } from '../types';
 import { TabNavigator } from './TabNavigator';
 import { StackNavigator } from './StackNavigator';
+import { Modal as DefaultModal } from '../../components/feedback/Modal';
 
 const RootStack = createStackNavigator();
 
@@ -36,7 +37,38 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
           headerShown: false,
           ...TransitionPresets.ModalSlideFromBottomIOS,
           cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
-          presentation: 'modal' as const,
+          presentation: 'transparentModal' as const,
+          gestureDirection: 'vertical' as const,
+          transitionSpec: {
+            open: { animation: 'timing', config: { duration: 200 } },
+            close: { animation: 'timing', config: { duration: 100 } },
+          },
+        } as const;
+      case 'top':
+        return {
+          headerShown: false,
+          ...TransitionPresets.ModalSlideFromBottomIOS,
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          presentation: 'transparentModal' as const,
+          gestureDirection: 'vertical-inverted' as const,
+          transitionSpec: {
+            open: { animation: 'timing', config: { duration: 200 } },
+            close: { animation: 'timing', config: { duration: 100 } },
+          },
+        } as const;
+      case 'left':
+        return {
+          headerShown: false,
+          ...TransitionPresets.SlideFromRightIOS,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureDirection: 'horizontal-inverted' as const,
+        } as const;
+      case 'right':
+        return {
+          headerShown: false,
+          ...TransitionPresets.SlideFromRightIOS,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureDirection: 'horizontal' as const,
         } as const;
       case 'none':
         return {
@@ -53,11 +85,15 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
     }
   };
 
+  const allModals = useMemo(() => {
+    const exists = (modals || []).some(m => m.name === 'Modal');
+    const def = { name: 'Modal', component: DefaultModal } as any;
+    return exists ? modals : [def, ...(modals || [])];
+  }, [modals]);
+
   return (
     <RootStack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
+      screenOptions={{ headerShown: false }}
     >
       {/* 主标签导航器 */}
       <RootStack.Screen
@@ -83,15 +119,23 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
       ))}
 
       {/* 模态页面 */}
-      {modals.map((modal) => (
+      {allModals.map((modal) => (
         <RootStack.Screen
           key={modal.name}
           name={modal.name}
           component={modal.component}
-          options={{
-            presentation: 'modal',
-            ...getTransitionOptions(transitionMode),
-            ...modal.options,
+          options={({ route }: any) => {
+            const direction: TransitionMode = route?.params?.direction ?? (modal.transitionMode as TransitionMode) ?? transitionMode;
+            const base = getTransitionOptions(direction);
+            return {
+              ...base,
+              presentation: 'transparentModal',
+              cardStyle: {
+                ...(typeof (modal.options as any)?.cardStyle === 'object' ? (modal.options as any).cardStyle : {}),
+                backgroundColor: 'transparent',
+              },
+              ...(typeof modal.options === 'function' ? (modal.options as any)({ route }) : (modal.options || {})),
+            } as any;
           }}
         />
       ))}

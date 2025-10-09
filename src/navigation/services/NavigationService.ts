@@ -1,4 +1,5 @@
 import { createNavigationContainerRef, StackActions, CommonActions } from '@react-navigation/native';
+import { TransitionMode } from '../types';
 
 // 创建导航引用
 export const navigationRef = createNavigationContainerRef();
@@ -15,6 +16,23 @@ class NavigationService {
       NavigationService.instance = new NavigationService();
     }
     return NavigationService.instance;
+  }
+
+  /**
+  * 以模态方式展示页面（传入方向/背景色等）
+  * direction: 'left' | 'right' | 'top' | 'bottom' | 'fade' | 'none'
+  */
+  presentModal(name: string, params?: { direction?: TransitionMode; backgroundColor?: string;[key: string]: any }): void {
+    if (navigationRef.current?.isReady()) {
+      console.log('NavigationService: presentModal', name, params);
+      const navigateAction = CommonActions.navigate({
+        name,
+        params,
+      });
+      navigationRef.current.dispatch(navigateAction);
+    } else {
+      console.warn('NavigationService: Navigation not ready');
+    }
   }
 
   /**

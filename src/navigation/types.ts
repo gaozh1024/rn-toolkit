@@ -63,7 +63,7 @@ export interface NavigatorConfig {
 
 export type NavigationType = 'tab' | 'stack' | 'modal';
 
-export type TransitionMode = 'ios' | 'fade' | 'bottom' | 'none';
+export type TransitionMode = 'ios' | 'fade' | 'bottom' | 'none' | 'left' | 'right' | 'top';
 
 // 导航参数类型
 export type RootParamList = {

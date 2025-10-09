@@ -1,364 +1,157 @@
-import React, { useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    Animated,
-    Dimensions,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    BackHandler,
-    StatusBar,
-    ViewStyle,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableWithoutFeedback, TouchableOpacity, StyleSheet, Dimensions, ViewStyle, DimensionValue, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../../theme';
+import { useComponentNavigation } from '../../../navigation';
+import { useFadeAnimation } from '../../../animation';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+export type ModalParams = {
+    title?: string; // 弹窗标题
+    renderContent?: () => React.ReactNode; // 弹窗内容渲染函数
+    direction?: 'left' | 'right' | 'top' | 'bottom' | 'fade' | 'none' | 'ios'; // 弹窗动画方向
+    backgroundColor?: string; // 屏幕背景色（可透明）
+    maskColor?: string;       // 遮罩色
+    position?: 'center' | 'top' | 'bottom'; // 弹窗位置
+    width?: DimensionValue; // 弹窗宽度
+    height?: DimensionValue; // 弹窗高度
+    closable?: boolean; // 是否显示关闭按钮
+    maskClosable?: boolean; // 是否点击遮罩关闭弹窗
+    cardBackgroundColor?: string; // 弹窗卡片背景色
+    titleAlign?: 'left' | 'center' | 'right'; // 弹窗标题对齐方式
+};
 
-export interface ModalProps {
-    // 基础属性
-    visible: boolean;
-    onClose?: () => void;
-    onShow?: () => void;
-    onHide?: () => void;
-
-    // 内容属性
-    title?: string;
-    children?: React.ReactNode;
-
-    // 样式属性
-    animationType?: 'slide' | 'fade' | 'none';
-    presentationStyle?: 'fullScreen' | 'pageSheet' | 'formSheet' | 'overFullScreen';
-    transparent?: boolean;
-
-    // 交互属性
-    closable?: boolean;
-    maskClosable?: boolean;
-    hardwareBackPress?: boolean;
-
-    // 布局属性
-    width?: number | string;
-    height?: number | string;
-    position?: 'center' | 'top' | 'bottom';
-
-    // 主题属性
-    backgroundColor?: string;
-    maskColor?: string;
-}
-
-export const Modal: React.FC<ModalProps> = ({
-    visible,
-    onClose,
-    onShow,
-    onHide,
-    title,
-    children,
-    animationType = 'fade',
-    presentationStyle = 'overFullScreen',
-    transparent = true,
-    closable = true,
-    maskClosable = true,
-    hardwareBackPress = true,
-    width = '90%',
-    height = 'auto',
-    position = 'center',
-    backgroundColor,
-    maskColor,
-}) => {
-    const { theme, isDark } = useTheme();
-    const colors = theme.colors;
+// 组件：Modal（在已有 useComponentNavigation 之后插入）
+export const Modal: React.FC<any> = ({ route }) => {
+    const params: ModalParams = route?.params || {};
+    const {
+        title,
+        renderContent,
+        backgroundColor = 'rgba(0,0,0,0)',
+        maskColor = 'rgba(0,0,0,0.4)',
+        position = 'center',
+        width = '90%',
+        height,
+        closable = true,
+        maskClosable = true,
+        // 新增默认值
+        cardBackgroundColor = '#fff',
+        titleAlign = 'left',
+    } = params;
 
     const insets = useSafeAreaInsets();
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-    const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-    const scaleAnim = useRef(new Animated.Value(0.8)).current;
+    const navigation = useComponentNavigation();
 
-    // 处理Android返回键
-    useEffect(() => {
-        if (!visible || !hardwareBackPress) return;
-
-        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-            if (onClose) {
-                onClose();
-                return true;
-            }
-            return false;
-        });
-
-        return () => backHandler.remove();
-    }, [visible, hardwareBackPress, onClose]);
-
-    // 显示动画
-    useEffect(() => {
-        if (visible) {
-            onShow?.();
-
-            if (animationType === 'fade') {
-                Animated.parallel([
-                    Animated.timing(fadeAnim, {
-                        toValue: 1,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }),
-                    Animated.spring(scaleAnim, {
-                        toValue: 1,
-                        tension: 100,
-                        friction: 8,
-                        useNativeDriver: true,
-                    }),
-                ]).start();
-            } else if (animationType === 'slide') {
-                Animated.parallel([
-                    Animated.timing(fadeAnim, {
-                        toValue: 1,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }),
-                    Animated.spring(slideAnim, {
-                        toValue: 0,
-                        tension: 100,
-                        friction: 8,
-                        useNativeDriver: true,
-                    }),
-                ]).start();
-            }
-        } else {
-            const animations = [];
-
-            if (animationType === 'fade') {
-                animations.push(
-                    Animated.timing(fadeAnim, {
-                        toValue: 0,
-                        duration: 200,
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(scaleAnim, {
-                        toValue: 0.8,
-                        duration: 200,
-                        useNativeDriver: true,
-                    })
-                );
-            } else if (animationType === 'slide') {
-                animations.push(
-                    Animated.timing(fadeAnim, {
-                        toValue: 0,
-                        duration: 200,
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(slideAnim, {
-                        toValue: SCREEN_HEIGHT,
-                        duration: 200,
-                        useNativeDriver: true,
-                    })
-                );
-            }
-
-            if (animations.length > 0) {
-                Animated.parallel(animations).start(() => {
-                    onHide?.();
-                });
-            } else {
-                onHide?.();
-            }
-        }
-    }, [visible, animationType, fadeAnim, slideAnim, scaleAnim, onShow, onHide]);
-
-    // 处理遮罩点击
-    const handleMaskPress = () => {
-        if (maskClosable && onClose) {
-            onClose();
-        }
+    const onClose = () => {
+        navigation.goBack();
     };
 
-    // 处理关闭按钮点击
-    const handleClosePress = () => {
-        if (onClose) {
-            onClose();
-        }
-    };
-
-    if (!visible) {
-        return null;
-    }
-
-    // 计算容器样式
-    const getContainerStyle = () => {
-        const baseStyle: any = {
-            backgroundColor: backgroundColor || colors.surface,
-            borderRadius: theme.borderRadius?.md || 12,
-            maxHeight: SCREEN_HEIGHT * 0.9,
-        };
-
-        if (typeof width === 'number') {
-            baseStyle.width = width;
-        } else if (typeof width === 'string') {
-            if (width.includes('%')) {
-                baseStyle.width = SCREEN_WIDTH * (parseInt(width) / 100);
-            } else {
-                baseStyle.width = parseInt(width);
-            }
-        }
-
-        if (height !== 'auto') {
-            if (typeof height === 'number') {
-                baseStyle.height = height;
-            } else if (typeof height === 'string') {
-                if (height.includes('%')) {
-                    baseStyle.height = SCREEN_HEIGHT * (parseInt(height) / 100);
-                } else {
-                    baseStyle.height = parseInt(height);
-                }
-            }
-        }
-
-        return baseStyle;
-    };
-
-    // 计算位置样式
     const getPositionStyle = (): ViewStyle => {
         switch (position) {
             case 'top':
                 return {
-                    justifyContent: 'flex-start' as const,
-                    paddingTop: insets.top + 20
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    paddingTop: insets.top + 16,
                 };
             case 'bottom':
                 return {
-                    justifyContent: 'flex-end' as const,
-                    paddingBottom: insets.bottom + 20
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    paddingBottom: insets.bottom + 16,
                 };
+            case 'center':
             default:
                 return {
-                    justifyContent: 'center' as const
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingTop: insets.top,
+                    paddingBottom: insets.bottom,
                 };
         }
     };
 
-    // 计算动画变换
-    const getAnimatedTransform = () => {
-        if (animationType === 'slide') {
-            return [{ translateY: slideAnim }];
-        } else if (animationType === 'fade') {
-            return [{ scale: scaleAnim }];
-        }
-        return [];
-    };
+    // 新增：遮罩可见状态与过渡事件监听
+    const [maskVisible, setMaskVisible] = useState(false);
+    const { fadeAnim, fadeIn } = useFadeAnimation(0);
 
-    const styles = createStyles(theme, maskColor);
+    useEffect(() => {
+        const unsubEnd = navigation.addListener('transitionEnd', () => {
+            setMaskVisible(true);
+            fadeIn(200).start();
+        });
+        const unsubStart = navigation.addListener('transitionStart', () => {
+            setMaskVisible(false);
+        });
+        return () => {
+            unsubEnd?.();
+            unsubStart?.();
+        };
+    }, [navigation, fadeIn]);
 
     return (
-        <View style={styles.overlay}>
-            <StatusBar
-                backgroundColor="rgba(0,0,0,0.5)"
-                barStyle={isDark ? 'light-content' : 'dark-content'}
-                translucent
-            />
+        <View style={[styles.root, { backgroundColor }]}>
+            {maskVisible && (
+                <TouchableWithoutFeedback onPress={maskClosable ? onClose : undefined}>
+                    <Animated.View style={[styles.mask, { backgroundColor: maskColor, opacity: fadeAnim }]} />
+                </TouchableWithoutFeedback>
+            )}
 
-            <TouchableWithoutFeedback onPress={handleMaskPress}>
-                <Animated.View style={[styles.mask, { opacity: fadeAnim }]} />
-            </TouchableWithoutFeedback>
-
-            <View style={[styles.container, getPositionStyle()]} pointerEvents="box-none">
-                <Animated.View
-                    style={[
-                        styles.modal,
-                        getContainerStyle(),
-                        {
-                            opacity: fadeAnim,
-                            transform: getAnimatedTransform(),
-                        },
-                    ]}
-                >
-                    {/* 头部 */}
-                    {(title || closable) && (
-                        <View style={styles.header}>
-                            {title && (
-                                <Text style={[styles.title, { color: colors.surface }]}>
-                                    {title}
-                                </Text>
+            <View style={[styles.container, getPositionStyle()]}>
+                <View style={[
+                    styles.card,
+                    {
+                        width,
+                        ...(height !== undefined && height !== 'auto' ? { height } : {}),
+                        maxWidth: SCREEN_WIDTH - 32,
+                        // 使用可配置卡片背景色
+                        backgroundColor: cardBackgroundColor,
+                    },
+                ]}>
+                    {!!title && (
+                        <View style={[
+                            styles.header,
+                            titleAlign === 'center' ? styles.headerCenter : undefined,
+                        ]}>
+                            {titleAlign === 'center' && closable && (
+                                <TouchableOpacity onPress={onClose} style={styles.closeAbsolute}>
+                                    <Text style={styles.close}>✕</Text>
+                                </TouchableOpacity>
                             )}
-                            {closable && (
-                                <TouchableOpacity
-                                    style={styles.closeButton}
-                                    onPress={handleClosePress}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                >
-                                    <Text style={[styles.closeText, { color: colors.surface }]}>
-                                        ✕
-                                    </Text>
+                            <Text style={[
+                                styles.title,
+                                titleAlign === 'center' ? styles.titleCenter : undefined,
+                                titleAlign === 'right' ? styles.titleRight : undefined,
+                            ]}>{title}</Text>
+                            {titleAlign !== 'center' && closable && (
+                                <TouchableOpacity onPress={onClose}>
+                                    <Text style={styles.close}>✕</Text>
                                 </TouchableOpacity>
                             )}
                         </View>
                     )}
 
-                    {/* 内容 */}
                     <View style={styles.content}>
-                        {children}
+                        {typeof renderContent === 'function' ? renderContent() : <Text style={styles.placeholder}>No Content</Text>}
                     </View>
-                </Animated.View>
+                </View>
             </View>
         </View>
     );
 };
 
-const createStyles = (colors: any, maskColor?: string) =>
-    StyleSheet.create({
-        overlay: {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 1000,
-        },
-        mask: {
-            ...StyleSheet.absoluteFillObject,
-            backgroundColor: maskColor || 'rgba(0, 0, 0, 0.5)',
-        },
-        container: {
-            flex: 1,
-            alignItems: 'center',
-            paddingHorizontal: 20,
-        },
-        modal: {
-            shadowColor: colors.shadow || '#000',
-            shadowOffset: {
-                width: 0,
-                height: 4,
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 12,
-            elevation: 8,
-        },
-        header: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: 20,
-            paddingVertical: 16,
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: colors.border,
-        },
-        title: {
-            fontSize: 18,
-            fontWeight: '600',
-            flex: 1,
-        },
-        closeButton: {
-            width: 32,
-            height: 32,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 16,
-            backgroundColor: colors.background,
-        },
-        closeText: {
-            fontSize: 16,
-            fontWeight: '500',
-        },
-        content: {
-            padding: 20,
-        },
-    });
+const styles = StyleSheet.create({
+    root: { flex: 1 },
+    mask: { ...StyleSheet.absoluteFillObject },
+    container: { flex: 1 },
+    card: { borderRadius: 12, overflow: 'hidden' }, // 移除固定白色，改为上方可配置项
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#e5e5ea', position: 'relative' },
+    headerCenter: { justifyContent: 'center' },
+    title: { fontSize: 16, fontWeight: '600' },
+    titleCenter: { textAlign: 'center', flex: 1 },
+    titleRight: { textAlign: 'right', flex: 1 },
+    close: { fontSize: 18 },
+    closeAbsolute: { position: 'absolute', right: 16 },
+    content: { padding: 16 },
+    placeholder: { color: '#8e8e93' },
+});

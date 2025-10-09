@@ -16,7 +16,6 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
   transitionMode = 'ios',
 }) => {
   const commonScreenOptions = useMemo(() => {
-    // 全局过渡预设
     switch (transitionMode) {
       case 'fade':
         return {
@@ -30,6 +29,29 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
           ...TransitionPresets.ModalSlideFromBottomIOS,
           cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
           presentation: 'modal' as const,
+          gestureDirection: 'vertical' as const,
+        } as const;
+      case 'top':
+        return {
+          headerShown: false,
+          ...TransitionPresets.ModalSlideFromBottomIOS,
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          presentation: 'modal' as const,
+          gestureDirection: 'vertical-inverted' as const,
+        } as const;
+      case 'left':
+        return {
+          headerShown: false,
+          ...TransitionPresets.SlideFromRightIOS,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureDirection: 'horizontal-inverted' as const,
+        } as const;
+      case 'right':
+        return {
+          headerShown: false,
+          ...TransitionPresets.SlideFromRightIOS,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureDirection: 'horizontal' as const,
         } as const;
       case 'none':
         return {
@@ -54,7 +76,6 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
       {stacks.map((stack) => {
         let screenOptions = stack.options;
         if (stack.transitionMode) {
-          // 单屏覆盖过渡
           switch (stack.transitionMode) {
             case 'fade':
               screenOptions = {
@@ -69,6 +90,32 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
                 ...TransitionPresets.ModalSlideFromBottomIOS,
                 cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
                 presentation: 'modal',
+                gestureDirection: 'vertical',
+              } as any;
+              break;
+            case 'top':
+              screenOptions = {
+                ...screenOptions,
+                ...TransitionPresets.ModalSlideFromBottomIOS,
+                cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+                presentation: 'modal',
+                gestureDirection: 'vertical-inverted',
+              } as any;
+              break;
+            case 'left':
+              screenOptions = {
+                ...screenOptions,
+                ...TransitionPresets.SlideFromRightIOS,
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+                gestureDirection: 'horizontal-inverted',
+              } as any;
+              break;
+            case 'right':
+              screenOptions = {
+                ...screenOptions,
+                ...TransitionPresets.SlideFromRightIOS,
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+                gestureDirection: 'horizontal',
               } as any;
               break;
             case 'none':

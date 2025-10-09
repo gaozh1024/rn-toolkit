@@ -1,168 +1,155 @@
-# Modal 组件
+# Modal 使用说明
 
-Modal 是一个功能强大的模态框组件，支持多种动画效果、位置设置和交互方式。
+导航驱动的模态组件，支持通过路由参数控制标题、内容、位置、背景色、遮罩色、尺寸以及关闭行为。
 
-## 特性
+**概览**
+- 文件：`src/components/feedback/Modal/Modal.tsx`
+- 能力：标题、内容渲染、位置（top/bottom/center）、背景/遮罩、宽高、可关闭、点击遮罩关闭
+- 适配：`useSafeAreaInsets` 自动处理顶部/底部安全区
 
-- 🎨 支持多种动画效果（fade、slide、none）
-- 📱 响应式设计，适配不同屏幕尺寸
-- 🎯 灵活的位置设置（center、top、bottom）
-- 🔧 可自定义样式和主题
-- 🎭 支持遮罩层点击关闭
-- 📱 支持硬件返回键处理
-- 🔄 提供 Hook 和 Service 两种使用方式
+**注册到导航**
+- 使用 `NavigationBuilder` 在框架层注册模态页面：
 
-## 安装
-
-```bash
-npm install @your-org/rn-toolkit
-```
-
-## 基础用法
-
-### 1. 使用 Modal 组件
-
-```tsx
+```tsx:src%2FApp.tsx
 import React from 'react';
-import { View, Text, Button } from 'react-native';
-import { Modal, useModal } from '@your-org/rn-toolkit';
+import { NavigationContainer } from '@react-navigation/native';
+import createNavigation from './src/navigation';
+import { Modal } from './src/components/feedback/Modal/Modal';
 
-const BasicModalExample = () => {
-  const modal = useModal();
+const App = () => {
+  const NavigationComponent = createNavigation()
+    .addModal({
+      name: 'Modal',
+      component: Modal,
+      transitionMode: 'bottom',
+      options: { cardStyle: { backgroundColor: 'transparent' } },
+    })
+    .build();
 
   return (
-    <View>
-      <Button title="显示模态框" onPress={modal.show} />
-      
-      <Modal
-        visible={modal.visible}
-        onClose={modal.hide}
-        title="基础模态框"
-      >
-        <Text>这是模态框的内容</Text>
-        <Button title="关闭" onPress={modal.hide} />
-      </Modal>
-    </View>
+    <NavigationContainer>
+      <NavigationComponent />
+    </NavigationContainer>
   );
 };
+
+export default App;
 ```
 
-### 2. 使用 ModalService
+**展示模态（全局调用）**
+- 使用全局导航服务在任意位置展示：
 
-```tsx
-import { modalService } from '@your-org/rn-toolkit';
+```tsx:src%2Fanywhere.ts
+import { navigationService } from './src/navigation';
 
-// 显示信息模态框
-modalService.info({
-  title: '提示',
-  content: '这是一个信息提示',
-  okText: '确定'
-});
-
-// 显示确认模态框
-modalService.confirm({
-  title: '确认删除',
-  content: '确定要删除这个项目吗？',
-  okText: '删除',
-  cancelText: '取消',
-  onOk: () => console.log('确认删除'),
-  onCancel: () => console.log('取消删除')
+navigationService.presentModal('Modal', {
+  direction: 'bottom',
+  backgroundColor: 'transparent',
+  title: '框架级模态',
+  position: 'center',          // 'top' | 'bottom' | 'center'
+  width: '90%',                 // DimensionValue：数值或百分比
+  height: 360,                  // DimensionValue：数值；'auto' 时不强制注入
+  closable: true,
+  maskClosable: true,
+  renderContent: () => null,    // 或渲染你的内容
 });
 ```
 
-## API 参考
+**在组件内展示（依赖导航上下文）**
 
-### ModalProps
+```tsx:src%2Fscreens%2FSomeScreen.tsx
+import React from 'react';
+import { Button } from 'react-native';
+import { useComponentNavigation } from '../src/navigation';
 
-| 属性 | 类型 | 默认值 | 描述 |
-|------|------|--------|------|
-| visible | boolean | - | 是否显示模态框 |
-| onClose | () => void | - | 关闭回调 |
-| onShow | () => void | - | 显示回调 |
-| onHide | () => void | - | 隐藏回调 |
-| title | string | - | 标题 |
-| children | React.ReactNode | - | 内容 |
-| animationType | 'slide' \| 'fade' \| 'none' | 'fade' | 动画类型 |
-| presentationStyle | 'fullScreen' \| 'pageSheet' \| 'formSheet' \| 'overFullScreen' | 'overFullScreen' | 展示样式 |
-| transparent | boolean | true | 是否透明 |
-| closable | boolean | true | 是否显示关闭按钮 |
-| maskClosable | boolean | true | 点击遮罩是否关闭 |
-| hardwareBackPress | boolean | true | 是否响应硬件返回键 |
-| width | number \| string | '90%' | 宽度 |
-| height | number \| string | 'auto' | 高度 |
-| position | 'center' \| 'top' \| 'bottom' | 'center' | 位置 |
-| backgroundColor | string | - | 背景色 |
-| maskColor | string | - | 遮罩颜色 |
-
-### useModal Hook
-
-```tsx
-const modal = useModal(initialVisible?: boolean);
-
-// 返回值
-interface UseModalReturn {
-  visible: boolean;
-  show: () => void;
-  hide: () => void;
-  toggle: () => void;
+export default function SomeScreen() {
+  const nav = useComponentNavigation();
+  return (
+    <Button
+      title="打开模态"
+      onPress={() => nav.navigate('Modal', {
+        title: '来自页面',
+        position: 'top',
+        renderContent: () => null,
+      })}
+    />
+  );
 }
 ```
 
-### ModalService
+**参数类型（route.params）**
 
-```tsx
-// 显示模态框
-modalService.show(config: ModalConfig): Promise<any>
-
-// 隐藏模态框
-modalService.hide(key: string): void
-
-// 隐藏所有模态框
-modalService.hideAll(): void
-
-// 显示确认对话框
-modalService.confirm(config: ConfirmConfig): Promise<boolean>
-
-// 显示信息对话框
-modalService.info(config: InfoConfig): Promise<void>
-```
-
-## 主题定制
-
-Modal 组件支持主题定制，可以通过 ThemeProvider 设置全局主题：
-
-```tsx
-import { ThemeProvider } from '@your-org/rn-toolkit';
-
-const theme = {
-  colors: {
-    background: '#ffffff',
-    text: '#000000',
-    border: '#e0e0e0',
-    shadow: '#000000'
-  },
-  borderRadius: {
-    sm: 4,
-    md: 8,
-    lg: 12
-  }
+```ts:src%2Fcomponents%2Ffeedback%2FModal%2Ftypes.ts
+export type ModalParams = {
+  title?: string;
+  renderContent?: () => React.ReactNode;
+  direction?: 'left' | 'right' | 'top' | 'bottom' | 'fade' | 'none' | 'ios';
+  backgroundColor?: string;   // 屏幕背景色（可透明）
+  maskColor?: string;         // 遮罩色
+  position?: 'center' | 'top' | 'bottom';
+  width?: import('react-native').DimensionValue;   // 默认 '90%'
+  height?: import('react-native').DimensionValue;  // 不传或 'auto' 时按内容自适应
+  closable?: boolean;         // 是否显示右上角关闭按钮
+  maskClosable?: boolean;     // 点击遮罩是否关闭
 };
-
-<ThemeProvider theme={theme}>
-  <App />
-</ThemeProvider>
 ```
 
-## 注意事项
+**示例**
+- 居中模态，自定义内容：
 
-1. 确保在应用根组件中包含 `ModalProvider`
-2. 使用 ModalService 时，模态框会自动管理生命周期
-3. 在 Android 上，硬件返回键默认会关闭模态框
-4. 模态框支持嵌套使用，但建议避免过深的嵌套
+```tsx:src%2Fexamples%2FModalCenterExample.tsx
+navigationService.presentModal('Modal', {
+  title: '提示',
+  position: 'center',
+  width: '90%',
+  renderContent: () => (
+    <View>
+      <Text>这是自定义内容</Text>
+    </View>
+  ),
+});
+```
 
-## 更多示例
+- 顶部对齐，固定尺寸：
 
-查看以下文件获取更多使用示例：
-- [基础示例](./examples.md)
-- [高级示例](./advanced-examples.md)
-- [ModalService 示例](./service-examples.md)
+```tsx:src%2Fexamples%2FModalTopExample.tsx
+navigationService.presentModal('Modal', {
+  title: '顶部模态',
+  position: 'top',
+  width: 320,
+  height: 420,
+});
+```
+
+- 点击遮罩关闭与右上角关闭：
+
+```tsx:src%2Fexamples%2FModalClosableExample.tsx
+navigationService.presentModal('Modal', {
+  title: '可关闭',
+  closable: true,
+  maskClosable: true,
+});
+```
+
+**注意事项**
+- `height: 'auto'` 或未传时不强制注入高度，按内容自适应。
+- `width/height` 类型为 `DimensionValue`（数值或百分比字符串）。
+- `position` 会自动应用安全区边距：顶部/底部分别加上 `insets.top` / `insets.bottom`。
+- 透明背景建议通过 `options.cardStyle.backgroundColor = 'transparent'` 或传入 `backgroundColor: 'transparent'`。
+
+**主题与安全区**
+- 安全区：通过 `useSafeAreaInsets` 自动处理。
+- 主题：建议与自定义内容协同使用主题色与字体（参考全局主题文档）。
+
+**导出**
+- 在聚合导出处添加：
+
+```ts:src%2Fcomponents%2Ffeedback%2Findex.ts
+export * from './Modal';
+```
+
+**参考**
+- 组件实现：<mcfile name="Modal.tsx" path="/Users/gzh/Projects/framework/rn-toolkit/src/components/feedback/Modal/Modal.tsx"></mcfile>
+- 导航服务：<mcfile name="NavigationService.ts" path="/Users/gzh/Projects/framework/rn-toolkit/src/navigation/services/NavigationService.ts"></mcfile>
+- 根导航注册：<mcfile name="RootNavigator.tsx" path="/Users/gzh/Projects/framework/rn-toolkit/src/navigation/components/RootNavigator.tsx"></mcfile>
+- 组件符号：<mcsymbol name="Modal" filename="Modal.tsx" path="/Users/gzh/Projects/framework/rn-toolkit/src/components/feedback/Modal/Modal.tsx" startline="21" type="function"></mcsymbol>
