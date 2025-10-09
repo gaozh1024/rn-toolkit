@@ -73,3 +73,8 @@
 - 主题接入完整、亮/暗模式无视觉问题
 - 动画与转场统一，交互无抖动
 - API 简洁一致，文档与示例完善
+
+## Toast 轻提示
+- 全局触发、自动消失、可配置时长/位置。
+- 使用：在根部挂载 `ToastContainer`，调用 `ToastService.show({ message, duration, position })`。
+- 详见：`src/components/feedback/Toast/README.md`
