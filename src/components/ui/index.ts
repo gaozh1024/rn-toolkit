@@ -8,8 +8,4 @@ export * from './TextArea';
 export * from './Checkbox';
 export * from './Radio';
 export * from './Switch';
-
-// export * from './Card';
-// export * from './Badge';
-// export * from './Avatar';
-// ... 其他UI组件
+export * from './Badge';
