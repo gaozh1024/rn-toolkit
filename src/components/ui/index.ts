@@ -9,3 +9,4 @@ export * from './Checkbox';
 export * from './Radio';
 export * from './Switch';
 export * from './Badge';
+export * from './Chip';
