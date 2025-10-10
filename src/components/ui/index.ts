@@ -5,6 +5,7 @@ export * from './Input';
 export * from './PasswordInput';
 export * from './Text';
 export * from './TextArea';
+export * from './Checkbox';
 // export * from './Card';
 // export * from './Badge';
 // export * from './Avatar';
