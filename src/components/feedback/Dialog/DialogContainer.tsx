@@ -5,8 +5,8 @@ import { useFadeAnimation, useScaleAnimation } from '../../../animation';
 import { useTheme } from '../../../theme/hooks';
 
 export const DialogContainer: React.FC = () => {
-    const { theme } = useTheme?.() ?? { theme: { colors: { background: '#FFFFFF', textPrimary: '#333333' } } };
-    const colors = theme?.colors ?? { background: '#FFFFFF', textPrimary: '#333333' };
+    const { theme } = useTheme() ?? { theme: { colors: { background: '#FFFFFF', textPrimary: '#333333' } } };
+    const colors = theme.colors ?? { background: '#FFFFFF', textPrimary: '#333333' };
 
     // 渲染门控，保证淡出动画可见
     const [rendering, setRendering] = useState(false);

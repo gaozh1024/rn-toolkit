@@ -1,23 +1,27 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Animated, TouchableWithoutFeedback, StyleSheet } from 'react-native';
 import { LoadingOverlayService, LoadingOverlayState } from './LoadingOverlayService';
 import { useTheme } from '../../../theme/hooks';
+import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 export const LoadingOverlayContainer: React.FC = () => {
     const { theme } = useTheme?.() ?? { theme: { colors: { background: '#FFFFFF', textPrimary: '#333333' } } };
     const colors = theme?.colors ?? { background: '#FFFFFF', textPrimary: '#333333' };
 
     const [state, setState] = useState<LoadingOverlayState>({ visible: false });
-    const opacity = useRef(new Animated.Value(0)).current;
     const duration = state.visible && state.animationDuration != null ? state.animationDuration : 200;
+
+    // 改为 reanimated：遮罩淡入/淡出
+    const opacity = useSharedValue(0);
+    const maskStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
     useEffect(() => {
         const unsub = LoadingOverlayService.subscribe(next => {
             setState(next);
             if (next.visible) {
-                Animated.timing(opacity, { toValue: 1, duration: next.animationDuration ?? 200, useNativeDriver: true }).start();
+                opacity.value = withTiming(1, { duration: next.animationDuration ?? 200 });
             } else {
-                Animated.timing(opacity, { toValue: 0, duration, useNativeDriver: true }).start();
+                opacity.value = withTiming(0, { duration });
             }
         });
         return unsub;
@@ -37,8 +41,7 @@ export const LoadingOverlayContainer: React.FC = () => {
 
     return (
         <View style={styles.root} pointerEvents={pointerEventsRoot}>
-            {/* 遮罩层（允许淡入/淡出），半阻断模式下不拦截触摸 */}
-            <Animated.View style={[styles.mask, { backgroundColor: maskColor, opacity }]} pointerEvents={state.mode === 'blocking' ? 'auto' : 'none'}>
+            <Animated.View style={[styles.mask, { backgroundColor: maskColor }, maskStyle]} pointerEvents={state.mode === 'blocking' ? 'auto' : 'none'}>
                 {state.cancelable && state.mode === 'blocking' ? (
                     <TouchableWithoutFeedback onPress={handleCancel}>
                         <View style={styles.touchFill} />

@@ -1,8 +1,9 @@
-// Progress 组件 - 修复 resolveColor 类型签名与导入
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Animated, ViewStyle, Text, TextStyle } from 'react-native';
-import { useTheme, ColorTheme } from '../../../theme';
+import { View, Text, ViewStyle, TextStyle } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
+import { useTheme } from '../../../theme/hooks';
+import { ColorTheme } from '../../../theme/types';
 
 export type ProgressVariant = 'linear' | 'circular';
 export type ProgressColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'text' | 'subtext' | 'border' | 'divider' | string;
@@ -57,55 +58,57 @@ const Progress: React.FC<ProgressProps> = ({
   const activeColor = resolveColor(colors, color, colors.primary);
   const track = resolveColor(colors, trackColor, colors.divider);
 
+  // ===================== 环形 =====================
   if (variant === 'circular') {
     const diameter = typeof size === 'number' ? size : size === 'small' ? 24 : size === 'large' ? 56 : 40;
     const stroke = thickness ?? Math.max(2, Math.round(diameter * 0.08));
     const progress01 = clamp01(value);
 
-    const r = (diameter - stroke) / 2; // 圆半径
+    const r = (diameter - stroke) / 2; // 半径
     const cx = diameter / 2;
     const cy = diameter / 2;
     const circumference = 2 * Math.PI * r;
 
-    const spin = useRef(new Animated.Value(0)).current;
+    // 不确定态旋转动画
+    const spinSV = useSharedValue(0);
     useEffect(() => {
       if (indeterminate) {
-        spin.setValue(0);
-        Animated.loop(
-          Animated.timing(spin, { toValue: 1, duration: 1500, useNativeDriver: true })
-        ).start();
+        spinSV.value = 0;
+        spinSV.value = withRepeat(withTiming(1, { duration: 1500 }), -1, false);
+      } else {
+        // 停止在初始位置
+        spinSV.value = 0;
       }
-    }, [indeterminate, spin]);
+    }, [indeterminate]);
 
-    const rotation = indeterminate
-      ? spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] })
-      : '0deg';
+    const rotationStyle = useAnimatedStyle(() => ({
+      transform: [{ rotate: `${indeterminate ? spinSV.value * 360 : 0}deg` }],
+    }));
 
-    const percent = Math.round(((indeterminate ? progress01 : progress01) * 100));
+    const percent = Math.round(progress01 * 100);
     const defaultTextStyle: TextStyle = {
       color: activeColor,
       fontSize: Math.round(diameter * 0.28),
       fontWeight: '500',
     };
+
     const labelNode: React.ReactNode = (label != null || showLabel)
       ? (
-          <View
-            style={{ position: 'absolute', width: diameter, height: diameter, alignItems: 'center', justifyContent: 'center' }}
-          >
-            {label != null ? (
-              typeof label === 'string' || typeof label === 'number'
-                ? <Text style={[defaultTextStyle, textStyle]}>{label}</Text>
-                : label
-            ) : (
-              <Text style={[defaultTextStyle, textStyle]}>{`${percent}%`}</Text>
-            )}
-          </View>
-        )
+        <View style={{ position: 'absolute', width: diameter, height: diameter, alignItems: 'center', justifyContent: 'center' }}>
+          {label != null ? (
+            typeof label === 'string' || typeof label === 'number'
+              ? <Text style={[defaultTextStyle, textStyle]}>{label}</Text>
+              : label
+          ) : (
+            <Text style={[defaultTextStyle, textStyle]}>{`${percent}%`}</Text>
+          )}
+        </View>
+      )
       : null;
 
     return (
       <View style={[{ width: diameter, height: diameter, justifyContent: 'center', alignItems: 'center' }, style]} testID={testID}>
-        <Animated.View style={{ width: diameter, height: diameter, transform: [{ rotate: rotation }] }}>
+        <Animated.View style={[{ width: diameter, height: diameter }, rotationStyle]}>
           <Svg width={diameter} height={diameter}>
             {/* 轨道 */}
             <Circle cx={cx} cy={cy} r={r} stroke={track} strokeWidth={stroke} fill="none" />
@@ -131,50 +134,47 @@ const Progress: React.FC<ProgressProps> = ({
     );
   }
 
-  // Linear
+  // ===================== 线性 =====================
   const barHeight = thickness ?? (typeof size === 'number' ? size : size === 'small' ? 4 : size === 'large' ? 10 : 6);
   const radius = barHeight / 2;
   const [containerWidth, setContainerWidth] = useState(0);
   const progress01 = clamp01(value);
 
-  const anim = useRef(new Animated.Value(progress01)).current;
+  const containerStyleLinear: ViewStyle = useMemo(() => ({
+    height: barHeight,
+    backgroundColor: track,
+    borderRadius: radius,
+    overflow: 'hidden',
+  }), [barHeight, track, radius]);
+
+  const barStyle: ViewStyle = useMemo(() => ({
+    height: barHeight,
+    backgroundColor: activeColor,
+    borderRadius: radius,
+  }), [barHeight, activeColor, radius]);
+
+  // 不确定态：横向滑动动画
+  const animSV = useSharedValue(0);
   useEffect(() => {
     if (indeterminate) {
-      anim.setValue(0);
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, { toValue: 1, duration: 1200, useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 0, duration: 0, useNativeDriver: true }),
-        ])
-      ).start();
+      animSV.value = 0;
+      animSV.value = withRepeat(withTiming(1, { duration: 1200 }), -1, false);
     } else {
-      Animated.timing(anim, { toValue: progress01, duration: 180, useNativeDriver: false }).start();
+      animSV.value = progress01; // 供需要时扩展为平滑进度动画
     }
-  }, [indeterminate, progress01, anim]);
+  }, [indeterminate, progress01]);
 
-  const indetTranslateX = useMemo(() => (
-    anim.interpolate({ inputRange: [0, 1], outputRange: [-containerWidth * 0.6, containerWidth] })
-  ), [anim, containerWidth]);
-
-  const containerStyleLinear: ViewStyle = {
-    height: barHeight,
-    borderRadius: radius,
-    backgroundColor: track,
-    overflow: 'hidden',
-    justifyContent: 'center',
-  };
-
-  const barStyle: ViewStyle = {
-    position: 'absolute',
-    height: '100%',
-    borderRadius: radius,
-    backgroundColor: activeColor,
-  };
+  const indeterminateStyle = useAnimatedStyle(() => {
+    const barW = containerWidth * 0.4; // 40% 宽的滑动块
+    const maxX = Math.max(0, containerWidth - barW);
+    const x = Math.min(maxX, animSV.value * maxX);
+    return { transform: [{ translateX: x }] };
+  }, [containerWidth]);
 
   return (
     <View style={[containerStyleLinear, style]} onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)} testID={testID}>
       {indeterminate ? (
-        <Animated.View style={[barStyle, { width: containerWidth * 0.4, transform: [{ translateX: indetTranslateX }] }]} />
+        <Animated.View style={[barStyle, { width: containerWidth * 0.4 }, indeterminateStyle]} />
       ) : (
         <View style={[barStyle, { width: containerWidth * progress01 }]} />
       )}
@@ -183,3 +183,4 @@ const Progress: React.FC<ProgressProps> = ({
 };
 
 export default Progress;
+export { Progress };
