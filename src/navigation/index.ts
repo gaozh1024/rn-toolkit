@@ -9,6 +9,7 @@ export * from './hooks/useNavigation';
 export * from './components/CustomTabButton';
 export * from './components/TabNavigator';
 export * from './components/NavigationContainer';
+export * from './components/DrawerLayout';
 
 // 导出服务
 export * from './services/NavigationService';

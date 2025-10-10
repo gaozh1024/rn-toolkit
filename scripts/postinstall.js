@@ -30,6 +30,9 @@ const REQUIRED_DEPS = [
   { name: 'react-native-screens', version: '4.16.0' },
   { name: 'react-native-svg', version: '15.14.0' },
   { name: 'react-native-vector-icons', version: '10.3.0' },
+  { name: 'react-native-drawer-layout', version: '4.1.13' },
+  { name: 'react-native-reanimated', version: '4.1.3' },
+  { name: 'react-native-worklets', version: '0.6.1' },
 ];
 
 function readJSON(filePath) {

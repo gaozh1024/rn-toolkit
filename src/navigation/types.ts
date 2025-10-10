@@ -48,6 +48,20 @@ export interface CustomTabButtonProps {
   children?: React.ReactNode;
 }
 
+export interface DrawerConfig {
+  /** 抽屉是否默认打开 */
+  open?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
+  width?: number;
+  /** 抽屉内容：组件类型或节点 */
+  content: ComponentType<any> | React.ReactNode;
+  /** 抽屉样式：'front' | 'back' | 'slide'（库支持范围内可选） */
+  drawerType?: 'front' | 'back' | 'slide';
+  /** 边缘手势宽度 */
+  edgeWidth?: number;
+}
+
 export interface NavigatorConfig {
   tabs: TabConfig[];
   stacks?: StackConfig[];
@@ -59,6 +73,9 @@ export interface NavigatorConfig {
   inactiveColor?: string;
   showLabels?: boolean;
   transitionMode?: TransitionMode; // 全局过渡动画模式
+  /** 左/右抽屉配置（可选） */
+  leftDrawer?: DrawerConfig;
+  rightDrawer?: DrawerConfig;
 }
 
 export type NavigationType = 'tab' | 'stack' | 'modal';

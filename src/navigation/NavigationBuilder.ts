@@ -1,5 +1,5 @@
 import React from 'react';
-import { TabConfig, NavigatorConfig, StackConfig, TransitionMode } from './types';
+import { TabConfig, NavigatorConfig, StackConfig, TransitionMode, DrawerConfig } from './types';
 import { TabNavigator } from './components/TabNavigator';
 import { RootNavigator } from './components/RootNavigator';
 
@@ -130,6 +130,21 @@ export class NavigationBuilder {
    */
   setShowLabels(show: boolean): NavigationBuilder {
     this.config.showLabels = show;
+    return this;
+  }
+
+  /**
+   * 设置左侧抽屉
+   */
+  setLeftDrawer(drawer: DrawerConfig): NavigationBuilder {
+    this.config.leftDrawer = drawer;
+    return this;
+  }
+  /**
+   * 设置右侧抽屉
+   */
+  setRightDrawer(drawer: DrawerConfig): NavigationBuilder {
+    this.config.rightDrawer = drawer;
     return this;
   }
 

@@ -275,3 +275,41 @@ const NavigationComponent = createNavigation()
 ## 📄 许可证
 
 MIT License
+
+
+# Multiple Drawers（左右抽屉）
+
+## 安装依赖
+```bash
+yarn add react-native-drawer-layout
+```
+
+## 用法示例
+```tsx
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import createNavigation from '@gaozh1024/rn-toolkit/src/navigation';
+
+const LeftMenu = () => <YourLeftMenu />;
+const RightPanel = () => <YourRightPanel />;
+
+const App = () => {
+  const NavigationComponent = createNavigation()
+    .addTabs([
+      { name: 'Home', component: HomeScreen, label: '首页' },
+      { name: 'Profile', component: ProfileScreen, label: '我的' },
+    ])
+    .setLeftDrawer({ content: LeftMenu, width: 300 })
+    .setRightDrawer({ content: RightPanel, width: 320 })
+    .build();
+
+  return (
+    <NavigationContainer>
+      <NavigationComponent />
+    </NavigationContainer>
+  );
+};
+```
+
+- `content` 可传组件或节点；`width` 为抽屉宽度；可选 `drawerType`、`edgeWidth`。
+- 有抽屉配置时，整个导航将被左右抽屉包裹；无配置则不影响现有导航。
