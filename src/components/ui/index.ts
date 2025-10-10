@@ -13,3 +13,4 @@ export * from './Chip';
 export * from './Avatar';
 export * from './AvatarGroup';
 export * from './Divider';
+export * from './Progress';
