@@ -10,3 +10,5 @@ export * from './Radio';
 export * from './Switch';
 export * from './Badge';
 export * from './Chip';
+export * from './Avatar';
+export * from './AvatarGroup';
