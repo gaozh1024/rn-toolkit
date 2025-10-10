@@ -3,39 +3,39 @@ import { TextStyle, ViewStyle } from 'react-native';
 // 颜色主题
 export interface ColorTheme {
   // 主色调
-  primary: string;
-  primaryLight: string;
-  primaryDark: string;
+  primary: string; // 品牌主色：主按钮、强调元素、链接高亮
+  primaryLight: string; // 主色浅色：悬浮/弱强调/背景填充的浅色变体
+  primaryDark: string; // 主色深色：按压/选中/活跃状态的深色变体
 
   // 辅助色
-  secondary: string;
-  secondaryLight: string;
-  secondaryDark: string;
+  secondary: string; // 辅助主色：次要按钮、标签、图标强调
+  secondaryLight: string; // 辅助浅色：悬浮/弱强调的浅色变体
+  secondaryDark: string; // 辅助深色：按压/选中/活跃状态的深色变体
 
   // 背景色
-  background: string;
-  surface: string;
-  card: string;
+  background: string; // 页面背景：整体画布背景
+  surface: string; // 表面背景：列表/容器/模块的承载背景
+  card: string; // 卡片背景：卡片/浮层等独立块的背景
 
   // 文本色
-  text: string;
-  subtext: string;
-  textSecondary: string;
-  textDisabled: string;
+  text: string; // 主文本：正文/标题的高对比文本颜色
+  subtext: string; // 次级说明：比主文本更轻的说明/提示文字
+  textSecondary: string; // 次要文本：副标题/辅助信息（与 subtext 接近，可做区分层级）
+  textDisabled: string; // 禁用文本：不可用状态的文字颜色
 
   // 状态色
-  success: string;
-  warning: string;
-  error: string;
-  info: string;
+  success: string; // 成功态：完成/通过/正确
+  warning: string; // 警告态：提醒/风险/注意
+  error: string; // 错误态：失败/异常/阻断
+  info: string; // 信息态：通知/一般提示
 
   // 边框和分割线
-  border: string;
-  divider: string;
+  border: string; // 边框色：输入框/卡片等边界线
+  divider: string; // 分割线：模块/列表项之间的分隔
 
   // 透明度变体
-  overlay: string;
-  shadow: string;
+  overlay: string; // 遮罩色：弹层/模态的半透明遮罩（含透明度）
+  shadow: string; // 阴影色：阴影/投影的基色（含透明度）
 }
 
 // 导航主题
