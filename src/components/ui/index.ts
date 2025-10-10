@@ -7,6 +7,7 @@ export * from './Text';
 export * from './TextArea';
 export * from './Checkbox';
 export * from './Radio';
+export * from './Switch';
 
 // export * from './Card';
 // export * from './Badge';
