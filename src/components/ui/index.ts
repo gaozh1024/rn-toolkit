@@ -15,3 +15,4 @@ export * from './AvatarGroup';
 export * from './Divider';
 export * from './Spinner';
 export * from './Progress';
+export * from './SegmentedMenu';
