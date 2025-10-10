@@ -44,6 +44,7 @@
     "react-native-reanimated": ">=3.0.0",
     "react-native-safe-area-context": ">=4.0.0",
     "react-native-screens": ">=3.0.0",
+    "react-native-svg": "^15.14.0",
     "react-native-vector-icons": "^10.3.0"
   },
   "peerDependenciesMeta": {
@@ -64,6 +65,7 @@
     "react-native-mmkv": "^3.3.3",
     "react-native-safe-area-context": "^4.14.1",
     "react-native-screens": "^3.37.0",
+    "react-native-svg": "^15.14.0",
     "rimraf": "^5.0.10",
     "ts-loader": "^9.5.4",
     "typescript": "^5.3.3",

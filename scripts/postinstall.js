@@ -28,6 +28,7 @@ const REQUIRED_DEPS = [
   { name: 'react-native-mmkv', version: '3.3.3' },
   { name: 'react-native-safe-area-context', version: '5.6.1' },
   { name: 'react-native-screens', version: '4.16.0' },
+  { name: 'react-native-svg', version: '15.14.0' },
   { name: 'react-native-vector-icons', version: '10.3.0' },
 ];
 

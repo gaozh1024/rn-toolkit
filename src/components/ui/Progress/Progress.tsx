@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Animated, ViewStyle, Text, TextStyle } from 'react-native';
 import { useTheme, ColorTheme } from '../../../theme';
+import Svg, { Circle } from 'react-native-svg';
 
 export type ProgressVariant = 'linear' | 'circular';
 export type ProgressColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'text' | 'subtext' | 'border' | 'divider' | string;
@@ -59,89 +60,72 @@ const Progress: React.FC<ProgressProps> = ({
   if (variant === 'circular') {
     const diameter = typeof size === 'number' ? size : size === 'small' ? 24 : size === 'large' ? 56 : 40;
     const stroke = thickness ?? Math.max(2, Math.round(diameter * 0.08));
-
     const progress01 = clamp01(value);
-    const spin = useRef(new Animated.Value(0)).current;
-    const [phase, setPhase] = useState(progress01);
 
+    const r = (diameter - stroke) / 2; // 圆半径
+    const cx = diameter / 2;
+    const cy = diameter / 2;
+    const circumference = 2 * Math.PI * r;
+
+    const spin = useRef(new Animated.Value(0)).current;
     useEffect(() => {
       if (indeterminate) {
         spin.setValue(0);
-        const anim = Animated.loop(
-          Animated.timing(spin, { toValue: 1, duration: 1500, useNativeDriver: false })
-        );
-        const id = spin.addListener(({ value }) => setPhase(value));
-        anim.start();
-        return () => { spin.removeListener(id); };
-      } else {
-        setPhase(progress01);
+        Animated.loop(
+          Animated.timing(spin, { toValue: 1, duration: 1500, useNativeDriver: true })
+        ).start();
       }
-    }, [indeterminate, progress01, spin]);
+    }, [indeterminate, spin]);
 
-    const angle = (indeterminate ? phase : progress01) * 360;
-    const rightDeg = Math.min(angle, 180);
-    const leftDeg = Math.max(angle - 180, 0);
+    const rotation = indeterminate
+      ? spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] })
+      : '0deg';
 
-    const containerStyle: ViewStyle = {
-      width: diameter,
-      height: diameter,
-      justifyContent: 'center',
-      alignItems: 'center',
+    const percent = Math.round(((indeterminate ? progress01 : progress01) * 100));
+    const defaultTextStyle: TextStyle = {
+      color: activeColor,
+      fontSize: Math.round(diameter * 0.28),
+      fontWeight: '500',
     };
-
-    const ringBase: ViewStyle = {
-      position: 'absolute',
-      width: diameter,
-      height: diameter,
-      borderRadius: diameter / 2,
-      borderWidth: stroke,
-      borderColor: track,
-    };
-
-    const halfWrapCommon: ViewStyle = { position: 'absolute', top: 0, height: diameter, overflow: 'hidden' };
-    const rightHalfWrap: ViewStyle = { ...halfWrapCommon, left: 0, width: diameter / 2 };
-    const leftHalfWrap: ViewStyle = { ...halfWrapCommon, right: 0, width: diameter / 2 };
-
-    const progressCircleCommon: ViewStyle = {
-      position: 'absolute',
-      width: diameter,
-      height: diameter,
-      borderRadius: diameter / 2,
-      borderWidth: stroke,
-      borderColor: activeColor,
-    };
-
-    const rightCircleStyle: ViewStyle = {
-      ...progressCircleCommon,
-      left: 0,
-      transform: [{ rotateZ: `${rightDeg}deg` }],
-    };
-
-    const leftCircleStyle: ViewStyle = {
-      ...progressCircleCommon,
-      left: -diameter / 2,
-      transform: [{ rotateZ: `${leftDeg}deg` }],
-    };
-
-    const labelNode = showLabel ? (
-      typeof label === 'string' || label == null ? (
-        <Text style={[{ color: colors.text, fontSize: 12 }, textStyle]}>{
-          label ?? `${Math.round(progress01 * 100)}%`
-        }</Text>
-      ) : (
-        label
-      )
-    ) : null;
+    const labelNode: React.ReactNode = (label != null || showLabel)
+      ? (
+          <View
+            style={{ position: 'absolute', width: diameter, height: diameter, alignItems: 'center', justifyContent: 'center' }}
+          >
+            {label != null ? (
+              typeof label === 'string' || typeof label === 'number'
+                ? <Text style={[defaultTextStyle, textStyle]}>{label}</Text>
+                : label
+            ) : (
+              <Text style={[defaultTextStyle, textStyle]}>{`${percent}%`}</Text>
+            )}
+          </View>
+        )
+      : null;
 
     return (
-      <View style={[containerStyle, style]} testID={testID}>
-        <View style={ringBase} />
-        <View style={rightHalfWrap}>
-          <View style={rightCircleStyle} />
-        </View>
-        <View style={leftHalfWrap}>
-          <View style={leftCircleStyle} />
-        </View>
+      <View style={[{ width: diameter, height: diameter, justifyContent: 'center', alignItems: 'center' }, style]} testID={testID}>
+        <Animated.View style={{ width: diameter, height: diameter, transform: [{ rotate: rotation }] }}>
+          <Svg width={diameter} height={diameter}>
+            {/* 轨道 */}
+            <Circle cx={cx} cy={cy} r={r} stroke={track} strokeWidth={stroke} fill="none" />
+            {/* 进度圆弧（从正上方开始） */}
+            <Circle
+              cx={cx}
+              cy={cy}
+              r={r}
+              stroke={activeColor}
+              strokeWidth={stroke}
+              fill="none"
+              strokeDasharray={`${circumference} ${circumference}`}
+              strokeDashoffset={indeterminate ? circumference * 0.25 : circumference * (1 - progress01)}
+              strokeLinecap="round"
+              rotation={-90}
+              originX={cx}
+              originY={cy}
+            />
+          </Svg>
+        </Animated.View>
         {labelNode}
       </View>
     );
