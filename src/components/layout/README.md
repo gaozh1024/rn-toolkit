@@ -40,6 +40,9 @@ export default function LayoutExample() {
 以下链接指向本目录内的各组件详细 README 使用说明：
 
 - [Card 卡片](./Card/README.md)
+- [Header 头部](./Header/README.md)
+- [Page 页面容器](./Page/README.md)
+- [GradientBackground 渐变背景](./GradientBackground/README.md)
 
 > 目前以下组件尚未提供独立 README：`Container`、`Header`、`Page`、`RefreshableList`、`SafeAreaView`、`Screen`、`Section`。如需补充我可以为你生成对应文档。
 

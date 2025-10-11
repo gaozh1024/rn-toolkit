@@ -6,6 +6,7 @@ import { Header } from '../Header';
 import { useTheme } from '../../../theme/hooks';
 import { Edge } from 'react-native-safe-area-context';
 import type { HeaderProps } from '../Header/Header';
+import { GradientBackground } from '../GradientBackground/GradientBackground';
 
 export interface PageProps {
     children: React.ReactNode;
@@ -31,6 +32,17 @@ export interface PageProps {
     statusBarBackgroundColor?: string;
 
     testID?: string;
+    // 渐变背景（可选）
+    gradientEnabled?: boolean;
+    gradientVariant?: 'linear' | 'radial';
+    gradientColors?: string[];
+    gradientLocations?: number[];
+    gradientAngle?: number;
+    gradientStart?: { x: number; y: number };
+    gradientEnd?: { x: number; y: number };
+    gradientCenter?: { x: number; y: number };
+    gradientRadius?: number;
+    gradientOpacity?: number;
 }
 
 export const Page: React.FC<PageProps> = ({
@@ -46,39 +58,97 @@ export const Page: React.FC<PageProps> = ({
     statusBarStyle,
     statusBarBackgroundColor,
     testID,
+    // 新增：渐变背景相关
+    gradientEnabled = false,
+    gradientVariant = 'linear',
+    gradientColors,
+    gradientLocations,
+    gradientAngle,
+    gradientStart,
+    gradientEnd,
+    gradientCenter = { x: 0.5, y: 0.5 },
+    gradientRadius = 0.5,
+    gradientOpacity = 1,
 }) => {
     const { theme, isDark } = useTheme();
     const colors = theme.colors;
     const autoStatusBarStyle = statusBarStyle || (isDark ? 'light-content' : 'dark-content');
-    const autoStatusBarBgColor = statusBarBackgroundColor || colors.background;
+    const autoStatusBarBgColor = gradientEnabled ? 'transparent' : (statusBarBackgroundColor || colors.background);
 
-    // SafeAreaView background applied from theme colors.background or provided backgroundColor
-    return (
-        <SafeAreaView
-            edges={safeAreaEdges}
-            style={[{ backgroundColor: backgroundColor || colors.background }, style]}
-            testID={testID}
-        >
-            <StatusBar
-                barStyle={autoStatusBarStyle}
-                backgroundColor={autoStatusBarBgColor}
-                translucent={false}
-            />
+    // 开启渐变时让内容容器透明，避免盖住渐变
+    const bgColor = gradientEnabled ? 'transparent' : (backgroundColor || colors.background);
 
-            {/* 顶部公共Header（默认显示） */}
-            {headerShown && <Header {...headerProps} />}
+    const gradientPalette = (gradientColors && gradientColors.length > 0)
+        ? gradientColors
+        : [colors.primary, colors.secondary];
 
-            {/* 页面主体内容（可滚动/非滚动） */}
-            <Container
-                flex={1}
-                padding={padding}
-                scrollable={scrollable}
-                style={contentStyle}
-                backgroundColor={backgroundColor || colors.background}
+    // 普通背景（不启用渐变）
+    if (!gradientEnabled) {
+        return (
+            <SafeAreaView
+                edges={safeAreaEdges}
+                style={[{ backgroundColor: bgColor }, style]}
+                testID={testID}
             >
-                {children}
-            </Container>
-        </SafeAreaView>
+                <StatusBar
+                    barStyle={autoStatusBarStyle}
+                    backgroundColor={autoStatusBarBgColor}
+                    translucent={false}
+                />
+
+                {headerShown && <Header {...headerProps} />}
+
+                <Container
+                    flex={1}
+                    padding={padding}
+                    scrollable={scrollable}
+                    style={contentStyle}
+                    backgroundColor={bgColor}
+                >
+                    {children}
+                </Container>
+            </SafeAreaView>
+        );
+    }
+
+    // 开启渐变：在 SafeAreaView 外层包裹全屏渐变背景
+    return (
+        <GradientBackground
+            variant={gradientVariant}
+            colors={gradientPalette}
+            locations={gradientLocations}
+            angle={gradientAngle}
+            start={gradientStart}
+            end={gradientEnd}
+            center={gradientCenter}
+            radius={gradientRadius}
+            opacity={gradientOpacity}
+            style={{ flex: 1 }}
+        >
+            <SafeAreaView
+                edges={safeAreaEdges}
+                style={[{ backgroundColor: bgColor }, style]}
+                testID={testID}
+            >
+                <StatusBar
+                    barStyle={autoStatusBarStyle}
+                    backgroundColor={autoStatusBarBgColor}
+                    translucent={false}
+                />
+
+                {headerShown && <Header {...headerProps} />}
+
+                <Container
+                    flex={1}
+                    padding={padding}
+                    scrollable={scrollable}
+                    style={contentStyle}
+                    backgroundColor={bgColor}
+                >
+                    {children}
+                </Container>
+            </SafeAreaView>
+        </GradientBackground>
     );
 };
 

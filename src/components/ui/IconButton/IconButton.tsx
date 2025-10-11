@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, ViewStyle, Insets } from 'react-native';
+import { Pressable, ViewStyle, Insets, StyleProp, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Icon, IconType } from '../Icon';
 import { useTheme, useThemeColors } from '../../../theme';
+import { GradientBackground } from '../../layout/GradientBackground';
 
 export interface IconButtonProps {
   name: string;
@@ -15,8 +16,20 @@ export interface IconButtonProps {
   hitSlop?: Insets;
   accessibilityLabel?: string;
   testID?: string;
+  // 渐变相关（默认与主题 primary→secondary）
+  gradientEnabled?: boolean;
+  gradientVariant?: 'linear' | 'radial';
+  gradientColors?: string[];
+  gradientLocations?: number[];
+  gradientAngle?: number;
+  gradientStart?: { x: number; y: number };
+  gradientEnd?: { x: number; y: number };
+  gradientCenter?: { x: number; y: number };
+  gradientRadius?: number;
+  gradientOpacity?: number;
 }
 
+// IconButton 组件（起始于第 20 行）
 const IconButton: React.FC<IconButtonProps> = ({
   name,
   type = 'ionicons',
@@ -29,9 +42,26 @@ const IconButton: React.FC<IconButtonProps> = ({
   hitSlop,
   accessibilityLabel,
   testID,
+  // 渐变相关（默认与主题 primary→secondary）
+  gradientEnabled = false,
+  gradientVariant = 'linear',
+  gradientColors,
+  gradientLocations,
+  gradientAngle,
+  gradientStart,
+  gradientEnd,
+  gradientCenter = { x: 0.5, y: 0.5 },
+  gradientRadius = 0.5,
+  gradientOpacity = 1,
 }) => {
   const { theme } = useTheme();
   const colors = useThemeColors();
+
+  const [containerSize, setContainerSize] = React.useState<{ width: number; height: number } | null>(null);
+  const handleLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setContainerSize({ width, height });
+  };
 
   const getContainerStyle = (): ViewStyle => {
     const base: ViewStyle = {
@@ -69,7 +99,28 @@ const IconButton: React.FC<IconButtonProps> = ({
     }
   };
 
-  const containerStyle = getContainerStyle();
+  // 启用渐变：背景透明 + 相对定位 + 溢出裁剪
+  const gradientEnhancer: ViewStyle = { backgroundColor: 'transparent', position: 'relative', overflow: 'hidden' };
+  const containerBaseStyle = getContainerStyle();
+  const containerStyle = gradientEnabled ? { ...containerBaseStyle, ...gradientEnhancer } : containerBaseStyle;
+  const finalStyle: StyleProp<ViewStyle> = [containerStyle, style];
+
+  // 扁平化获取有效圆角
+  const flatFinal = StyleSheet.flatten(finalStyle) as ViewStyle | undefined;
+  const effectiveRadius =
+    typeof flatFinal?.borderRadius === 'number'
+      ? (flatFinal.borderRadius as number)
+      : (() => {
+          const corners = [
+            flatFinal?.borderTopLeftRadius,
+            flatFinal?.borderTopRightRadius,
+            flatFinal?.borderBottomLeftRadius,
+            flatFinal?.borderBottomRightRadius,
+          ].filter((v) => typeof v === 'number') as number[];
+          return corners.length ? Math.max(...corners) : (theme.borderRadius?.md ?? 8);
+        })();
+
+  const gradientPalette = (gradientColors && gradientColors.length > 0) ? gradientColors : [colors.primary, colors.secondary];
 
   return (
     <Pressable
@@ -80,8 +131,24 @@ const IconButton: React.FC<IconButtonProps> = ({
       disabled={disabled}
       onPress={disabled ? undefined : onPress}
       hitSlop={hitSlop}
-      style={[containerStyle, style]}
+      onLayout={handleLayout}
+      style={finalStyle as StyleProp<ViewStyle>}
     >
+      {gradientEnabled && (
+        <GradientBackground
+          variant={gradientVariant}
+          colors={gradientPalette}
+          locations={gradientLocations}
+          angle={gradientAngle}
+          start={gradientStart}
+          end={gradientEnd}
+          center={gradientCenter}
+          radius={gradientRadius}
+          opacity={gradientOpacity}
+          borderRadius={effectiveRadius}
+          style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
+        />
+      )}
       <Icon name={name} type={type} size={size} color={disabled ? 'textDisabled' : color} />
     </Pressable>
   );

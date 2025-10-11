@@ -123,6 +123,7 @@ function ColorExample() {
 ### 主题颜色
 
 支持以下主题颜色键：
+
 - `primary` - 主色（默认）
 - `secondary` - 辅助色
 - `success` - 成功色
@@ -352,4 +353,29 @@ const styles = StyleSheet.create({
 });
 
 export default ButtonDemo;
+```
+
+# Button 渐变背景
+
+- 通过以下属性启用按钮渐变背景：
+  - `gradientEnabled?: boolean`
+  - `gradientVariant?: 'linear' | 'radial'`
+  - `gradientColors?: string[]`
+  - `gradientLocations?: number[]`
+  - `gradientAngle?: number`
+  - `gradientStart?: { x: number; y: number }`
+  - `gradientEnd?: { x: number; y: number }`
+  - `gradientCenter?: { x: number; y: number }`
+  - `gradientRadius?: number`
+  - `gradientOpacity?: number`
+
+```tsx
+<Button
+  title="渐变按钮"
+  variant="primary"
+  gradientEnabled
+  gradientVariant="linear"
+  gradientColors={["#7F00FF", "#E100FF"]}
+  gradientAngle={45}
+/>
 ```

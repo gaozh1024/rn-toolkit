@@ -1,10 +1,11 @@
+// 文件：GradientBackground.tsx，组件：GradientBackground
 import React from 'react';
-import { View, ViewStyle, StyleProp, DimensionValue } from 'react-native';
+import { View, ViewStyle, StyleProp, DimensionValue, StyleSheet } from 'react-native';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect, RadialGradient as SvgRadialGradient } from 'react-native-svg';
 import { useThemeColors } from '../../../theme/hooks';
 
 export type GradientVariant = 'linear' | 'radial';
- 
+
 export interface GradientBackgroundProps {
     children?: React.ReactNode;
     variant?: GradientVariant;
@@ -68,28 +69,34 @@ export const GradientBackground: React.FC<GradientBackgroundProps> = ({
     const containerStyle: ViewStyle = {
         overflow: borderRadius ? 'hidden' : 'visible',
         borderRadius: borderRadius,
+        position: 'relative', // 关键：为绝对定位背景提供参照
     };
 
     return (
         <View style={[{ width, height }, containerStyle, style]} testID={testID}>
-            <Svg width="100%" height="100%" preserveAspectRatio="none">
-                <Defs>
-                    {variant === 'linear' ? (
-                        <SvgLinearGradient id="bgGradient" x1={s.x} y1={s.y} x2={e.x} y2={e.y}>
-                            {stops.map((s, i) => (
-                                <Stop key={i} offset={s.offset} stopColor={s.color} stopOpacity={opacity} />
-                            ))}
-                        </SvgLinearGradient>
-                    ) : (
-                        <SvgRadialGradient id="bgGradient" cx={center.x} cy={center.y} r={radius}>
-                            {stops.map((s, i) => (
-                                <Stop key={i} offset={s.offset} stopColor={s.color} stopOpacity={opacity} />
-                            ))}
-                        </SvgRadialGradient>
-                    )}
-                </Defs>
-                <Rect x="0" y="0" width="100%" height="100%" fill="url(#bgGradient)" />
-            </Svg>
+            {/* 绝对定位的渐变背景层，不遮挡内容与触控 */}
+            <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                <Svg width="100%" height="100%" preserveAspectRatio="none">
+                    <Defs>
+                        {variant === 'linear' ? (
+                            <SvgLinearGradient id="bgGradient" x1={s.x} y1={s.y} x2={e.x} y2={e.y}>
+                                {stops.map((s, i) => (
+                                    <Stop key={i} offset={s.offset} stopColor={s.color} stopOpacity={opacity} />
+                                ))}
+                            </SvgLinearGradient>
+                        ) : (
+                            <SvgRadialGradient id="bgGradient" cx={center.x} cy={center.y} r={radius}>
+                                {stops.map((s, i) => (
+                                    <Stop key={i} offset={s.offset} stopColor={s.color} stopOpacity={opacity} />
+                                ))}
+                            </SvgRadialGradient>
+                        )}
+                    </Defs>
+                    <Rect x="0" y="0" width="100%" height="100%" fill="url(#bgGradient)" />
+                </Svg>
+            </View>
+
+            {/* 内容将位于渐变之上 */}
             {children}
         </View>
     );

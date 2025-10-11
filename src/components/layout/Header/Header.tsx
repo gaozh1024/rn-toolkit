@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Pressable, ViewStyle } from 'react-native';
-import { useTheme, useLayoutStyles, useSpacingStyles } from '../../../theme';
+import { useTheme, useSpacingStyles } from '../../../theme';
 import { useNav } from '../../../navigation/hooks/useNavigation';
 import { useSafeAreaInsets } from '../SafeAreaView';
 import { Icon } from '../../ui/Icon';
@@ -22,33 +22,38 @@ export interface HeaderAction {
     accessibilityLabel?: string;
 }
 
+import { GradientBackground } from '../GradientBackground/GradientBackground';
+
 export interface HeaderProps {
     title?: string | React.ReactNode;
-
     // 左侧返回按钮
-    backVisible?: boolean;            // 是否展示返回按钮（默认 true，当提供 onBack 时自动展示）
-    onBack?: () => void;              // 返回事件
-    backIconName?: string;            // 返回图标名，默认 chevron-back
-    backIconColor?: string;           // 返回图标颜色（主题键或颜色值）
-
+    backVisible?: boolean;
+    onBack?: () => void;
+    backIconName?: string;
+    backIconColor?: string;
     // 右侧动作区（最多 3 个）
     actions?: HeaderAction[];
-
     // 外观与皮肤
-    backgroundColor?: string;         // 覆盖背景色（默认使用 theme.navigation.backgroundColor）
-    borderBottom?: boolean;           // 是否显示底部分割线（默认 true）
-    titleColor?: string;              // 标题颜色（默认使用 theme.navigation.titleColor）
-    height?: number;                  // Header 内容高度（不含安全区，默认 theme.navigation.height）
-
+    backgroundColor?: string;
+    borderBottom?: boolean;
+    titleColor?: string;
+    height?: number;
     // 其他
     testID?: string;
+    // 渐变（可选）
+    gradientEnabled?: boolean;
+    gradientVariant?: 'linear' | 'radial';
+    gradientColors?: string[];
+    gradientLocations?: number[];
+    gradientAngle?: number;
+    gradientStart?: { x: number; y: number };
+    gradientEnd?: { x: number; y: number };
+    gradientCenter?: { x: number; y: number };
+    gradientRadius?: number;
+    gradientOpacity?: number;
 }
 
-/**
- * 公共 Header 组件
- * - 左侧返回，居中标题，右侧最多 3 个动作按钮
- * - 使用主题的 navigation 配置（高度、颜色等）
- */
+// Header 组件布局修复：让渐变覆盖安全区+bar
 export const Header: React.FC<HeaderProps> = ({
     title,
     backVisible,
@@ -61,9 +66,19 @@ export const Header: React.FC<HeaderProps> = ({
     titleColor,
     height,
     testID,
+    // 渐变相关
+    gradientEnabled = false,
+    gradientVariant = 'linear',
+    gradientColors,
+    gradientLocations,
+    gradientAngle,
+    gradientStart,
+    gradientEnd,
+    gradientCenter = { x: 0.5, y: 0.5 },
+    gradientRadius = 0.5,
+    gradientOpacity = 1,
 }) => {
     const { theme } = useTheme();
-    const layout = useLayoutStyles();
     const spacing = useSpacingStyles();
     const insets = useSafeAreaInsets();
 
@@ -75,47 +90,61 @@ export const Header: React.FC<HeaderProps> = ({
     const iconColor = (c?: string) => c ?? nav.iconColor;
     const iconSize = nav.iconSize;
 
-    // 动作区最多保留 3 个
+    // 补齐缺失的常量定义
     const MAX_ACTIONS = 3;
     const actionsLimited = useMemo(() => actions.slice(0, MAX_ACTIONS), [actions]);
-    // 每个图标按钮的触控槽位宽度（保证左右两边等宽以实现标题真正居中）
     const LEFT_SIZE = 44;
     const SLOT_SIZE = 36;
     const sideWidth = SLOT_SIZE * MAX_ACTIONS;
 
-    const containerStyle: ViewStyle = {
-        backgroundColor: containerBg,
-        paddingTop: insets.top,
+    const gradientPalette = (gradientColors && gradientColors.length > 0)
+        ? gradientColors
+        : [theme.colors.primary, theme.colors.secondary];
+
+    // 原有 containerStyle 改为外层容器（无 paddingTop）
+    const outerContainerStyle: ViewStyle = {
+        backgroundColor: gradientEnabled ? 'transparent' : containerBg,
         borderBottomWidth: borderBottom ? 1 : 0,
         borderBottomColor: borderBottom ? nav.borderColor : 'transparent',
+        position: 'relative',
+    };
+
+    // 新增：内容包裹层，把安全区内边距放到这里
+    const contentWrapperStyle: ViewStyle = {
+        paddingTop: insets.top,
     };
 
     const contentRowStyle: ViewStyle = {
         height: contentHeight,
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: 'transparent',
     };
 
     const sideContainerStyle: ViewStyle = {
         width: sideWidth,
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: 'transparent',
     };
 
     const leftContainerStyle: ViewStyle = {
         ...sideContainerStyle,
+        backgroundColor: 'transparent',
     };
 
     const rightContainerStyle: ViewStyle = {
         ...sideContainerStyle,
         ...spacing.prXs,
         justifyContent: 'flex-end',
+        backgroundColor: 'transparent',
     };
 
     const titleContainerStyle: ViewStyle = {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: 'transparent',
         // 通过左右固定宽度容器，确保标题真实居中且有最大宽度限制
     };
 
@@ -199,30 +228,43 @@ export const Header: React.FC<HeaderProps> = ({
     };
 
     return (
-        <View style={containerStyle} testID={testID}>
-            <View style={contentRowStyle}>
-                {/* 左侧返回槽位（固定宽度） */}
-                <View style={leftContainerStyle}>{renderBackSlot()}</View>
-
-                {/* 中间标题（居中、单行省略） */}
-                <View style={titleContainerStyle}>
-                    {typeof title === 'string' ? (
-                        <Text
-                            style={[titleTextStyle, { fontSize: nav.titleSize, fontWeight: nav.titleWeight }]}
-                            color={titleColorFinal}
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
-                        >
-                            {title}
-                        </Text>
-                    ) : (
-                        // 如果传入自定义节点，交由外部控制，但仍受居中与最大宽度限制
-                        title
-                    )}
+        <View style={[outerContainerStyle]} testID={testID}>
+            {gradientEnabled && (
+                <GradientBackground
+                    variant={gradientVariant}
+                    colors={gradientPalette}
+                    locations={gradientLocations}
+                    angle={gradientAngle}
+                    start={gradientStart}
+                    end={gradientEnd}
+                    center={gradientCenter}
+                    radius={gradientRadius}
+                    opacity={gradientOpacity}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}
+                />
+            )}
+            <View style={contentWrapperStyle}>
+                <View style={contentRowStyle}>
+                    {/* 左侧返回槽位（固定宽度） */}
+                    <View style={leftContainerStyle}>{renderBackSlot()}</View>
+                    {/* 中间标题（居中、单行省略） */}
+                    <View style={titleContainerStyle}>
+                        {typeof title === 'string' ? (
+                            <Text
+                                style={[titleTextStyle, { fontSize: nav.titleSize, fontWeight: nav.titleWeight }]}
+                                color={titleColorFinal}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                            >
+                                {title}
+                            </Text>
+                        ) : (
+                            title
+                        )}
+                    </View>
+                    {/* 右侧动作区（最多3个槽位，固定宽度） */}
+                    <View style={rightContainerStyle}>{renderActionSlots()}</View>
                 </View>
-
-                {/* 右侧动作区（最多3个槽位，固定宽度） */}
-                <View style={rightContainerStyle}>{renderActionSlots()}</View>
             </View>
         </View>
     );
