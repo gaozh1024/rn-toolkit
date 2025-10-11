@@ -6,3 +6,4 @@ export * from './LoadingOverlay';
 export * from './Snackbar';
 export * from './Dialog';
 export * from './ActionSheet';
+export * from './Result';

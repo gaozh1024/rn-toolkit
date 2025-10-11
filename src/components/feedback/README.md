@@ -1,80 +1,77 @@
-# Feedback 组件建设清单与规范
+# Feedback 组件总览
 
-面向通知、提示、空态与阻断式交互的反馈体系建设指南，统一风格、主题接入与导航方式。
+面向通知、提示、空态与阻断式交互的反馈组件集合，统一风格、主题接入与导航方式。
 
-**现状**
-- 已有：Modal（支持标题、内容、位置、背景/遮罩、可关闭）
-- 目录：<mcfolder name="feedback" path="/Users/gzh/Projects/framework/rn-toolkit/src/components/feedback"></mcfolder>
+## 快速开始
 
-**目标**
-- 提供轻提示、空态、操作面板、确认对话、加载遮罩与结果页等通用反馈能力。
-- 与主题系统、导航系统协同：颜色/阴影/安全区/转场统一。
+- 从聚合导出中引入反馈组件与容器
+- 在应用根部挂载需要的容器（Toast/Snackbar/LoadingOverlay 等）
 
-**建议组件（按优先级）**
-- 优先级 1
-  - Empty：空态占位组件（图标/标题/描述/操作）。
-  - Toast：轻提示（自动消失/可配置时长/位置）。
-  - Dialog：确认/警示对话框（阻断式、按钮组）。
-  - ActionSheet：底部操作面板（iOS 风格，手势关闭）。
-- 优先级 2
-  - Snackbar：底部提示（可带操作按钮、支持安全区）。
-  - LoadingOverlay：全局加载遮罩（阻断/半阻断、可取消）。
-- 优先级 3
-  - Result：结果页（成功/失败/网络错误等场景化反馈）。
+```tsx
+import React from 'react';
+import { View } from 'react-native';
+import {
+  // 容器
+  ToastContainer,
+  SnackbarContainer,
+  LoadingOverlayContainer,
+  DialogContainer,
+  ActionSheetContainer,
+  // 服务（示例）
+  ToastService,
+  SnackbarService,
+  LoadingOverlayService,
+} from '@gaozh1024/rn-toolkit';
 
-**最小 API 草案**
-- Empty
-  - props：icon、title、description、actionText、onAction、style
-- Toast
-  - props：message、duration、position（top/center/bottom）、type（success/warning/error/info）、onClose
-- Snackbar
-  - props：message、actionText、onAction、duration、position="bottom"、safeArea、onClose
-- Dialog
-  - props：title、message、actions[{ text, type, onPress }]、closable、maskClosable
-- ActionSheet
-  - props：title、options[{ label, icon, onPress, destructive }]、cancelText、onCancel
-- LoadingOverlay
-  - props：visible、text、cancelable、onCancel、backgroundColor
-- Result
-  - props：status（success/error/warning/info/offline）、title、description、extra
+export default function AppRoot() {
+  return (
+    <View style={{ flex: 1 }}>
+      {/* 你的导航或页面 */}
 
-**交互与主题要求**
-- 主题：颜色/阴影/边框统一来自主题（light/dark 兼容）。
-- 导航：路由化模态建议复用导航系统的 modals。
-- 安全区：顶部/底部提示遵守 `useSafeAreaInsets`。
+      {/* 全局容器（按需挂载）*/}
+      <ToastContainer />
+      <SnackbarContainer />
+      <LoadingOverlayContainer />
+      <DialogContainer />
+      <ActionSheetContainer />
+    </View>
+  );
+}
 
-**目录与导出约定**
-- 每个组件目录：`Component/Component.tsx`、`Component/index.ts`、`Component/README.md`
-- 聚合导出：<mcfile name="index.ts" path="/Users/gzh/Projects/framework/rn-toolkit/src/components/feedback/index.ts"></mcfile>
-  - `export * from './Modal';`
-  - `export * from './Empty';`
-  - `export * from './Toast';`
-  - `export * from './Snackbar';`
-  - `export * from './Dialog';`
-  - `export * from './ActionSheet';`
-  - `export * from './Loading';`
-  - `export * from './Result';`
+// 在任意位置触发服务
+ToastService.show({ message: '操作成功', duration: 2000, position: 'bottom' });
+SnackbarService.show({ message: '已保存', actionText: '撤销', onAction: () => {} });
+LoadingOverlayService.show({ text: '加载中...', cancelable: false });
+LoadingOverlayService.hide();
+```
 
-**使用示例**
-- Modal（路由化展示）：
-  - 使用导航构建器注册模态，并通过全局导航展示。
-  - 参考：<mcfile name="NavigationService.ts" path="/Users/gzh/Projects/framework/rn-toolkit/src/navigation/services/NavigationService.ts"></mcfile> 的 `presentModal`
-- Empty（列表空态）：
-  - 与 <mcfile name="RefreshableList.tsx" path="/Users/gzh/Projects/framework/rn-toolkit/src/components/layout/RefreshableList/RefreshableList.tsx"></mcfile> 的 `emptyComponent`/`emptyText` 协作。
-- Toast（轻提示）：
-  - 与工具方法协作：例如复制成功后提示，参考 <mcfile name="ClipboardService.ts" path="/Users/gzh/Projects/framework/rn-toolkit/src/utils/ClipboardService.ts"></mcfile> 中相关注释。
+## 导入与导出
 
-**实施顺序（Roadmap）**
-1. Empty、Toast、Dialog、ActionSheet（覆盖高频反馈场景）
-2. Snackbar、LoadingOverlay（增强异步与操作提示）
-3. Result（完善流程结束态）
+- 统一从 `src/components/feedback/index.ts` 聚合导出引入
+- 与主题系统协作：颜色/阴影/字体/安全区统一（详见主题文档）
 
-**验收标准**
-- 主题接入完整、亮/暗模式无视觉问题
-- 动画与转场统一，交互无抖动
-- API 简洁一致，文档与示例完善
+## 组件文档索引
 
-## Toast 轻提示
-- 全局触发、自动消失、可配置时长/位置。
-- 使用：在根部挂载 `ToastContainer`，调用 `ToastService.show({ message, duration, position })`。
-- 详见：`src/components/feedback/Toast/README.md`
+以下链接指向每个组件的详细 README 使用说明：
+
+- [ActionSheet 底部操作面板](./ActionSheet/README.md)
+- [Dialog 对话框](./Dialog/README.md)
+- [Empty 空态](./Empty/README.md)
+- [LoadingOverlay 加载遮罩](./LoadingOverlay/README.md)
+- [Modal 模态页](./Modal/README.md)
+- [Result 结果页](./Result/README.md)
+- [Snackbar 底部提示](./Snackbar/README.md)
+- [Toast 轻提示](./Toast/README.md)
+
+## 交互与主题
+
+- 主题：颜色/阴影/边框统一来自主题（light/dark 兼容）
+- 安全区：顶部/底部提示遵守 `useSafeAreaInsets`
+- 动画：统一使用动画工具（淡入淡出、位移），避免交互抖动
+
+## 最佳实践
+
+- 根据场景选择组件：阻断用 Dialog/Modal；非阻断用 Toast/Snackbar
+- 页面空态使用 Empty，并配合明确行动按钮（刷新/重试/创建）
+- 全局加载场景使用 LoadingOverlay，支持阻断与可取消
+- 结果页使用 Result，提供清晰的下一步（返回/重试/查看详情）

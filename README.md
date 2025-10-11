@@ -3,6 +3,7 @@
 一个面向 React Native 的工程化工具包，提供一致的 API、类型与最佳实践，覆盖 UI 组件、动画、导航、状态栏、主题、存储与常用工具，助你更快搭建高质量应用。
 
 ## 特性
+
 - 统一 API：跨模块保持一致的调用风格与类型定义
 - 高性能动画：内置 `react-native-reanimated` 支持与预设动画
 - 主题系统：亮/暗模式、可持久化与丰富样式预设
@@ -11,15 +12,21 @@
 - TypeScript：完备类型，便于开发与维护
 
 ## 安装与自动化配置
+
 - 安装：
+
 ```bash
 npm install @gaozh1024/rn-toolkit react-native-reanimated react-native-gesture-handler
 ```
+
 - iOS 依赖：
+
 ```bash
 cd ios && pod install
 ```
+
 - Babel 插件（必须，置于 `plugins` 最后一行）：
+
 ```javascript
 module.exports = {
   presets: ['module:metro-react-native-babel-preset'],
@@ -28,6 +35,7 @@ module.exports = {
   ],
 };
 ```
+
 - 自动化：安装期间，postinstall 会尝试：
   - 按精确版本安装必需依赖（含 Reanimated、Gesture Handler 等）
   - 自动为 `babel.config.js` 追加 `'react-native-reanimated/plugin'` 至 `plugins` 数组末尾
@@ -36,7 +44,9 @@ module.exports = {
 > 可通过宿主的 `package.json -> rnToolkit` 配置控制自动化行为（如 `autoInstall`、`manager`、`silent`、`skipConfigure`）。
 
 ## 快速上手
+
 - 初始化主题与预设（示例）：
+
 ```tsx
 import React, { useEffect } from 'react';
 import { AnimationPresets } from '@gaozh1024/rn-toolkit';
@@ -48,7 +58,9 @@ export default function App() {
   return null;
 }
 ```
+
 - 使用 UI 组件（示例）：
+
 ```tsx
 import { Button, Text } from '@gaozh1024/rn-toolkit';
 
@@ -61,7 +73,9 @@ function Example() {
   );
 }
 ```
+
 - 使用动画（Reanimated 示例）：
+
 ```tsx
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
@@ -74,6 +88,7 @@ function FadeIn() {
 ```
 
 ## 模块索引与文档
+
 - 动画（Animation）：见 [src/animation/README.md](src/animation/README.md)
 - 导航（Navigation）：见 [src/navigation/README.md](src/navigation/README.md)
 - 状态栏（StatusBar）：见 [src/statusbar/README.md](src/statusbar/README.md)
@@ -84,6 +99,7 @@ function FadeIn() {
 - 反馈组件（Feedback）：见 [src/components/feedback/README.md](src/components/feedback/README.md)
 
 ## 目录结构
+
 ```text
 src/
   animation/        # 动画服务、预设与 Hooks
@@ -99,6 +115,7 @@ src/
 ```
 
 ## 约定与最佳实践
+
 - 统一导出：组件在各自目录 `index.ts` 导出，并在聚合出口集中导出
 - 主题接入：禁止硬编码颜色，统一来自主题 tokens
 - 动画：默认使用 Reanimated；兼容层仅用于特殊/开发场景降级
@@ -106,25 +123,33 @@ src/
 - 文档：每个模块/组件均包含 `README.md`，含 API 与示例
 
 ## 故障排除
+
 - 动画不工作：
   - 确认已安装 `react-native-reanimated` 与启用 Babel 插件（且位于最后）
   - 重启 Metro 并清缓存：
+
 ```bash
 npm start -- --reset-cache
 ```
+
 - iOS 编译失败：
+
 ```bash
 cd ios && pod install
 ```
+
 - 图标不显示：确认已自动/手动配置 `react-native-vector-icons` 的 Pod 与 Gradle
 
 ## 常见问题（FAQ）
+
 - 是否必须使用 Reanimated？是，动画模块以 Reanimated 为默认与必须依赖
 - 是否支持暗色模式？是，主题系统内置支持并可持久化
 - 是否可禁用自动安装？可在宿主 `package.json -> rnToolkit` 中配置 `autoInstall: false`
 
 ## 参与贡献
+
 - 欢迎提交 Issue/PR；遵循模块文档的“验收标准”与“目录与导出约定”
 
 ## 许可证
+
 MIT License
