@@ -76,12 +76,23 @@ function getDeclaredVersion(pkg, name) {
   return dependencies[name] || devDependencies[name] || peerDependencies[name] || null;
 }
 
+function hasInstalledPackage(hostRoot, name) {
+  const checkPaths = [];
+  // 优先检查宿主应用的 node_modules
+  checkPaths.push(path.join(hostRoot, 'node_modules', name, 'package.json'));
+  // 回退检查 RN 项目根目录（workspace/hoist 场景）
+  const projectRoot = findProjectRoot();
+  if (projectRoot && projectRoot !== hostRoot) {
+    checkPaths.push(path.join(projectRoot, 'node_modules', name, 'package.json'));
+  }
+  return checkPaths.some(p => fs.existsSync(p));
+}
+
 function collectInstallList(pkg, requiredList) {
   const toInstall = [];
   for (const { name, version } of requiredList) {
-    const declared = getDeclaredVersion(pkg, name);
-    // We require exact match. Any non-equal (including ^/~ ranges) will be overridden to exact.
-    if (declared !== version) {
+    // 仅当缺失时加入安装列表
+    if (!hasInstalledPackage(hostRoot, name)) {
       toInstall.push({ name, version });
     }
   }
@@ -278,22 +289,22 @@ function main() {
     }));
 
     const manager = resolvePackageManager(cfg.manager, process.env.npm_config_user_agent);
-    const toInstall = collectInstallList(cfg.pkg, REQUIRED_DEPS);
+    const toInstall = collectInstallList(hostRoot, REQUIRED_DEPS);
 
     if (!cfg.autoInstall) {
       if (toInstall.length === 0) {
-        log('All required dependencies already satisfy exact pinned versions.');
+        log('All required dependencies already present in node_modules, skip install.');
       } else {
-        log('Auto-install disabled. Please install the following exact versions manually:');
+        log('Auto-install disabled. Missing dependencies detected:');
         for (const d of toInstall) {
           console.log(`  - ${d.name}@${d.version}`);
         }
       }
     } else {
       if (toInstall.length === 0) {
-        log('All required dependencies already satisfy exact pinned versions.');
+        log('All required dependencies already present in node_modules, skip install.');
       } else {
-        log('Installing required dependencies (exact versions):');
+        log('Installing missing required dependencies (exact versions):');
         toInstall.forEach(d => console.log(`  - ${d.name}@${d.version}`));
         const cmd = buildInstallCommand(manager, toInstall, cfg.silent);
         if (cmd) execInHost(cmd, hostRoot);
