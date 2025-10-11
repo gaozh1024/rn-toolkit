@@ -17,12 +17,49 @@
 
 ```bash
 npm install @gaozh1024/rn-toolkit react-native-reanimated react-native-gesture-handler
+```
 
-// 执行 postinstall 脚本，自动安装依赖与配置
+### 必须安装的框架
+
+- `react-native-reanimated`
+- `react-native-gesture-handler`
+- `react-native-screens`
+- `react-native-safe-area-context`
+- `react-native-vector-icons`
+- `react-native-drawer-layout`
+- `react-native-mmkv`
+- `@react-native-clipboard/clipboard`
+- `react-native-svg`
+- `react-native-device-info`
+- `react-native-localize`
+- `react-native-worklets`
+- `@react-navigation/native`
+- `@react-navigation/stack`
+- `@react-navigation/bottom-tabs`
+
+> 提示：安装期间，postinstall 会自动检查缺失的依赖并安装；已存在的依赖会跳过。
+
+### 运行 postinstall（自动安装与配置）
+
+- 已发布包（npm）：
+
+```bash
 npx -p @gaozh1024/rn-toolkit rn-toolkit postinstall
 ```
 
-- iOS 依赖：
+- yalc/本地联动（不依赖 Registry）：
+
+```bash
+INIT_CWD="$(pwd)" node node_modules/@gaozh1024/rn-toolkit/scripts/cli.js postinstall
+```
+
+- 直接脚本触发：
+
+```bash
+INIT_CWD="$(pwd)" node node_modules/@gaozh1024/rn-toolkit/scripts/postinstall.js
+```
+
+- iOS 依赖安装：
 
 ```bash
 cd ios && pod install
@@ -156,3 +193,24 @@ cd ios && pod install
 ## 许可证
 
 MIT License
+
+### 使用 npm 安装（固定版本）
+
+```bash
+npm install --save --save-exact \
+  react-native-reanimated@4.1.3 \
+  react-native-gesture-handler@2.28.0 \
+  react-native-screens@4.16.0 \
+  react-native-safe-area-context@5.6.1 \
+  react-native-vector-icons@10.3.0 \
+  react-native-drawer-layout@4.1.13 \
+  react-native-mmkv@3.3.3 \
+  @react-native-clipboard/clipboard@1.16.3 \
+  react-native-svg@15.14.0 \
+  react-native-device-info@14.1.1 \
+  react-native-localize@3.5.2 \
+  react-native-worklets@0.6.1 \
+  @react-navigation/native@7.1.17 \
+  @react-navigation/stack@7.4.8 \
+  @react-navigation/bottom-tabs@7.4.7
+```

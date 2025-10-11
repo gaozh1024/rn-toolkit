@@ -39,14 +39,20 @@ function readJSON(filePath) {
   try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch { return null; }
 }
 
+// 文件：scripts/postinstall.js，方法：findHostRoot()
 function findHostRoot() {
-  const INIT_CWD = process.env.INIT_CWD || process.cwd();
-  const toolkitCwd = process.cwd();
-  if (INIT_CWD === toolkitCwd) {
+  const INIT_CWD = process.env.INIT_CWD || null;
+  const pkg = readJSON(path.join(process.cwd(), 'package.json')) || {};
+  const inNodeModules = __dirname.includes(path.join('node_modules', '@gaozh1024', 'rn-toolkit'));
+  const isToolkitRepo = pkg.name === '@gaozh1024/rn-toolkit' && !inNodeModules;
+
+  if (isToolkitRepo) {
+    // 真正的“在本地 rn-toolkit 仓库内开发”场景：跳过宿主操作
     log('Detected local install inside rn-toolkit repo, skip host operations.');
     return null;
   }
-  return INIT_CWD;
+  // 其他场景：返回宿主根（手动执行时 INIT_CWD 可能为空，回退到当前目录）
+  return INIT_CWD || process.cwd();
 }
 
 function loadHostConfig(hostRoot) {
@@ -88,10 +94,10 @@ function hasInstalledPackage(hostRoot, name) {
   return checkPaths.some(p => fs.existsSync(p));
 }
 
-function collectInstallList(pkg, requiredList) {
+function collectInstallList(hostRoot, requiredList) {
   const toInstall = [];
   for (const { name, version } of requiredList) {
-    // 仅当缺失时加入安装列表
+    // 仅当宿主的 node_modules 中缺失时加入安装列表
     if (!hasInstalledPackage(hostRoot, name)) {
       toInstall.push({ name, version });
     }
@@ -278,16 +284,9 @@ function main() {
     }
 
     const hostRoot = findHostRoot();
-    if (!hostRoot) return; // local toolkit install; nothing to do
+    if (!hostRoot) return; // 在本地 rn-toolkit 仓库内开发，跳过宿主操作
 
     const cfg = loadHostConfig(hostRoot);
-    log('Host configuration:', JSON.stringify({
-      autoInstall: cfg.autoInstall,
-      manager: cfg.manager,
-      silent: cfg.silent,
-      skipConfigure: cfg.skipConfigure,
-    }));
-
     const manager = resolvePackageManager(cfg.manager, process.env.npm_config_user_agent);
     const toInstall = collectInstallList(hostRoot, REQUIRED_DEPS);
 
