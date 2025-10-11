@@ -25,7 +25,7 @@ npm install @gaozh1024/rn-toolkit react-native-reanimated react-native-gesture-h
 - `react-native-gesture-handler`
 - `react-native-screens`
 - `react-native-safe-area-context`
-- `react-native-vector-icons`
+- `@react-native-vector-icons/ionicons`
 - `react-native-drawer-layout`
 - `react-native-mmkv`
 - `@react-native-clipboard/clipboard`
@@ -79,7 +79,7 @@ module.exports = {
 - 自动化：安装期间，postinstall 会尝试：
   - 按精确版本安装必需依赖（含 Reanimated、Gesture Handler 等）
   - 自动为 `babel.config.js` 追加 `'react-native-reanimated/plugin'` 至 `plugins` 数组末尾
-  - 配置 `react-native-vector-icons` 的 iOS Pod 与 Android Gradle
+  - 配置 `@react-native-vector-icons/ionicons` 的 iOS Pod 与 Android Gradle
 
 > 可通过宿主的 `package.json -> rnToolkit` 配置控制自动化行为（如 `autoInstall`、`manager`、`silent`、`skipConfigure`）。
 
@@ -178,7 +178,8 @@ npm start -- --reset-cache
 cd ios && pod install
 ```
 
-- 图标不显示：确认已自动/手动配置 `react-native-vector-icons` 的 Pod 与 Gradle
+- 图标不显示：确认已自动/手动配置 `@react-native-vector-icons/ionicons` 的 Pod 与 Gradle
+- ios 图标不显示：确认已在info.plist中添加图标字体 IonIcons.ttf
 
 ## 常见问题（FAQ）
 
