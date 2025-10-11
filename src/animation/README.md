@@ -1,10 +1,10 @@
 # Animation Module
 
-React Native 动画模块，提供对 `react-native-reanimated` 的可选支持和自动降级机制。
+React Native 动画模块，统一封装 `react-native-reanimated`（现在为必须依赖）与少量 Animated 兼容层。
 
 ## 特性
 
-- 🔄 **自动降级**: 当 `react-native-reanimated` 不可用时，自动降级到 React Native 的 `Animated` API
+- 🔄 兼容层：极少数环境下可临时降级到 React Native `Animated`
 - 🎯 **统一 API**: 无论使用哪种动画库，API 保持一致
 - 🚀 **高性能**: 优先使用 `react-native-reanimated` 获得更好的性能
 - 📦 **可选依赖**: `react-native-reanimated` 作为可选依赖，不强制安装
@@ -14,41 +14,52 @@ React Native 动画模块，提供对 `react-native-reanimated` 的可选支持�
 ## 安装
 
 ```bash
-npm install @gaozh1024/rn-toolkit
+npm install @gaozh1024/rn-toolkit react-native-reanimated react-native-gesture-handler
+```
 
-# 可选：安装 react-native-reanimated 以获得更好的性能
-npm install react-native-reanimated
+```bash
+cd ios && pod install
 ```
 
 ## 快速开始
 
-### 1. 初始化动画服务
-
-无需手动初始化。AnimationService 在模块加载时会自动检测并初始化 Reanimated（若可用）。
-
-### 2. 使用动画服务
+### 1. 以 Reanimated 为默认路径
 
 ```typescript
-import React from 'react';
-import { View, Animated } from 'react-native';
-import { AnimationService } from '@gaozh1024/rn-toolkit';
+import React, { useEffect } from 'react';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 const MyComponent = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const opacity = useSharedValue(0);
 
   useEffect(() => {
-    // 创建淡入动画（传入已有 Animated.Value，避免重建数值导致状态丢失）
-    const preset = AnimationService.fadeIn(fadeAnim, 300);
-    if (preset.type === 'animated') {
-      preset.animation.start();
-    }
+    opacity.value = withTiming(1, { duration: 300 });
   }, []);
 
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
   return (
-    <Animated.View style={{ opacity: fadeAnim }}>
+    <Animated.View style={animatedStyle}>
       {/* 你的内容 */}
     </Animated.View>
   );
+};
+```
+
+### 2. 使用 AnimationService 与预设
+
+```typescript
+import { AnimationService, AnimationPresets } from '@gaozh1024/rn-toolkit';
+import Animated, { withTiming, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
+
+const Example = () => {
+  const x = useSharedValue(-100);
+  useEffect(() => {
+    x.value = withTiming(0, { duration: 300 });
+    AnimationPresets.initialize();
+  }, []);
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  return <Animated.View style={style} />;
 };
 ```
 
@@ -742,7 +753,3 @@ import { Animated } from 'react-native';
 // 现在
 import { AnimationService, useFadeAnimation } from '@gaozh1024/rn-toolkit';
 ```
-
-## 许可证
-
-MIT License

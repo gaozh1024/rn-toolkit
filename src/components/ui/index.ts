@@ -1,6 +1,7 @@
 // 基础UI组件
 export * from './Button';
 export * from './Icon';
+export * from './IconButton';
 export * from './Input';
 export * from './PasswordInput';
 export * from './Text';
@@ -16,3 +17,8 @@ export * from './Divider';
 export * from './Spinner';
 export * from './Progress';
 export * from './SegmentedMenu';
+export * from './Skeleton';
+export * from './Stepper';
+export * from './Slider';
+export * from './ListItem';
+export * from './Link';

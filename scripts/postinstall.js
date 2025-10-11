@@ -197,6 +197,68 @@ function runPlatformConfiguration() {
   }
 }
 
+function configureBabelReanimatedPlugin() {
+  const projectRoot = findProjectRoot();
+  if (!projectRoot) {
+    console.log('⚠️  未找到 React Native 项目根目录，跳过 Babel 配置');
+    return false;
+  }
+  const babelPath = path.join(projectRoot, 'babel.config.js');
+  if (!fs.existsSync(babelPath)) {
+    console.log('⚠️  未找到 babel.config.js，跳过自动配置。请手动在 plugins 最后一行添加 \"react-native-reanimated/plugin\"');
+    return false;
+  }
+  try {
+    let content = fs.readFileSync(babelPath, 'utf8');
+
+    const regex = /plugins\s*:\s*\[\s*([\s\S]*?)\s*\]/m;
+    const match = content.match(regex);
+    if (!match) {
+      // 新增：未检测到 plugins，则自动创建并加入 reanimated 插件（且保证位于最后）
+      const exportsRegex = /module\.exports\s*=\s*\{\s*([\s\S]*?)\s*\};?/m;
+      const objMatch = content.match(exportsRegex);
+      if (objMatch) {
+        const objInner = objMatch[1];
+        const newObjInner = `plugins: [\n    'react-native-reanimated/plugin'\n  ],\n${objInner}`;
+        const replaced = content.replace(exportsRegex, `module.exports = {\n${newObjInner}\n};`);
+        fs.writeFileSync(babelPath, replaced, 'utf8');
+        console.log('✅ 未检测到 plugins，已创建并添加 reanimated 插件');
+        return true;
+      }
+
+      // 回退：无法定位导出对象，末尾追加安全修改逻辑
+      content += `\n// rn-toolkit auto-added plugins\ntry {\n  module.exports = module.exports || {};\n  module.exports.plugins = Array.isArray(module.exports.plugins) ? module.exports.plugins : [];\n  if (!module.exports.plugins.includes('react-native-reanimated/plugin')) {\n    module.exports.plugins.push('react-native-reanimated/plugin');\n  }\n  // 确保插件位于最后\n  const idx = module.exports.plugins.indexOf('react-native-reanimated/plugin');\n  if (idx !== -1 && idx !== module.exports.plugins.length - 1) {\n    module.exports.plugins.splice(idx, 1);\n    module.exports.plugins.push('react-native-reanimated/plugin');\n  }\n} catch (e) {}\n`;
+      fs.writeFileSync(babelPath, content, 'utf8');
+      console.log('✅ 未检测到 plugins，已在文件末尾追加并添加 reanimated 插件');
+      return true;
+    }
+
+    let inner = match[1];
+    // 移除已有 reanimated 插件（避免重复），稍后统一追加到最后
+    inner = inner.replace(/['"]react-native-reanimated\/plugin['"]\s*,?/g, '').trim();
+    inner = inner.replace(/,\s*$/, '');
+
+    const newInner = inner.length > 0
+      ? `${inner},\n    'react-native-reanimated/plugin'`
+      : `'react-native-reanimated/plugin'`;
+
+    const newSection = `plugins: [\n    ${newInner}\n  ]`;
+    const newContent = content.replace(regex, newSection);
+
+    if (newContent !== content) {
+      fs.writeFileSync(babelPath, newContent, 'utf8');
+      console.log('✅ 已将 reanimated Babel 插件添加到 plugins 最后一行');
+      return true;
+    } else {
+      console.log('ℹ️  Babel 配置无需变更');
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ 配置 Babel 失败:', error.message);
+    return false;
+  }
+}
+
 function main() {
   try {
     if (process.env.RN_TOOLKIT_SKIP_POSTINSTALL === '1') {
@@ -240,6 +302,8 @@ function main() {
     }
 
     if (!cfg.skipConfigure) {
+      // 新增：配置 Babel 插件（确保在平台配置前完成）
+      configureBabelReanimatedPlugin();
       runPlatformConfiguration();
     } else {
       log('Skip platform configuration as per host config.');
