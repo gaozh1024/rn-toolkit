@@ -68,9 +68,14 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
     }
   }, [transitionMode]);
 
+  // 新增：将父层传入的初始路由名映射为子层屏幕名（添加后缀）
+  const mapToInnerRoute = (name?: string) => (name ? `${name}__screen` : undefined);
+  const initialInnerRoute = mapToInnerRoute(initialRouteName) || (stacks[0]?.name ? `${stacks[0].name}__screen` : undefined);
+
   return (
     <Stack.Navigator
-      initialRouteName={initialRouteName || stacks[0]?.name}
+      // 修改：使用映射后的初始路由名，避免与父层重复
+      initialRouteName={initialInnerRoute}
       screenOptions={commonScreenOptions as any}
     >
       {stacks.map((stack) => {
@@ -137,7 +142,8 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
         return (
           <Stack.Screen
             key={stack.name}
-            name={stack.name}
+            // 修改：为子层屏幕名称添加后缀，避免与父层同名
+            name={`${stack.name}__screen`}
             component={stack.component}
             options={screenOptions}
           />
