@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-// rn-toolkit postinstall script
-// - Improves readability and structured logging
-// - Installs strictly pinned required dependencies in the host app (exact versions)
-// - Respects host configuration via package.json -> rnToolkit { autoInstall, manager, silent, skipConfigure }
-// - Configures iOS/Android for react-native-vector-icons
-// - Never fails the consumer install on errors
+/**
+ * rn-toolkit postinstall
+ * - 安装并固定所需依赖（精确版本）到宿主 package.json
+ * - 自动配置 iOS/Android 的 @react-native-vector-icons/ionicons
+ * - 自动确保 Babel plugins 包含 'react-native-reanimated/plugin' 并位于最后
+ * - 遵循宿主 package.json -> rnToolkit 配置：{ autoInstall, manager, silent, skipConfigure }
+ * - 保持稳定：任何错误均不影响宿主安装流程（只打印警告）
+ *
+ * 注意：不向后兼容旧包名，仅支持 @react-native-vector-icons/ionicons
+ */
 
 const fs = require('fs');
 const path = require('path');
@@ -16,7 +20,7 @@ const PREFIX = '[rn-toolkit postinstall]';
 const log = (...args) => console.log(PREFIX, ...args);
 const warn = (...args) => console.warn(PREFIX, ...args);
 
-// Strictly pinned required dependencies for rn-toolkit to work
+// 精确版本依赖列表（如需调整版本，只在此处维护）
 const REQUIRED_DEPS = [
   { name: '@react-native-clipboard/clipboard', version: '1.16.3' },
   { name: '@react-navigation/bottom-tabs', version: '7.4.7' },
@@ -29,29 +33,27 @@ const REQUIRED_DEPS = [
   { name: 'react-native-safe-area-context', version: '5.6.1' },
   { name: 'react-native-screens', version: '4.16.0' },
   { name: 'react-native-svg', version: '15.14.0' },
-  { name: 'react-native-vector-icons', version: '10.3.0' },
+  { name: '@react-native-vector-icons/ionicons', version: '12.3.0' },
   { name: 'react-native-drawer-layout', version: '4.1.13' },
   { name: 'react-native-reanimated', version: '4.1.3' },
   { name: 'react-native-worklets', version: '0.6.1' },
 ];
 
+const VECTOR_ICONS_MODULE = '@react-native-vector-icons/ionicons';
+
 function readJSON(filePath) {
   try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch { return null; }
 }
 
-// 文件：scripts/postinstall.js，方法：findHostRoot()
 function findHostRoot() {
   const INIT_CWD = process.env.INIT_CWD || null;
   const pkg = readJSON(path.join(process.cwd(), 'package.json')) || {};
   const inNodeModules = __dirname.includes(path.join('node_modules', '@gaozh1024', 'rn-toolkit'));
   const isToolkitRepo = pkg.name === '@gaozh1024/rn-toolkit' && !inNodeModules;
-
   if (isToolkitRepo) {
-    // 真正的“在本地 rn-toolkit 仓库内开发”场景：跳过宿主操作
     log('Detected local install inside rn-toolkit repo, skip host operations.');
     return null;
   }
-  // 其他场景：返回宿主根（手动执行时 INIT_CWD 可能为空，回退到当前目录）
   return INIT_CWD || process.cwd();
 }
 
@@ -62,8 +64,8 @@ function loadHostConfig(hostRoot) {
   return {
     autoInstall: cfg.autoInstall !== false, // default true
     manager: cfg.manager || 'auto',        // 'auto' | 'yarn' | 'npm' | 'pnpm'
-    silent: !!cfg.silent,                  // less logs from child installers
-    skipConfigure: !!cfg.skipConfigure,    // skip iOS/Android configuration
+    silent: !!cfg.silent,                  // 传递静默参数给安装命令
+    skipConfigure: !!cfg.skipConfigure,    // 跳过 iOS/Android 配置
     pkg,
     pkgPath,
   };
@@ -82,25 +84,12 @@ function getDeclaredVersion(pkg, name) {
   return dependencies[name] || devDependencies[name] || peerDependencies[name] || null;
 }
 
-function hasInstalledPackage(hostRoot, name) {
-  const checkPaths = [];
-  // 优先检查宿主应用的 node_modules
-  checkPaths.push(path.join(hostRoot, 'node_modules', name, 'package.json'));
-  // 回退检查 RN 项目根目录（workspace/hoist 场景）
-  const projectRoot = findProjectRoot();
-  if (projectRoot && projectRoot !== hostRoot) {
-    checkPaths.push(path.join(projectRoot, 'node_modules', name, 'package.json'));
-  }
-  return checkPaths.some(p => fs.existsSync(p));
-}
-
 function collectInstallList(hostRoot, requiredList) {
   const cfgPkgPath = path.join(hostRoot, 'package.json');
   const cfgPkg = readJSON(cfgPkgPath) || {};
   const toInstall = [];
   for (const { name, version } of requiredList) {
     const declared = getDeclaredVersion(cfgPkg, name);
-    // 以 package.json 为准：未声明或非精确版本，均需要安装并写入
     if (!declared || declared !== version) {
       toInstall.push({ name, version });
     }
@@ -113,7 +102,6 @@ function buildInstallCommand(manager, deps, silent) {
   const specList = deps.map(d => `${d.name}@${d.version}`).join(' ');
   if (manager === 'yarn') return `yarn add -E ${specList}${silent ? ' --silent' : ''}`;
   if (manager === 'pnpm') return `pnpm add -E ${specList}${silent ? ' --silent' : ''}`;
-  // npm
   return `npm install --save --save-exact ${specList}${silent ? ' --silent' : ''}`;
 }
 
@@ -122,7 +110,7 @@ function execInHost(cmd, cwd) {
   execSync(cmd, { stdio: 'inherit', cwd });
 }
 
-// ---------------- iOS/Android configuration for vector-icons -----------------
+// ---------------- 项目根路径与平台配置（ionicons） ----------------
 function findProjectRoot() {
   let currentDir = process.cwd();
   while (currentDir !== path.dirname(currentDir)) {
@@ -136,6 +124,19 @@ function findProjectRoot() {
     currentDir = path.dirname(currentDir);
   }
   return null;
+}
+
+function resolveVectorIconsPaths(projectRoot) {
+  const modulePathAbs = path.join(projectRoot, 'node_modules', VECTOR_ICONS_MODULE);
+  if (!fs.existsSync(modulePathAbs)) return null;
+  const podspecAbs = path.join(modulePathAbs, 'RNVectorIcons.podspec');
+  const fontsGradleAbs = path.join(modulePathAbs, 'fonts.gradle');
+  return {
+    moduleName: VECTOR_ICONS_MODULE,
+    modulePathAbs,
+    podspecAbs: fs.existsSync(podspecAbs) ? podspecAbs : null,
+    fontsGradleAbs: fs.existsSync(fontsGradleAbs) ? fontsGradleAbs : null,
+  };
 }
 
 function configureIOS() {
@@ -153,70 +154,87 @@ function configureIOS() {
       console.log('✅ iOS Podfile 已配置 RNVectorIcons');
       return true;
     }
+    const vi = resolveVectorIconsPaths(projectRoot);
+    if (!vi || !vi.podspecAbs) {
+      console.log('⚠️  未检测到 RNVectorIcons.podspec（ionicons 包），跳过自动 iOS 配置');
+      return false;
+    }
     const targetRegex = /target\s+['"][^'"]+['"]\s+do/;
+    const relPathToModule = path.relative(iosDir, vi.modulePathAbs);
     if (targetRegex.test(podfileContent)) {
       podfileContent = podfileContent.replace(
         targetRegex,
-        (match) => `${match}\n  pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'`
+        (match) => `${match}\n  pod 'RNVectorIcons', :path => '${relPathToModule}'`
       );
       fs.writeFileSync(podfilePath, podfileContent);
-      console.log('✅ 已自动配置 iOS Podfile');
+      console.log(`✅ 已自动配置 iOS Podfile（模块：${vi.moduleName}）`);
       console.log('📝 请运行: cd ios && pod install');
       return true;
+    } else {
+      console.log('⚠️  未匹配到 target 块，请手动在目标 target 内添加 pod 行');
+      return false;
     }
   } catch (error) {
     console.log('❌ 配置 iOS Podfile 失败:', error.message);
+    return false;
   }
-  return false;
 }
 
 function configureAndroid() {
   const projectRoot = findProjectRoot();
   if (!projectRoot) return false;
   const androidDir = path.join(projectRoot, 'android');
-  const buildGradlePath = path.join(androidDir, 'app', 'build.gradle');
+  const appDir = path.join(androidDir, 'app');
+  const buildGradlePath = path.join(appDir, 'build.gradle');
   if (!fs.existsSync(androidDir) || !fs.existsSync(buildGradlePath)) {
     console.log('⚠️  Android 目录或 build.gradle 不存在，跳过 Android 配置');
     return false;
   }
   try {
     let buildGradleContent = fs.readFileSync(buildGradlePath, 'utf8');
-    if (buildGradleContent.includes('react-native-vector-icons/fonts.gradle')) {
+    if (buildGradleContent.includes('fonts.gradle')) {
       console.log('✅ Android build.gradle 已配置字体');
       return true;
     }
-    buildGradleContent += '\napply from: "../../node_modules/react-native-vector-icons/fonts.gradle"\n';
+    const vi = resolveVectorIconsPaths(projectRoot);
+    if (!vi || !vi.fontsGradleAbs) {
+      console.log('⚠️  未检测到 fonts.gradle（ionicons 包），跳过自动 Android 配置');
+      return false;
+    }
+    const relFontsGradle = path.relative(appDir, vi.fontsGradleAbs);
+    buildGradleContent += `\napply from: "${relFontsGradle}"\n`;
     fs.writeFileSync(buildGradlePath, buildGradleContent);
-    console.log('✅ 已自动配置 Android build.gradle');
+    console.log(`✅ 已自动配置 Android build.gradle（模块：${vi.moduleName}）`);
     return true;
   } catch (error) {
     console.log('❌ 配置 Android build.gradle 失败:', error.message);
+    return false;
   }
-  return false;
 }
 
 function runPlatformConfiguration() {
-  console.log('🚀 开始配置 react-native-vector-icons...');
+  console.log('🚀 开始配置 @react-native-vector-icons/ionicons...');
   const projectRoot = findProjectRoot();
   if (!projectRoot) {
     console.log('⚠️  未找到 React Native 项目根目录，跳过自动配置');
-    console.log('📝 请手动配置 react-native-vector-icons');
+    console.log('📝 请手动配置 @react-native-vector-icons/ionicons');
     return;
   }
   console.log(`📁 找到项目根目录: ${projectRoot}`);
   const iosConfigured = configureIOS();
   const androidConfigured = configureAndroid();
   if (iosConfigured || androidConfigured) {
-    console.log('\n🎉 react-native-vector-icons 配置完成！');
+    console.log('\n🎉 @react-native-vector-icons/ionicons 配置完成！');
     if (iosConfigured) console.log('📱 iOS: 请运行 "cd ios && pod install"');
     if (androidConfigured) console.log('🤖 Android: 配置已完成');
   } else {
-    console.log('\n📝 请手动配置 react-native-vector-icons:');
-    console.log('iOS: 在 Podfile 中添加 pod \'RNVectorIcons\', :path => \'../node_modules/react-native-vector-icons\'');
-    console.log('Android: 在 android/app/build.gradle 中添加 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"');
+    console.log('\n📝 请手动配置 @react-native-vector-icons/ionicons:');
+    console.log('iOS: 在 Podfile 的 target 内添加 pod \"RNVectorIcons\"，:path 指向 node_modules/@react-native-vector-icons/ionicons');
+    console.log('Android: 在 android/app/build.gradle 中添加 apply from: 指向该包内的 fonts.gradle');
   }
 }
 
+// ---------------- Babel reanimated 插件保障 ----------------
 function configureBabelReanimatedPlugin() {
   const projectRoot = findProjectRoot();
   if (!projectRoot) {
@@ -225,16 +243,14 @@ function configureBabelReanimatedPlugin() {
   }
   const babelPath = path.join(projectRoot, 'babel.config.js');
   if (!fs.existsSync(babelPath)) {
-    console.log('⚠️  未找到 babel.config.js，跳过自动配置。请手动在 plugins 最后一行添加 \"react-native-reanimated/plugin\"');
+    console.log('⚠️  未找到 babel.config.js，跳过自动配置。请手动在 plugins 最后一行添加 "react-native-reanimated/plugin"');
     return false;
   }
   try {
     let content = fs.readFileSync(babelPath, 'utf8');
-
     const regex = /plugins\s*:\s*\[\s*([\s\S]*?)\s*\]/m;
     const match = content.match(regex);
     if (!match) {
-      // 新增：未检测到 plugins，则自动创建并加入 reanimated 插件（且保证位于最后）
       const exportsRegex = /module\.exports\s*=\s*\{\s*([\s\S]*?)\s*\};?/m;
       const objMatch = content.match(exportsRegex);
       if (objMatch) {
@@ -245,16 +261,13 @@ function configureBabelReanimatedPlugin() {
         console.log('✅ 未检测到 plugins，已创建并添加 reanimated 插件');
         return true;
       }
-
-      // 回退：无法定位导出对象，末尾追加安全修改逻辑
-      content += `\n// rn-toolkit auto-added plugins\ntry {\n  module.exports = module.exports || {};\n  module.exports.plugins = Array.isArray(module.exports.plugins) ? module.exports.plugins : [];\n  if (!module.exports.plugins.includes('react-native-reanimated/plugin')) {\n    module.exports.plugins.push('react-native-reanimated/plugin');\n  }\n  // 确保插件位于最后\n  const idx = module.exports.plugins.indexOf('react-native-reanimated/plugin');\n  if (idx !== -1 && idx !== module.exports.plugins.length - 1) {\n    module.exports.plugins.splice(idx, 1);\n    module.exports.plugins.push('react-native-reanimated/plugin');\n  }\n} catch (e) {}\n`;
+      content += `\n// rn-toolkit auto-added plugins\ntry {\n  module.exports = module.exports || {};\n  module.exports.plugins = Array.isArray(module.exports.plugins) ? module.exports.plugins : [];\n  if (!module.exports.plugins.includes('react-native-reanimated/plugin')) {\n    module.exports.plugins.push('react-native-reanimated/plugin');\n  }\n  const idx = module.exports.plugins.indexOf('react-native-reanimated/plugin');\n  if (idx !== -1 && idx !== module.exports.plugins.length - 1) {\n    module.exports.plugins.splice(idx, 1);\n    module.exports.plugins.push('react-native-reanimated/plugin');\n  }\n} catch (e) {}\n`;
       fs.writeFileSync(babelPath, content, 'utf8');
       console.log('✅ 未检测到 plugins，已在文件末尾追加并添加 reanimated 插件');
       return true;
     }
 
     let inner = match[1];
-    // 移除已有 reanimated 插件（避免重复），稍后统一追加到最后
     inner = inner.replace(/['"]react-native-reanimated\/plugin['"]\s*,?/g, '').trim();
     inner = inner.replace(/,\s*$/, '');
 
@@ -279,6 +292,7 @@ function configureBabelReanimatedPlugin() {
   }
 }
 
+// ---------------- 主流程 ----------------
 function main() {
   try {
     if (process.env.RN_TOOLKIT_SKIP_POSTINSTALL === '1') {
@@ -291,7 +305,6 @@ function main() {
 
     const cfg = loadHostConfig(hostRoot);
     const manager = resolvePackageManager(cfg.manager, process.env.npm_config_user_agent);
-    // 关键：基于 package.json 的声明来收集需安装的依赖，以确保写入
     const toInstall = collectInstallList(hostRoot, REQUIRED_DEPS);
 
     if (!cfg.autoInstall) {
@@ -299,9 +312,7 @@ function main() {
         log('All required dependencies already pinned in package.json, skip install.');
       } else {
         log('Auto-install disabled. Missing or mismatched dependencies detected:');
-        for (const d of toInstall) {
-          console.log(`  - ${d.name}@${d.version}`);
-        }
+        for (const d of toInstall) console.log(`  - ${d.name}@${d.version}`);
       }
     } else {
       if (toInstall.length === 0) {
@@ -316,7 +327,6 @@ function main() {
     }
 
     if (!cfg.skipConfigure) {
-      // 新增：配置 Babel 插件（确保在平台配置前完成）
       configureBabelReanimatedPlugin();
       runPlatformConfiguration();
     } else {

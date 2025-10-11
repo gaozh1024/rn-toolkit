@@ -1,6 +1,6 @@
 import React, { useMemo, forwardRef } from 'react';
 import { TextStyle, ViewStyle, Insets } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { useTheme } from '../../../theme';
 
 // 间距尺寸类型
