@@ -17,6 +17,9 @@
 
 ```bash
 npm install @gaozh1024/rn-toolkit react-native-reanimated react-native-gesture-handler
+
+// 执行 postinstall 脚本，自动安装依赖与配置
+npx -p @gaozh1024/rn-toolkit rn-toolkit postinstall
 ```
 
 - iOS 依赖：
