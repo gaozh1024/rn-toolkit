@@ -95,10 +95,13 @@ function hasInstalledPackage(hostRoot, name) {
 }
 
 function collectInstallList(hostRoot, requiredList) {
+  const cfgPkgPath = path.join(hostRoot, 'package.json');
+  const cfgPkg = readJSON(cfgPkgPath) || {};
   const toInstall = [];
   for (const { name, version } of requiredList) {
-    // 仅当宿主的 node_modules 中缺失时加入安装列表
-    if (!hasInstalledPackage(hostRoot, name)) {
+    const declared = getDeclaredVersion(cfgPkg, name);
+    // 以 package.json 为准：未声明或非精确版本，均需要安装并写入
+    if (!declared || declared !== version) {
       toInstall.push({ name, version });
     }
   }
@@ -284,30 +287,31 @@ function main() {
     }
 
     const hostRoot = findHostRoot();
-    if (!hostRoot) return; // 在本地 rn-toolkit 仓库内开发，跳过宿主操作
+    if (!hostRoot) return;
 
     const cfg = loadHostConfig(hostRoot);
     const manager = resolvePackageManager(cfg.manager, process.env.npm_config_user_agent);
+    // 关键：基于 package.json 的声明来收集需安装的依赖，以确保写入
     const toInstall = collectInstallList(hostRoot, REQUIRED_DEPS);
 
     if (!cfg.autoInstall) {
       if (toInstall.length === 0) {
-        log('All required dependencies already present in node_modules, skip install.');
+        log('All required dependencies already pinned in package.json, skip install.');
       } else {
-        log('Auto-install disabled. Missing dependencies detected:');
+        log('Auto-install disabled. Missing or mismatched dependencies detected:');
         for (const d of toInstall) {
           console.log(`  - ${d.name}@${d.version}`);
         }
       }
     } else {
       if (toInstall.length === 0) {
-        log('All required dependencies already present in node_modules, skip install.');
+        log('All required dependencies already pinned in package.json, skip install.');
       } else {
-        log('Installing missing required dependencies (exact versions):');
+        log('Installing and pinning required dependencies (exact versions):');
         toInstall.forEach(d => console.log(`  - ${d.name}@${d.version}`));
         const cmd = buildInstallCommand(manager, toInstall, cfg.silent);
         if (cmd) execInHost(cmd, hostRoot);
-        log('Dependencies installed successfully.');
+        log('Dependencies installed and written to package.json.');
       }
     }
 

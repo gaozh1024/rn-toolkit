@@ -152,16 +152,19 @@ export class NavigationBuilder {
    * 构建导航组件
    */
   build(): React.FC {
-    if (this.config.tabs.length === 0) {
-      throw new Error('至少需要添加一个标签页');
+    const hasTabs = (this.config.tabs || []).length > 0;
+    const hasOther = (this.config.stacks || []).length > 0 || (this.config.modals || []).length > 0;
+
+    if (!hasTabs && !hasOther) {
+      throw new Error('至少需要添加一个页面（tab/stack/modal）');
     }
 
-    // 如果只有标签页，使用简单的TabNavigator
-    if ((this.config.stacks || []).length === 0 && (this.config.modals || []).length === 0) {
+    // 只有标签页时，使用 TabNavigator
+    if (hasTabs && !hasOther) {
       return () => React.createElement(TabNavigator, this.config);
     }
 
-    // 如果有其他类型的页面，使用RootNavigator
+    // 存在栈或模态时，使用 RootNavigator（可有可无 tabs）
     return () => React.createElement(RootNavigator, this.config);
   }
 

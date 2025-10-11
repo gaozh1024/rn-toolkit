@@ -95,12 +95,14 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
     <RootStack.Navigator
       screenOptions={{ headerShown: false }}
     >
-      {/* 主标签导航器 */}
-      <RootStack.Screen
-        name="MainTabs"
-        component={TabsComponent}
-        options={getTransitionOptions(transitionMode)}
-      />
+      {/* 主标签导航器：仅在存在 tabs 时挂载 */}
+      {tabs.length > 0 && (
+        <RootStack.Screen
+          name="MainTabs"
+          component={TabsComponent}
+          options={getTransitionOptions(transitionMode)}
+        />
+      )}
 
       {/* 堆栈页面 */}
       {stacks.map((stack) => (
