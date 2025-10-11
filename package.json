@@ -30,6 +30,9 @@
     "README.md",
     "LICENSE"
   ],
+  "bin": {
+    "rn-toolkit": "scripts/cli.js"
+  },
   "peerDependencies": {
     "@react-native-clipboard/clipboard": ">=1.16.0",
     "@react-navigation/bottom-tabs": ">=6.0.0",
