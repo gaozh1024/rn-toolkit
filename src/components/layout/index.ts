@@ -7,3 +7,4 @@ export * from './Section';
 export * from './Header';
 export * from './Page';
 export * from './RefreshableList';
+export * from './GradientBackground';
