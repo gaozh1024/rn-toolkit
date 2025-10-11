@@ -48,16 +48,42 @@ import { Header } from '@gaozh1024/rn-toolkit';
 />
 ```
 
-## Props 摘要
+## 透明背景与顶部安全区控制
 
-- `title`: 标题文本或节点
-- `backVisible`, `onBack`, `backIconName`, `backIconColor`
-- `actions`: 右侧动作（最多 3 个）
-- `backgroundColor`, `borderBottom`, `titleColor`, `height`
-- 渐变相关：`gradientEnabled`, `gradientVariant`, `gradientColors`, `gradientLocations`, `gradientAngle`, `gradientStart`, `gradientEnd`, `gradientCenter`, `gradientRadius`, `gradientOpacity`
+在单独使用 Header 时，你可以：
+
+- 设置背景为透明，仅显示 Header 本身：
+- 关闭顶部安全区内边距，避免重复叠加：
+
+```tsx
+// 透明背景（保留顶部安全区）
+<Header title="示例" transparent />
+
+// 透明背景 + 关闭顶部安全区，只显示 header 本身高度
+<Header title="示例" transparent safeAreaTopEnabled={false} />
+
+// 保持主题背景，但不添加顶部安全区
+<Header title="示例" safeAreaTopEnabled={false} />
+```
+
+说明：
+
+- `transparent` 会让 Header 背景透明；若开启渐变，渐变会覆盖 Header 区域。
+- `safeAreaTopEnabled={false}` 关闭顶部安全区内边距，适合“只渲染 Header”的场景。
+- 与 `Page`/`SafeAreaView` 组合使用时，避免在外层再加顶部安全区以免重复。
 
 ## 注意事项
 
 - 开启渐变后容器背景设为透明，底部分割线仍生效
 - 顶部安全区由 Header 内部处理，不需要额外在外层再加顶部 safe-area
 - 与 `Page` 的渐变同时开启时，`Page` 渐变会在 Header 之下；Header 的渐变覆盖其自身高度
+
+## Props 摘要
+
+- `title`: 标题文本或节点
+- `backVisible`, `onBack`, `backIconName`, `backIconColor`
+- `actions`: 右侧动作（最多 3 个）
+- `backgroundColor`, `borderBottom`, `titleColor`, `height`
+- `transparent`: 启用后 Header 背景透明（默认 false）
+- `safeAreaTopEnabled`: 是否添加顶部安全区内边距（默认 true）
+- 渐变相关：`gradientEnabled`, `gradientVariant`, `gradientColors`, `gradientLocations`, `gradientAngle`, `gradientStart`, `gradientEnd`, `gradientCenter`, `gradientRadius`, `gradientOpacity`

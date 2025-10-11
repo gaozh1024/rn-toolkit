@@ -24,6 +24,7 @@ export interface HeaderAction {
 
 import { GradientBackground } from '../GradientBackground/GradientBackground';
 
+// 在 HeaderProps 中新增两个可选属性
 export interface HeaderProps {
     title?: string | React.ReactNode;
     // 左侧返回按钮
@@ -40,6 +41,9 @@ export interface HeaderProps {
     height?: number;
     // 其他
     testID?: string;
+    // 背景透明与安全区
+    transparent?: boolean;            // 开启后 Header 背景透明
+    safeAreaTopEnabled?: boolean;     // 是否添加顶部安全区内边距，默认 true
     // 渐变（可选）
     gradientEnabled?: boolean;
     gradientVariant?: 'linear' | 'radial';
@@ -66,6 +70,9 @@ export const Header: React.FC<HeaderProps> = ({
     titleColor,
     height,
     testID,
+    // 新增：透明与安全区控制
+    transparent = false,
+    safeAreaTopEnabled = true,
     // 渐变相关
     gradientEnabled = false,
     gradientVariant = 'linear',
@@ -85,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
     // 主题导航配置
     const nav = theme.navigation;
     const contentHeight = height ?? nav.height;
-    const containerBg = backgroundColor ?? nav.backgroundColor;
+    const containerBg = transparent ? 'transparent' : (backgroundColor ?? nav.backgroundColor);
     const titleColorFinal = titleColor ?? nav.titleColor;
     const iconColor = (c?: string) => c ?? nav.iconColor;
     const iconSize = nav.iconSize;
@@ -109,9 +116,9 @@ export const Header: React.FC<HeaderProps> = ({
         position: 'relative',
     };
 
-    // 新增：内容包裹层，把安全区内边距放到这里
+    // 内容包裹层：根据 safeAreaTopEnabled 决定是否添加顶部安全区内边距
     const contentWrapperStyle: ViewStyle = {
-        paddingTop: insets.top,
+        paddingTop: safeAreaTopEnabled ? insets.top : 0,
     };
 
     const contentRowStyle: ViewStyle = {
