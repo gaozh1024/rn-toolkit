@@ -1,5 +1,6 @@
 import { createNavigationContainerRef, StackActions, CommonActions } from '@react-navigation/native';
 import { TransitionMode } from '../types';
+import { getGlobalDrawerController } from '../DrawerContext';
 
 // 创建导航引用
 export const navigationRef = createNavigationContainerRef();
@@ -224,6 +225,69 @@ class NavigationService {
     }
 
     return route;
+  }
+
+  openLeftDrawer(): void {
+    try {
+      getGlobalDrawerController().openLeft();
+      console.log('NavigationService: openLeftDrawer');
+    } catch (e) {
+      console.warn('NavigationService: Drawer controller not set');
+    }
+  }
+
+  closeLeftDrawer(): void {
+    try {
+      getGlobalDrawerController().closeLeft();
+      console.log('NavigationService: closeLeftDrawer');
+    } catch (e) {
+      console.warn('NavigationService: Drawer controller not set');
+    }
+  }
+
+  toggleLeftDrawer(): void {
+    try {
+      getGlobalDrawerController().toggleLeft();
+      console.log('NavigationService: toggleLeftDrawer');
+    } catch (e) {
+      console.warn('NavigationService: Drawer controller not set');
+    }
+  }
+
+  /**
+   * 打开右侧抽屉
+   */
+  openRightDrawer(): void {
+    try {
+      getGlobalDrawerController().openRight();
+      console.log('NavigationService: openRightDrawer');
+    } catch (e) {
+      console.warn('NavigationService: Drawer controller not set');
+    }
+  }
+
+  /**
+   * 关闭右侧抽屉
+   */
+  closeRightDrawer(): void {
+    try {
+      getGlobalDrawerController().closeRight();
+      console.log('NavigationService: closeRightDrawer');
+    } catch (e) {
+      console.warn('NavigationService: Drawer controller not set');
+    }
+  }
+
+  /**
+   * 切换右侧抽屉状态
+   */
+  toggleRightDrawer(): void {
+    try {
+      getGlobalDrawerController().toggleRight();
+      console.log('NavigationService: toggleRightDrawer');
+    } catch (e) {
+      console.warn('NavigationService: Drawer controller not set');
+    }
   }
 }
 

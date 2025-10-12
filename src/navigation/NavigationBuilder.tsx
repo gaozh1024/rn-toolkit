@@ -2,6 +2,7 @@ import React from 'react';
 import { TabConfig, NavigatorConfig, StackConfig, TransitionMode, DrawerConfig } from './types';
 import { TabNavigator } from './components/TabNavigator';
 import { RootNavigator } from './components/RootNavigator';
+import { DrawerLayout } from './components/DrawerLayout';
 
 /**
  * 简单导航构建器 - 支持链式调用
@@ -159,13 +160,23 @@ export class NavigationBuilder {
       throw new Error('至少需要添加一个页面（tab/stack/modal）');
     }
 
+    const wrapWithDrawer = (child: React.ReactElement) => {
+      const { leftDrawer, rightDrawer } = this.config;
+      if (!leftDrawer && !rightDrawer) return child;
+      return (
+        <DrawerLayout leftDrawer={leftDrawer} rightDrawer={rightDrawer}>
+          {child}
+        </DrawerLayout>
+      );
+    };
+
     // 只有标签页时，使用 TabNavigator
     if (hasTabs && !hasOther) {
-      return () => React.createElement(TabNavigator, this.config);
+      return () => wrapWithDrawer(React.createElement(TabNavigator, this.config));
     }
 
     // 存在栈或模态时，使用 RootNavigator（可有可无 tabs）
-    return () => React.createElement(RootNavigator, this.config);
+    return () => wrapWithDrawer(React.createElement(RootNavigator, this.config));
   }
 
   /**

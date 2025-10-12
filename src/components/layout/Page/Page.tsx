@@ -7,6 +7,8 @@ import { useTheme } from '../../../theme/hooks';
 import { Edge } from 'react-native-safe-area-context';
 import type { HeaderProps } from '../Header/Header';
 import { GradientBackground } from '../GradientBackground/GradientBackground';
+import DrawerLayout from '../../../navigation/components/DrawerLayout';
+import { DrawerConfig } from '../../../navigation/types';
 
 export interface PageProps {
     children: React.ReactNode;
@@ -43,6 +45,9 @@ export interface PageProps {
     gradientCenter?: { x: number; y: number };
     gradientRadius?: number;
     gradientOpacity?: number;
+    // 可选：页面级左右抽屉
+    leftDrawer?: DrawerConfig;
+    rightDrawer?: DrawerConfig;
 }
 
 export const Page: React.FC<PageProps> = ({
@@ -69,6 +74,9 @@ export const Page: React.FC<PageProps> = ({
     gradientCenter = { x: 0.5, y: 0.5 },
     gradientRadius = 0.5,
     gradientOpacity = 1,
+    // 新增：抽屉配置
+    leftDrawer,
+    rightDrawer,
 }) => {
     const { theme, isDark } = useTheme();
     const colors = theme.colors;
@@ -82,9 +90,21 @@ export const Page: React.FC<PageProps> = ({
         ? gradientColors
         : [colors.primary, colors.secondary];
 
+    // 条件包裹：根据是否配置抽屉进行最外层包裹
+    const wrapWithDrawer = (node: React.ReactNode) => {
+        if (leftDrawer || rightDrawer) {
+            return (
+                <DrawerLayout leftDrawer={leftDrawer} rightDrawer={rightDrawer}>
+                    {node}
+                </DrawerLayout>
+            );
+        }
+        return node;
+    };
+
     // 普通背景（不启用渐变）
     if (!gradientEnabled) {
-        return (
+        return wrapWithDrawer(
             <SafeAreaView
                 edges={safeAreaEdges}
                 style={[{ backgroundColor: bgColor }, style]}
@@ -112,7 +132,7 @@ export const Page: React.FC<PageProps> = ({
     }
 
     // 开启渐变：在 SafeAreaView 外层包裹全屏渐变背景
-    return (
+    return wrapWithDrawer(
         <GradientBackground
             variant={gradientVariant}
             colors={gradientPalette}

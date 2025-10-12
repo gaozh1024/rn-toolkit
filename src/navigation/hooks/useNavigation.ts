@@ -75,6 +75,15 @@ export const useNavigation = () => {
         replace: (name: string, params?: any) => navigationService.replace(name, params),
         reset: (routes: Array<{ name: string; params?: any }>) => navigationService.reset(routes),
         goBack: () => navigationService.goBack(),
+        // 加入抽屉控制方法
+        openLeftDrawer: () => navigationService.openLeftDrawer(),
+        closeLeftDrawer: () => navigationService.closeLeftDrawer(),
+        toggleLeftDrawer: () => navigationService.toggleLeftDrawer(),
+
+        // 加入抽屉控制方法
+        openRightDrawer: () => navigationService.openRightDrawer(),
+        closeRightDrawer: () => navigationService.closeRightDrawer(),
+        toggleRightDrawer: () => navigationService.toggleRightDrawer(),
 
         // 状态查询
         getCurrentRouteName: () => navigationService.getCurrentRouteName(),

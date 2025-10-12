@@ -16,7 +16,7 @@
 - 安装：
 
 ```bash
-npm install @gaozh1024/rn-toolkit react-native-reanimated react-native-gesture-handler
+npm install @gaozh1024/rn-toolkit
 ```
 
 ### 必须安装的框架
@@ -68,6 +68,7 @@ cd ios && pod install
 - Babel 插件（必须，置于 `plugins` 最后一行）：
 
 ```javascript
+// 如执行了 postinstall 方法，则会自动为 babel.config.js 追加 'react-native-reanimated/plugin' 至 plugins 数组末尾
 module.exports = {
   presets: ['module:metro-react-native-babel-preset'],
   plugins: [
@@ -79,53 +80,17 @@ module.exports = {
 - 自动化：安装期间，postinstall 会尝试：
   - 按精确版本安装必需依赖（含 Reanimated、Gesture Handler 等）
   - 自动为 `babel.config.js` 追加 `'react-native-reanimated/plugin'` 至 `plugins` 数组末尾
-  - 配置 `@react-native-vector-icons/ionicons` 的 iOS Pod 与 Android Gradle
 
-> 可通过宿主的 `package.json -> rnToolkit` 配置控制自动化行为（如 `autoInstall`、`manager`、`silent`、`skipConfigure`）。
+  ios 依赖配置：
 
-## 快速上手
+  - 因为引用了 `@react-native-vector-icons/ionicons`，所以需要在 `info.plist` 中添加  
 
-- 初始化主题与预设（示例）：
-
-```tsx
-import React, { useEffect } from 'react';
-import { AnimationPresets } from '@gaozh1024/rn-toolkit';
-
-export default function App() {
-  useEffect(() => {
-    AnimationPresets.initialize();
-  }, []);
-  return null;
-}
-```
-
-- 使用 UI 组件（示例）：
-
-```tsx
-import { Button, Text } from '@gaozh1024/rn-toolkit';
-
-function Example() {
-  return (
-    <>
-      <Text variant="h1">Hello</Text>
-      <Button variant="primary" title="启动" onPress={() => {}} />
-    </>
-  );
-}
-```
-
-- 使用动画（Reanimated 示例）：
-
-```tsx
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-
-function FadeIn() {
-  const opacity = useSharedValue(0);
-  const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  React.useEffect(() => { opacity.value = withTiming(1, { duration: 300 }); }, []);
-  return <Animated.View style={style} />;
-}
-```
+  ```xml
+  <key>UIAppFonts</key>
+  <array>
+    <string>Ionicons.ttf</string>
+  </array>
+  ```
 
 ## 模块索引与文档
 
@@ -137,22 +102,6 @@ function FadeIn() {
 - UI 组件（UI）：见 [src/components/ui/README.md](src/components/ui/README.md)
 - 布局组件（Layout）：见 [src/components/layout/README.md](src/components/layout/README.md)
 - 反馈组件（Feedback）：见 [src/components/feedback/README.md](src/components/feedback/README.md)
-
-## 目录结构
-
-```text
-src/
-  animation/        # 动画服务、预设与 Hooks
-  components/
-    ui/             # 基础 UI 组件（Button/Icon/Input 等）
-    layout/         # 布局相关组件（栅格、容器等）
-    feedback/       # 反馈类组件（Modal/Toast 等）
-  navigation/       # 导航构建器、服务与类型
-  statusbar/        # 状态栏服务与 Hooks
-  storage/          # 存储服务（MMKV）与类型
-  theme/            # 主题服务、预设与 Hooks
-  utils/            # 常用工具（剪贴板、本地化、设备信息等）
-```
 
 ## 约定与最佳实践
 

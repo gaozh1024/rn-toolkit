@@ -232,6 +232,7 @@ console.log('CustomTabButton rendered:', { focused, label, bottomSafeArea });
 ```
 
 这可以帮助你：
+
 - 确认按钮是否正确渲染
 - 查看焦点状态
 - 检查安全区域高度
@@ -276,19 +277,20 @@ const NavigationComponent = createNavigation()
 
 MIT License
 
-
 # Multiple Drawers（左右抽屉）
 
 ## 安装依赖
+
 ```bash
 yarn add react-native-drawer-layout
 ```
 
 ## 用法示例
+
 ```tsx
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import createNavigation from '@gaozh1024/rn-toolkit/src/navigation';
+// 使用工具包提供的容器，自动绑定全局导航与反馈容器
+import { NavigationContainer , createNavigation } from '@gaozh1024/rn-toolkit';
 
 const LeftMenu = () => <YourLeftMenu />;
 const RightPanel = () => <YourRightPanel />;
@@ -312,4 +314,36 @@ const App = () => {
 ```
 
 - `content` 可传组件或节点；`width` 为抽屉宽度；可选 `drawerType`、`edgeWidth`。
-- 有抽屉配置时，整个导航将被左右抽屉包裹；无配置则不影响现有导航。
+- 配置了 `leftDrawer` / `rightDrawer` 时，导航会自动被抽屉包裹，并注册全局控制器。
+- 自动初始化：通过 `setLeftDrawer` / `setRightDrawer` 配置后，无需额外 Provider，已自动注册全局控制器。
+- 全局方法：
+  - `Navigation.openLeftDrawer()`
+  - `Navigation.closeLeftDrawer()`
+  - `Navigation.toggleLeftDrawer()`
+- Hook（推荐）：
+
+  ```tsx
+  import { useNavigation } from '@gaozh1024/rn-toolkit/src/navigation';
+
+  const HomeScreen = () => {
+    const nav = useNavigation();
+
+    return (
+      <Button title="打开左抽屉" onPress={() => nav.openLeftDrawer()} />
+    );
+  };
+  ```
+
+- 服务调用（任意位置）：
+
+  ```tsx
+  import { Navigation } from '@gaozh1024/rn-toolkit/src/navigation';
+
+  Navigation.openLeftDrawer();
+  ```
+
+## 手势与行为
+
+- 通过 `edgeWidth` 控制边缘滑动手势区域，示例：`setLeftDrawer({ content, width: 300, edgeWidth: 40 })`
+- `drawerType` 支持 `'front' | 'back' | 'slide'`（具体效果由 `react-native-drawer-layout` 决定）
+- 左右同时配置时，内容区域会按“左外右内”的层级包裹
