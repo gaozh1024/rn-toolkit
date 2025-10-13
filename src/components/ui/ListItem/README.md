@@ -3,12 +3,14 @@
 用于展示标题/描述等内容，支持左右插槽与点击交互。
 
 ## 特性
+
 - 标题/描述：`title`、`description`（字符串或自定义节点）
 - 插槽：`left`/`right` 可放头像、图标、开关等
 - 交互与状态：`onPress`、`disabled`、`selected`
 - 主题接入：圆角、间距、边框/背景来源主题 tokens
 
 ## 用法
+
 ```tsx
 import { ListItem, Avatar, IconButton, Switch } from '@gaozh1024/rn-toolkit';
 
@@ -39,6 +41,7 @@ function Example() {
 ```
 
 ## Props
+
 - `title`: `string | ReactNode`
 - `description`: `string | ReactNode`
 - `left`: `ReactNode`（如 `Avatar`/`IconButton`/`Switch`）
@@ -55,12 +58,14 @@ function Example() {
 - `testID`: 测试标识
 
 ## 主题说明
+
 - 圆角：`theme.borderRadius.md`
 - 间距：`theme.spacing.sm/md`
 - 边框：`colors.border`，选中态使用 `colors.primary` 高亮
 - 背景：选中态使用 `colors.surface`
 
 ## 最佳实践
+
 - 左右插槽尺寸建议与 `minHeight` 对齐，保证点击区域充足
 - 标题使用 `body1` + `semibold`，描述使用 `body2` + `textSecondary`
 - 对可点击项设置 `onPress` 与合理的 `accessibilityLabel`

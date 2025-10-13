@@ -9,7 +9,7 @@ export interface IconButtonProps extends SpacingProps {
   type?: IconType;
   size?: number; // 图标尺寸（px）
   color?: 'primary' | 'secondary' | 'text' | 'textSecondary' | 'textDisabled' | 'error' | 'warning' | 'success' | 'info' | string;
-  variant?: 'filled' | 'ghost' | 'outline';
+  variant?: 'filled' | 'ghost' | 'outline'; // 按钮变体（填充、幽灵、轮廓）
   disabled?: boolean;
   onPress?: () => void;
   style?: ViewStyle | ViewStyle[];
