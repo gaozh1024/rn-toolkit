@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp } from 'react-native';
+import { useSpacingStyle, SpacingProps } from '../../../theme';
 
-export interface StackProps {
+export interface StackProps extends SpacingProps {
   children: React.ReactNode;
   direction?: 'row' | 'column';
   gap?: number;
@@ -29,6 +30,7 @@ export const Stack: React.FC<StackProps> = ({
   fullHeight,
   divider,
   testID,
+  ...props
 }) => {
   const containerStyle: ViewStyle = {
     flexDirection: direction,
@@ -41,6 +43,7 @@ export const Stack: React.FC<StackProps> = ({
     ...(fullHeight ? { height: '100%' } : {}),
   };
 
+  const spacingStyle = useSpacingStyle(props);
   let content: React.ReactNode = children;
 
   // 若传入 divider，则在子元素之间插入分隔节点；否则使用 gap 控制间距
@@ -61,7 +64,7 @@ export const Stack: React.FC<StackProps> = ({
   }
 
   return (
-    <View style={[containerStyle, style]} testID={testID}>
+    <View style={[containerStyle, spacingStyle, style]} testID={testID}>
       {content}
     </View>
   );

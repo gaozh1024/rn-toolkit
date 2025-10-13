@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { View, Image, Text, ViewStyle, TextStyle } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 
 export type AvatarSize = 'small' | 'medium' | 'large' | number;
 export type AvatarShape = 'circle' | 'rounded' | 'square';
 export type AvatarStatus = 'online' | 'offline';
 
-export interface AvatarProps {
+export interface AvatarProps extends SpacingProps {
   src?: string;
   name?: string;
   size?: AvatarSize;
@@ -63,6 +63,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   style,
   textStyle,
   testID,
+  ...props
 }) => {
   const { theme } = useTheme();
   const colors = theme.colors as any;
@@ -132,9 +133,10 @@ export const Avatar: React.FC<AvatarProps> = ({
 
   const accessibilityLabel = `${name ?? ''}${status ? `, ${status}` : ''}`.trim();
   const showImage = !!src && !imageError;
+  const spacingStyle = useSpacingStyle(props);
 
   return (
-    <View style={[container, style]} testID={testID} accessibilityLabel={accessibilityLabel}>
+    <View style={[container, spacingStyle, style]} testID={testID} accessibilityLabel={accessibilityLabel}>
       {showImage ? (
         <Image
           source={{ uri: src! }}

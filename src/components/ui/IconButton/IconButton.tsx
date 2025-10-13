@@ -1,10 +1,10 @@
 import React from 'react';
 import { Pressable, ViewStyle, Insets, StyleProp, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Icon, IconType } from '../Icon';
-import { useTheme, useThemeColors } from '../../../theme';
+import { useTheme, useThemeColors, useSpacingStyle, SpacingProps } from '../../../theme';
 import { GradientBackground } from '../../layout/GradientBackground';
 
-export interface IconButtonProps {
+export interface IconButtonProps extends SpacingProps {
   name: string;
   type?: IconType;
   size?: number; // 图标尺寸（px）
@@ -29,7 +29,6 @@ export interface IconButtonProps {
   gradientOpacity?: number;
 }
 
-// IconButton 组件（起始于第 20 行）
 const IconButton: React.FC<IconButtonProps> = ({
   name,
   type = 'ionicons',
@@ -53,6 +52,9 @@ const IconButton: React.FC<IconButtonProps> = ({
   gradientCenter = { x: 0.5, y: 0.5 },
   gradientRadius = 0.5,
   gradientOpacity = 1,
+  // 间距快捷（统一辅助）
+  m, mv, mh, mt, mb, ml, mr,
+  p, pv, ph, pt, pb, pl, pr,
 }) => {
   const { theme } = useTheme();
   const colors = useThemeColors();
@@ -103,7 +105,14 @@ const IconButton: React.FC<IconButtonProps> = ({
   const gradientEnhancer: ViewStyle = { backgroundColor: 'transparent', position: 'relative', overflow: 'hidden' };
   const containerBaseStyle = getContainerStyle();
   const containerStyle = gradientEnabled ? { ...containerBaseStyle, ...gradientEnhancer } : containerBaseStyle;
-  const finalStyle: StyleProp<ViewStyle> = [containerStyle, style];
+
+  // 统一的间距样式
+  const spacingStyle = useSpacingStyle({
+    m, mv, mh, mt, mb, ml, mr,
+    p, pv, ph, pt, pb, pl, pr,
+  });
+
+  const finalStyle: StyleProp<ViewStyle> = [containerStyle, spacingStyle, style];
 
   // 扁平化获取有效圆角
   const flatFinal = StyleSheet.flatten(finalStyle) as ViewStyle | undefined;

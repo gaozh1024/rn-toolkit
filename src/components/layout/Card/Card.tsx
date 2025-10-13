@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 
-export interface CardProps {
+export interface CardProps extends SpacingProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   backgroundColor?: string;
@@ -32,6 +32,7 @@ export const Card: React.FC<CardProps> = ({
   disabled = false,
   transparent = false,
   testID,
+  ...props
 }) => {
   const { theme, styles } = useTheme();
 
@@ -55,10 +56,12 @@ export const Card: React.FC<CardProps> = ({
     ...(typeof elevation === 'number' ? { elevation } : {}),
   };
 
+  const spacingStyle = useSpacingStyle(props);
+
   if (onPress) {
     return (
       <TouchableOpacity
-        style={[cardStyle, style]}
+        style={[cardStyle, spacingStyle, style]}
         onPress={onPress}
         disabled={disabled}
         activeOpacity={0.7}
@@ -70,7 +73,7 @@ export const Card: React.FC<CardProps> = ({
   }
 
   return (
-    <View style={[cardStyle, style]} testID={testID}>
+    <View style={[cardStyle, spacingStyle, style]} testID={testID}>
       {children}
     </View>
   );

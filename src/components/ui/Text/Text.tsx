@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
 import { Text as RNText, TextStyle, StyleProp } from 'react-native';
-import { useTheme } from '../../../theme';
+// 顶部导入处
+import { useTheme, useSpacingStyle, SpacingProps, SpacingSize } from '../../../theme';
 
-type SpacingSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | number;
-
-export interface TextProps {
+export interface TextProps extends SpacingProps {
     // 基础属性
     children?: React.ReactNode;
     style?: StyleProp<TextStyle>;
@@ -57,23 +56,6 @@ export interface TextProps {
 
     // 测试ID
     testID?: string;
-
-    // 间距（基于主题 spacing，亦可传数字像素）
-    m?: SpacingSize;
-    mv?: SpacingSize; // marginVertical
-    mh?: SpacingSize; // marginHorizontal
-    mt?: SpacingSize;
-    mb?: SpacingSize;
-    ml?: SpacingSize;
-    mr?: SpacingSize;
-
-    p?: SpacingSize;
-    pv?: SpacingSize; // paddingVertical
-    ph?: SpacingSize; // paddingHorizontal
-    pt?: SpacingSize;
-    pb?: SpacingSize;
-    pl?: SpacingSize;
-    pr?: SpacingSize;
 }
 
 const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
@@ -285,10 +267,16 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
         ...(typeof transform !== 'undefined' ? { textTransform: transform } : {}),
     };
 
+    // 移除本地 getSpacingValue / spacingMemo，改用统一辅助
+    const spacingStyle = useSpacingStyle({
+        m, mv, mh, mt, mb, ml, mr,
+        p, pv, ph, pt, pb, pl, pr,
+    });
+
     return (
         <RNText
             ref={ref}
-            style={[baseStyle, style]}
+            style={[baseStyle, spacingStyle, style]}
             selectable={selectable}
             numberOfLines={numberOfLines}
             ellipsizeMode={ellipsizeMode}

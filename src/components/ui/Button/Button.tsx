@@ -14,11 +14,11 @@ import {
     StyleSheet,
     LayoutChangeEvent
 } from 'react-native';
-import { useTheme, useThemeColors, useLayoutStyles, useSpacingStyles } from '../../../theme';
+import { useTheme, useThemeColors, useLayoutStyles, useSpacingStyles, useSpacingStyle, SpacingProps } from '../../../theme';
 import { GradientBackground } from '../../layout/GradientBackground/GradientBackground';
 
 // 文件顶部：ButtonProps 接口
-export interface ButtonProps {
+export interface ButtonProps extends SpacingProps {
     // 基础属性
     children?: React.ReactNode;
     title?: string;
@@ -101,7 +101,6 @@ const Button: React.FC<ButtonProps> = ({
     bold = false,
     icon,
     iconPosition = 'left',
-    // 宽度控制
     fullWidth = false,
     flex = false,
     touchType = 'opacity',
@@ -114,7 +113,6 @@ const Button: React.FC<ButtonProps> = ({
     accessibilityHint,
     accessibilityRole = 'button',
     testID,
-    // 渐变相关（默认与主题 primary→secondary）
     gradientEnabled = false,
     gradientVariant = 'linear',
     gradientColors,
@@ -131,6 +129,7 @@ const Button: React.FC<ButtonProps> = ({
     const colors = useThemeColors();
     const layout = useLayoutStyles();
     const spacing = useSpacingStyles();
+    const spacingStyle = useSpacingStyle(props);
 
     // 获取按钮样式
     const getButtonStyle = (): ViewStyle => {
@@ -436,6 +435,7 @@ const Button: React.FC<ButtonProps> = ({
 
     const finalStyle: StyleProp<ViewStyle> = [
         baseButtonStyle,
+        spacingStyle,
         gradientEnabled ? gradientEnhancer : null,
         style,
     ];

@@ -1,10 +1,7 @@
 import React, { useMemo, forwardRef } from 'react';
 import { TextStyle, ViewStyle, Insets } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import { useTheme } from '../../../theme';
-
-// 间距尺寸类型
-type SpacingSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | number;
+import { useTheme, useSpacingStyle, SpacingProps, SpacingSize } from '../../../theme';
 
 // 自定义图标组件类型
 export type CustomIconComponent = React.ComponentType<{
@@ -22,7 +19,7 @@ export type CustomIconComponent = React.ComponentType<{
 // 图标类型（支持默认的 Ionicons 和自定义图标库）
 export type IconType = 'ionicons' | string;
 
-export interface IconProps {
+export interface IconProps extends SpacingProps {
     /** 图标名称 */
     name: string;
     /** 图标类型/字体库，默认为 ionicons */
@@ -44,22 +41,6 @@ export interface IconProps {
     /** 无障碍标签 */
     accessibilityLabel?: string;
 
-    // 间距（基于主题 spacing，亦可传数字像素）
-    m?: SpacingSize;
-    mv?: SpacingSize; // marginVertical
-    mh?: SpacingSize; // marginHorizontal
-    mt?: SpacingSize;
-    mb?: SpacingSize;
-    ml?: SpacingSize;
-    mr?: SpacingSize;
-
-    p?: SpacingSize;
-    pv?: SpacingSize; // paddingVertical
-    ph?: SpacingSize; // paddingHorizontal
-    pt?: SpacingSize;
-    pb?: SpacingSize;
-    pl?: SpacingSize;
-    pr?: SpacingSize;
 }
 
 // 自定义图标库注册表
@@ -105,7 +86,7 @@ export const isIconLibraryRegistered = (name: string): boolean => {
     return name === 'ionicons' || !!customIconComponents[name];
 };
 
-export const Icon = forwardRef<any, IconProps>(({
+export const Icon = forwardRef<any, IconProps>(({ 
     name,
     type = 'ionicons',
     size = 24,
@@ -116,7 +97,6 @@ export const Icon = forwardRef<any, IconProps>(({
     testID,
     hitSlop,
     accessibilityLabel,
-    // spacing shortcuts
     m, mv, mh, mt, mb, ml, mr,
     p, pv, ph, pt, pb, pl, pr,
     ...props
@@ -172,22 +152,11 @@ export const Icon = forwardRef<any, IconProps>(({
     const iconColor = useMemo(getIconColor, [color, colors]);
 
     // 计算样式，包括间距
-    const iconStyle = useMemo(() => {
-        const baseStyle: ViewStyle = {
-            // Margin（单向 > 轴向 > 总量）
-            ...(spacingMemo.mt != null ? { marginTop: spacingMemo.mt } : spacingMemo.mv != null ? { marginTop: spacingMemo.mv } : spacingMemo.m != null ? { marginTop: spacingMemo.m } : {}),
-            ...(spacingMemo.mb != null ? { marginBottom: spacingMemo.mb } : spacingMemo.mv != null ? { marginBottom: spacingMemo.mv } : spacingMemo.m != null ? { marginBottom: spacingMemo.m } : {}),
-            ...(spacingMemo.ml != null ? { marginLeft: spacingMemo.ml } : spacingMemo.mh != null ? { marginLeft: spacingMemo.mh } : spacingMemo.m != null ? { marginLeft: spacingMemo.m } : {}),
-            ...(spacingMemo.mr != null ? { marginRight: spacingMemo.mr } : spacingMemo.mh != null ? { marginRight: spacingMemo.mh } : spacingMemo.m != null ? { marginRight: spacingMemo.m } : {}),
-
-            // Padding（单向 > 轴向 > 总量）
-            ...(spacingMemo.pt != null ? { paddingTop: spacingMemo.pt } : spacingMemo.pv != null ? { paddingTop: spacingMemo.pv } : spacingMemo.p != null ? { paddingTop: spacingMemo.p } : {}),
-            ...(spacingMemo.pb != null ? { paddingBottom: spacingMemo.pb } : spacingMemo.pv != null ? { paddingBottom: spacingMemo.pv } : spacingMemo.p != null ? { paddingBottom: spacingMemo.p } : {}),
-            ...(spacingMemo.pl != null ? { paddingLeft: spacingMemo.pl } : spacingMemo.ph != null ? { paddingLeft: spacingMemo.ph } : spacingMemo.p != null ? { paddingLeft: spacingMemo.p } : {}),
-            ...(spacingMemo.pr != null ? { paddingRight: spacingMemo.pr } : spacingMemo.ph != null ? { paddingRight: spacingMemo.ph } : spacingMemo.p != null ? { paddingRight: spacingMemo.p } : {}),
-        };
-        return baseStyle;
-    }, [spacingMemo]);
+    const spacingStyle = useSpacingStyle({
+      m, mv, mh, mt, mb, ml, mr,
+      p, pv, ph, pt, pb, pl, pr,
+    });
+    const styleMerged = spacingStyle ? { ...spacingStyle, ...(style as object) } : style;
 
     let IconComponent: CustomIconComponent;
 
@@ -208,7 +177,7 @@ export const Icon = forwardRef<any, IconProps>(({
         name,
         size,
         color: iconColor,
-        style: iconStyle ? { ...iconStyle, ...(style as object) } : style,
+        style: styleMerged,
         onPress: disabled ? undefined : onPress,
         testID,
         hitSlop,

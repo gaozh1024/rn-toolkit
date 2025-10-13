@@ -35,3 +35,4 @@ export {
 
 // 便捷导出
 export { useTheme as default } from './hooks';
+export * from './spacing';

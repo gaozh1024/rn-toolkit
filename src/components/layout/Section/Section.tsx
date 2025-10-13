@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, ViewStyle, TextStyle, StyleProp } from 'react-native';
-import { useTheme } from '../../../theme/hooks';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { Text } from '../../ui/Text';
 
-export interface SectionProps {
+export interface SectionProps extends SpacingProps {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
@@ -25,6 +25,7 @@ export const Section: React.FC<SectionProps> = ({
   contentStyle,
   spacing = 16,
   testID,
+  ...props
 }) => {
   const { theme } = useTheme();
   const colors = theme.colors;
@@ -41,8 +42,10 @@ export const Section: React.FC<SectionProps> = ({
     marginBottom: spacing,
   };
 
+  const spacingStyle = useSpacingStyle(props);
+
   return (
-    <View style={style} testID={testID}>
+    <View style={[spacingStyle, style]} testID={testID}>
       {title && (
         <Text style={[defaultTitleStyle, titleStyle]}>
           {title}

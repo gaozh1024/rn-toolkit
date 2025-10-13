@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { View, Text, ViewStyle, TextStyle } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { Avatar, AvatarSize, AvatarShape, AvatarStatus } from '../Avatar';
 
 export interface AvatarItem { src?: string; name?: string; status?: AvatarStatus }
-export interface AvatarGroupProps {
+export interface AvatarGroupProps extends SpacingProps {
   items: AvatarItem[];
   size?: AvatarSize;
   shape?: AvatarShape;
@@ -24,6 +24,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
   style,
   textStyle,
   testID,
+  ...props
 }) => {
   const { theme } = useTheme();
   const colors = theme.colors;
@@ -34,6 +35,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
   }, [size]);
 
   const step = overlap != null ? overlap : Math.floor(px * 0.35);
+  const spacingStyle = useSpacingStyle(props);
 
   const visible = useMemo(() => {
     if (!max || max <= 0) return items;
@@ -43,7 +45,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
   const extraCount = items.length - visible.length;
 
   return (
-    <View style={[{ flexDirection: 'row', alignItems: 'center' }, style]} testID={testID}>
+    <View style={[{ flexDirection: 'row', alignItems: 'center' }, spacingStyle, style]} testID={testID}>
       {visible.map((it, idx) => (
         <View key={`av-${idx}`} style={{ marginLeft: idx === 0 ? 0 : -step, zIndex: idx + 1 }}>
           <Avatar src={it.src} name={it.name} status={it.status} size={px} shape={shape} textStyle={textStyle} />
