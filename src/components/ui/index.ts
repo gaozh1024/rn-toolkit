@@ -23,3 +23,4 @@ export * from './Stepper';
 export * from './Slider';
 export * from './ListItem';
 export * from './Link';
+export * from './Chat';
