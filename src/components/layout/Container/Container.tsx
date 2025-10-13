@@ -12,6 +12,7 @@ export interface ContainerProps {
   scrollable?: boolean;
   scrollViewProps?: React.ComponentProps<typeof ScrollView>;
   testID?: string;
+  transparent?: boolean; // 背景透明
 }
 
 export const Container: React.FC<ContainerProps> = ({
@@ -24,6 +25,7 @@ export const Container: React.FC<ContainerProps> = ({
   scrollable = false,
   scrollViewProps,
   testID,
+  transparent = false,
 }) => {
   const { theme } = useTheme();
   const colors = theme.colors;
@@ -48,7 +50,7 @@ export const Container: React.FC<ContainerProps> = ({
 
   const viewStyle: ViewStyle = {
     flex,
-    backgroundColor: backgroundColor || colors.background,
+    backgroundColor: transparent ? 'transparent' : (backgroundColor || colors.background),
     ...marginStyle,
   };
 

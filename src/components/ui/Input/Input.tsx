@@ -37,6 +37,8 @@ export interface InputProps {
     paddingH?: number;
     paddingV?: number;
     radius?: number;
+    transparent?: boolean;
+    noHorizontalPadding?: boolean;
 }
 
 const Input = forwardRef<TextInput, InputProps>((props, ref) => {
@@ -67,6 +69,8 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
         accessibilityLabel,
         accessibilityHint,
         testID,
+        transparent = false,
+        noHorizontalPadding = false,
     } = props;
 
     const { theme } = useTheme();
@@ -75,11 +79,11 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
     const widthStyle: ViewStyle = flex != null ? { flex } : fullWidth ? { width: '100%' } : {};
 
     const baseBorderColor = error ? colors.error : colors.border;
-    const bgColor = variant === 'solid' ? colors.surface : colors.background;
+    const bgColor = transparent ? 'transparent' : (variant === 'solid' ? colors.surface : colors.background);
     const borderWidth = variant === 'outline' ? 1 : 0;
 
     // 原默认值改为优先取 props，未传入时使用主题值
-    const paddingH = props.paddingH ?? theme.spacing.sm;
+    const paddingH = noHorizontalPadding ? 0 : (props.paddingH ?? theme.spacing.sm);
     const paddingV = props.paddingV ?? theme.spacing.md;
     const radius = props.radius ?? theme.borderRadius.lg;
 
