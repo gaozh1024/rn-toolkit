@@ -584,7 +584,11 @@ class ThemeService {
         const merged: BaseTheme = JSON.parse(JSON.stringify(baseTheme));
 
         if (config.colors) {
-            merged.colors = { ...merged.colors, ...config.colors };
+            const safeColors: Record<string, string> = {};
+            for (const [key, val] of Object.entries(config.colors)) {
+                if (typeof val === 'string') safeColors[key] = val;
+            }
+            merged.colors = { ...merged.colors, ...safeColors };
         }
 
         if (config.navigation) {

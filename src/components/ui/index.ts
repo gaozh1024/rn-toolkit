@@ -18,6 +18,7 @@ export * from './Spinner';
 export * from './Progress';
 export * from './SegmentedMenu';
 export * from './Skeleton';
+export * from './SegmentedProgress';
 export * from './Stepper';
 export * from './Slider';
 export * from './ListItem';
