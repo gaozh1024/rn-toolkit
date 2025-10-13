@@ -20,12 +20,15 @@ const PasswordInput = forwardRef<TextInput, PasswordInputProps>((props, ref) => 
         toggleIconType,
         onVisibilityChange,
         toggleIconColor,
+        value,
+        defaultValue,
         // 透传 Input 的其他 props
         ...rest
     } = props;
 
     const [visible, setVisible] = useState<boolean>(false);
-    const effectiveSecure = secureTextEntry && !visible; // 显示时关闭加密
+    const effectiveSecure = secureTextEntry && !visible; // 当前是否密文
+    const hasValue = ((value ?? defaultValue) ?? '').length > 0; // 无值时隐藏切换图标
 
     const handleToggle = () => {
         setVisible((v) => {
@@ -35,15 +38,17 @@ const PasswordInput = forwardRef<TextInput, PasswordInputProps>((props, ref) => 
         });
     };
 
-    // 优先显示内置的显隐切换按钮；如需禁用可 toggleIconVisible=false 后自行传递 rightIcon（本组件不接收 rightIcon）
-    const rightIcon = toggleIconVisible
-        ? { name: visible ? toggleIconNames.hide : toggleIconNames.show, type: toggleIconType, color: toggleIconColor, onPress: handleToggle }
+    // 无值时不显示；密文=闭眼，明文=睁眼
+    const rightIcon = toggleIconVisible && hasValue
+        ? { name: effectiveSecure ? toggleIconNames.hide : toggleIconNames.show, type: toggleIconType, color: toggleIconColor, onPress: handleToggle }
         : undefined;
 
     return (
         <Input
             ref={ref}
             secureTextEntry={effectiveSecure}
+            value={value}
+            defaultValue={defaultValue}
             rightIcon={rightIcon as any}
             {...rest}
         />

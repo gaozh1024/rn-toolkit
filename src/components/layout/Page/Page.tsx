@@ -5,7 +5,7 @@ import { SafeAreaView } from '../SafeAreaView/SafeAreaView';
 import { Container } from '../Container/Container';
 import { Header } from '../Header';
 import { useTheme } from '../../../theme/hooks';
-import type { HeaderProps } from '../Header/Header';
+import type { HeaderAction, HeaderProps } from '../Header/Header';
 import { GradientBackground } from '../GradientBackground/GradientBackground';
 import DrawerLayout from '../../../navigation/components/DrawerLayout';
 import { DrawerConfig } from '../../../navigation/types';
@@ -17,6 +17,7 @@ export interface PageProps {
     // Header控制
     headerShown?: boolean;              // 默认显示 Header
     headerProps?: HeaderProps;          // 传入 Header 的配置（title、actions、onBack 等）
+    headerActions?: HeaderAction[];     // 新增：直接在 Page 上设置右侧动作（图标/文本）
 
     // 布局与外观
     style?: StyleProp<ViewStyle>;
@@ -58,6 +59,7 @@ export const Page: React.FC<PageProps> = ({
     children,
     headerShown = true,
     headerProps,
+    headerActions, // 新增：从 Page 直传右侧动作
     style,
     contentStyle,
     backgroundColor,
@@ -121,7 +123,9 @@ export const Page: React.FC<PageProps> = ({
                     translucent={false}
                 />
 
-                {headerShown && <Header {...headerProps} />}
+                {headerShown && (
+                    <Header {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} />
+                )}
 
                 <Container
                     flex={1}
@@ -162,7 +166,9 @@ export const Page: React.FC<PageProps> = ({
                     translucent={false}
                 />
 
-                {headerShown && <Header {...headerProps} />}
+                {headerShown && (
+                    <Header {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} />
+                )}
 
                 <Container
                     flex={1}
