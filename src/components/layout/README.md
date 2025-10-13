@@ -5,11 +5,11 @@
 ## 快速开始
 
 - 从聚合导出中直接引入布局组件
-- 按需组合 `SafeAreaView`、`Container`、`Section`、`Header`、`Screen`、`Page`、`Card`
+- 按需组合 `SafeAreaView`、`Container`、`Section`、`Header`、`Screen`、`Page`、`Card`、`GradientBackground`、`Stack`
 
 ```tsx
 import React from 'react';
-import { SafeAreaView, Container, Section, Header, Screen, Page } from '@gaozh1024/rn-toolkit';
+import { SafeAreaView, Container, Section, Header, Screen, Page, Card, GradientBackground, Stack } from '@gaozh1024/rn-toolkit';
 
 export default function LayoutExample() {
   return (
@@ -43,13 +43,14 @@ export default function LayoutExample() {
 - [Header 头部](./Header/README.md)
 - [Page 页面容器](./Page/README.md)
 - [GradientBackground 渐变背景](./GradientBackground/README.md)
-
-> 目前以下组件尚未提供独立 README：`Container`、`Header`、`Page`、`RefreshableList`、`SafeAreaView`、`Screen`、`Section`。如需补充我可以为你生成对应文档。
+- [Stack 堆叠布局](./Stack/README.md)
 
 ## 组件概览
 
 - `SafeAreaView`/`SafeAreaContainer`：包裹页面根节点，自动处理 iOS/Android 安全区
 - `Screen`：页面级容器（可用于统一背景、滚动策略等）
+- `GradientBackground`：渐变背景容器（支持方向/颜色/位置）
+- `Stack`：堆叠布局容器（支持方向/间距/对齐/换行/分隔符）
 - `Header`：页面头部（标题/左/右操作）
 - `Page`：页面内容容器（可与 `Screen` 搭配）
 - `Container`：区块容器，支持统一 `padding/margin/backgroundColor/flex/scrollable`
