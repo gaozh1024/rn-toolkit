@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ViewStyle, StyleProp, ScrollView, StyleSheet } from 'react-native';
+import { View, ViewStyle, StyleProp, ScrollView, StyleSheet, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 
 export interface ContainerProps {
@@ -12,7 +12,8 @@ export interface ContainerProps {
   scrollable?: boolean;
   scrollViewProps?: React.ComponentProps<typeof ScrollView>;
   testID?: string;
-  transparent?: boolean; // 背景透明
+  transparent?: boolean; // 背景透明（已添加）
+  dismissKeyboardOnTapOutside?: boolean; // 新增：点击空白处收起键盘
 }
 
 export const Container: React.FC<ContainerProps> = ({
@@ -26,6 +27,7 @@ export const Container: React.FC<ContainerProps> = ({
   scrollViewProps,
   testID,
   transparent = false,
+  dismissKeyboardOnTapOutside = false,
 }) => {
   const { theme } = useTheme();
   const colors = theme.colors;
@@ -61,13 +63,13 @@ export const Container: React.FC<ContainerProps> = ({
   const flattened = StyleSheet.flatten(style) as ViewStyle | undefined;
   const styleWithoutPadding: StyleProp<ViewStyle> = flattened
     ? [{
-        ...flattened,
-        padding: undefined,
-        paddingTop: undefined,
-        paddingBottom: undefined,
-        paddingLeft: undefined,
-        paddingRight: undefined,
-      }]
+      ...flattened,
+      padding: undefined,
+      paddingTop: undefined,
+      paddingBottom: undefined,
+      paddingLeft: undefined,
+      paddingRight: undefined,
+    }]
     : undefined;
 
   if (flattened) {
@@ -83,12 +85,24 @@ export const Container: React.FC<ContainerProps> = ({
       <ScrollView
         style={[viewStyle, styleWithoutPadding]}
         contentContainerStyle={contentPaddingStyle}
+        keyboardShouldPersistTaps={dismissKeyboardOnTapOutside ? 'handled' : undefined}
+        onScrollBeginDrag={dismissKeyboardOnTapOutside ? Keyboard.dismiss : undefined}
         testID={testID}
         showsVerticalScrollIndicator={false}
         {...scrollViewProps}
       >
         {children}
       </ScrollView>
+    );
+  }
+
+  if (dismissKeyboardOnTapOutside) {
+    return (
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={[viewStyle, contentPaddingStyle, style]} testID={testID}>
+          {children}
+        </View>
+      </TouchableWithoutFeedback>
     );
   }
 

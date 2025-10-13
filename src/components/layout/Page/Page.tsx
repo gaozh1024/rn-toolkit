@@ -1,15 +1,16 @@
 import React from 'react';
 import { StatusBar, ViewStyle, StyleProp } from 'react-native';
+import { Edge } from 'react-native-safe-area-context';
 import { SafeAreaView } from '../SafeAreaView/SafeAreaView';
 import { Container } from '../Container/Container';
 import { Header } from '../Header';
 import { useTheme } from '../../../theme/hooks';
-import { Edge } from 'react-native-safe-area-context';
 import type { HeaderProps } from '../Header/Header';
 import { GradientBackground } from '../GradientBackground/GradientBackground';
 import DrawerLayout from '../../../navigation/components/DrawerLayout';
 import { DrawerConfig } from '../../../navigation/types';
 
+// export interface PageProps
 export interface PageProps {
     children: React.ReactNode;
 
@@ -48,8 +49,11 @@ export interface PageProps {
     // 可选：页面级左右抽屉
     leftDrawer?: DrawerConfig;
     rightDrawer?: DrawerConfig;
+    // 新增：点击空白处收起键盘
+    dismissKeyboardOnTapOutside?: boolean;
 }
 
+// export const Page: React.FC<PageProps>
 export const Page: React.FC<PageProps> = ({
     children,
     headerShown = true,
@@ -77,6 +81,7 @@ export const Page: React.FC<PageProps> = ({
     // 新增：抽屉配置
     leftDrawer,
     rightDrawer,
+    dismissKeyboardOnTapOutside = false,
 }) => {
     const { theme, isDark } = useTheme();
     const colors = theme.colors;
@@ -124,6 +129,7 @@ export const Page: React.FC<PageProps> = ({
                     scrollable={scrollable}
                     style={contentStyle}
                     backgroundColor={bgColor}
+                    dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
                 >
                     {children}
                 </Container>
@@ -164,6 +170,7 @@ export const Page: React.FC<PageProps> = ({
                     scrollable={scrollable}
                     style={contentStyle}
                     backgroundColor={bgColor}
+                    dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
                 >
                     {children}
                 </Container>

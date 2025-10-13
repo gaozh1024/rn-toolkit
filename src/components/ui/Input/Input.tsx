@@ -39,6 +39,7 @@ export interface InputProps {
     radius?: number;
     transparent?: boolean;
     noHorizontalPadding?: boolean;
+    backgroundColor?: string; // 新增：直接设置背景色
 }
 
 const Input = forwardRef<TextInput, InputProps>((props, ref) => {
@@ -71,6 +72,7 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
         testID,
         transparent = false,
         noHorizontalPadding = false,
+        backgroundColor, // 新增：背景色
     } = props;
 
     const { theme } = useTheme();
@@ -79,7 +81,10 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
     const widthStyle: ViewStyle = flex != null ? { flex } : fullWidth ? { width: '100%' } : {};
 
     const baseBorderColor = error ? colors.error : colors.border;
-    const bgColor = transparent ? 'transparent' : (variant === 'solid' ? colors.surface : colors.background);
+    const bgColor =
+        transparent
+            ? 'transparent'
+            : (backgroundColor ?? (variant === 'solid' ? colors.surface : colors.background));
     const borderWidth = variant === 'outline' ? 1 : 0;
 
     // 原默认值改为优先取 props，未传入时使用主题值

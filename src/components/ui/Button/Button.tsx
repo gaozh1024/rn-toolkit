@@ -83,6 +83,9 @@ export interface ButtonProps extends SpacingProps {
     gradientCenter?: { x: number; y: number };
     gradientRadius?: number;
     gradientOpacity?: number;
+    backgroundColor?: string; // 直接设置按钮背景色（已添加）
+    borderColor?: string;     // 新增：直接设置边框颜色
+    borderWidth?: number;     // 新增：直接设置边框宽度
 }
 
 // Button 组件（const Button: React.FC<ButtonProps> = ({ ... }) => { ... }）
@@ -123,6 +126,9 @@ const Button: React.FC<ButtonProps> = ({
     gradientCenter = { x: 0.5, y: 0.5 },
     gradientRadius = 0.5,
     gradientOpacity = 1,
+    backgroundColor,
+    borderColor,
+    borderWidth,
     ...props
 }) => {
     const { theme } = useTheme();
@@ -218,35 +224,37 @@ const Button: React.FC<ButtonProps> = ({
         switch (variant) {
             case 'primary':
                 return {
-                    backgroundColor: themeColor || theme.button.primary.backgroundColor,
-                    borderWidth: theme.button.primary.borderWidth,
-                    borderColor: theme.button.primary.borderColor,
+                    backgroundColor: backgroundColor ?? (themeColor ?? colors.primary),
+                    borderWidth: borderWidth ?? theme.button.primary.borderWidth,
+                    borderColor: borderColor ?? (themeColor ?? colors.primary),
                     borderRadius: theme.button.primary.borderRadius,
                 };
             case 'secondary':
                 return {
-                    backgroundColor: themeColor || theme.button.secondary.backgroundColor,
-                    borderWidth: 1,
-                    borderColor: theme.button.secondary.borderColor,
+                    backgroundColor: backgroundColor ?? (themeColor ?? theme.button.secondary.backgroundColor),
+                    borderWidth: borderWidth ?? 1,
+                    borderColor: borderColor ?? theme.button.secondary.borderColor,
                     borderRadius: theme.button.secondary.borderRadius,
                 };
             case 'outline':
                 return {
-                    backgroundColor: theme.button.outline.backgroundColor,
-                    borderWidth: 1,
-                    borderColor: themeColor || theme.button.outline.borderColor,
+                    backgroundColor: backgroundColor ?? theme.button.outline.backgroundColor,
+                    borderWidth: borderWidth ?? 1,
+                    borderColor: borderColor ?? (themeColor ?? theme.button.outline.borderColor),
                     borderRadius: theme.button.outline.borderRadius,
                 };
             case 'text':
                 return {
-                    backgroundColor: themeColor || theme.button.text.backgroundColor,
-                    borderWidth: 0,
+                    backgroundColor: backgroundColor ?? (themeColor ?? theme.button.text.backgroundColor),
+                    borderWidth: borderWidth ?? 0,
+                    borderColor: borderColor ?? 'transparent',
                     borderRadius: theme.button.text.borderRadius,
                 };
             default:
                 return {
-                    backgroundColor: themeColor,
-                    borderWidth: 0,
+                    backgroundColor: backgroundColor ?? themeColor,
+                    borderWidth: borderWidth ?? 0,
+                    borderColor: borderColor ?? (themeColor ?? colors.primary),
                     borderRadius: theme.borderRadius.md,
                 };
         }
@@ -399,7 +407,7 @@ const Button: React.FC<ButtonProps> = ({
         const textColor = getTextColor();
         const sizeConfig = getSizeConfig();
         const innerPadding = gradientEnabled ? { paddingHorizontal: sizeConfig.paddingHorizontal } : {};
-    
+
         if (loading) {
             return (
                 <View style={[layout.row, layout.center, innerPadding]}>
@@ -412,7 +420,7 @@ const Button: React.FC<ButtonProps> = ({
                 </View>
             );
         }
-    
+
         return (
             <View style={[layout.row, layout.center, innerPadding]}>
                 {icon && iconPosition === 'left' && <View style={spacing.mrXs}>{icon}</View>}
@@ -469,116 +477,116 @@ const Button: React.FC<ButtonProps> = ({
     // 根据触摸类型渲染不同的组件
     // 在三种触摸容器上挂载 onLayout，并把精确尺寸传入渐变层（使用 width/height）
     if (touchType === 'highlight') {
-    return (
-      <TouchableHighlight
-        style={finalStyle as StyleProp<ViewStyle>}
-        onLayout={handleLayout}
-        onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        onLongPress={onLongPress}
-        disabled={isDisabled}
-        underlayColor={getUnderlayColor()}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityHint={accessibilityHint}
-        accessibilityRole={accessibilityRole}
-        testID={testID}
-        {...props}
-      >
-        <>
-          {gradientEnabled && (
-            <GradientBackground
-              variant={gradientVariant}
-              colors={gradientPalette}
-              locations={gradientLocations}
-              angle={gradientAngle}
-              start={gradientStart}
-              end={gradientEnd}
-              center={gradientCenter}
-              radius={gradientRadius}
-              opacity={gradientOpacity}
-              borderRadius={effectiveRadius}
-              style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
-            />
-          )}
-          {renderContent()}
-        </>
-      </TouchableHighlight>
-    );
+        return (
+            <TouchableHighlight
+                style={finalStyle as StyleProp<ViewStyle>}
+                onLayout={handleLayout}
+                onPress={onPress}
+                onPressIn={onPressIn}
+                onPressOut={onPressOut}
+                onLongPress={onLongPress}
+                disabled={isDisabled}
+                underlayColor={getUnderlayColor()}
+                accessibilityLabel={accessibilityLabel}
+                accessibilityHint={accessibilityHint}
+                accessibilityRole={accessibilityRole}
+                testID={testID}
+                {...props}
+            >
+                <>
+                    {gradientEnabled && (
+                        <GradientBackground
+                            variant={gradientVariant}
+                            colors={gradientPalette}
+                            locations={gradientLocations}
+                            angle={gradientAngle}
+                            start={gradientStart}
+                            end={gradientEnd}
+                            center={gradientCenter}
+                            radius={gradientRadius}
+                            opacity={gradientOpacity}
+                            borderRadius={effectiveRadius}
+                            style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
+                        />
+                    )}
+                    {renderContent()}
+                </>
+            </TouchableHighlight>
+        );
     }
-    
+
     if (touchType === 'pressable') {
-    return (
-      <Pressable
-        style={({ pressed }) => ([
-          finalStyle,
-          pressed && !isDisabled ? { opacity: 0.8 } : null,
-        ] as StyleProp<ViewStyle>)}
-        onLayout={handleLayout}
-        onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        onLongPress={onLongPress}
-        disabled={isDisabled}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityHint={accessibilityHint}
-        accessibilityRole={accessibilityRole}
-        testID={testID}
-        {...props}
-      >
-        {gradientEnabled && (
-          <GradientBackground
-            variant={gradientVariant}
-            colors={gradientPalette}
-            locations={gradientLocations}
-            angle={gradientAngle}
-            start={gradientStart}
-            end={gradientEnd}
-            center={gradientCenter}
-            radius={gradientRadius}
-            opacity={gradientOpacity}
-            borderRadius={effectiveRadius}
-            style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
-          />
-        )}
-        {renderContent()}
-      </Pressable>
-    );
+        return (
+            <Pressable
+                style={({ pressed }) => ([
+                    finalStyle,
+                    pressed && !isDisabled ? { opacity: 0.8 } : null,
+                ] as StyleProp<ViewStyle>)}
+                onLayout={handleLayout}
+                onPress={onPress}
+                onPressIn={onPressIn}
+                onPressOut={onPressOut}
+                onLongPress={onLongPress}
+                disabled={isDisabled}
+                accessibilityLabel={accessibilityLabel}
+                accessibilityHint={accessibilityHint}
+                accessibilityRole={accessibilityRole}
+                testID={testID}
+                {...props}
+            >
+                {gradientEnabled && (
+                    <GradientBackground
+                        variant={gradientVariant}
+                        colors={gradientPalette}
+                        locations={gradientLocations}
+                        angle={gradientAngle}
+                        start={gradientStart}
+                        end={gradientEnd}
+                        center={gradientCenter}
+                        radius={gradientRadius}
+                        opacity={gradientOpacity}
+                        borderRadius={effectiveRadius}
+                        style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
+                    />
+                )}
+                {renderContent()}
+            </Pressable>
+        );
     }
-    
+
     return (
-      <TouchableOpacity
-        style={finalStyle as StyleProp<ViewStyle>}
-        onLayout={handleLayout}
-        onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        onLongPress={onLongPress}
-        disabled={isDisabled}
-        activeOpacity={0.7}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityHint={accessibilityHint}
-        accessibilityRole={accessibilityRole}
-        testID={testID}
-        {...props}
-      >
-        {gradientEnabled && (
-          <GradientBackground
-            variant={gradientVariant}
-            colors={gradientPalette}
-            locations={gradientLocations}
-            angle={gradientAngle}
-            start={gradientStart}
-            end={gradientEnd}
-            center={gradientCenter}
-            radius={gradientRadius}
-            opacity={gradientOpacity}
-            borderRadius={effectiveRadius}
-            style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
-          />
-        )}
-        {renderContent()}
-      </TouchableOpacity>
+        <TouchableOpacity
+            style={finalStyle as StyleProp<ViewStyle>}
+            onLayout={handleLayout}
+            onPress={onPress}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            onLongPress={onLongPress}
+            disabled={isDisabled}
+            activeOpacity={0.7}
+            accessibilityLabel={accessibilityLabel}
+            accessibilityHint={accessibilityHint}
+            accessibilityRole={accessibilityRole}
+            testID={testID}
+            {...props}
+        >
+            {gradientEnabled && (
+                <GradientBackground
+                    variant={gradientVariant}
+                    colors={gradientPalette}
+                    locations={gradientLocations}
+                    angle={gradientAngle}
+                    start={gradientStart}
+                    end={gradientEnd}
+                    center={gradientCenter}
+                    radius={gradientRadius}
+                    opacity={gradientOpacity}
+                    borderRadius={effectiveRadius}
+                    style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
+                />
+            )}
+            {renderContent()}
+        </TouchableOpacity>
     );
 };
 
