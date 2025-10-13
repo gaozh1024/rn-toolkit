@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Pressable } from 'react-native';
+import { Text, Pressable, Platform } from 'react-native';
 import { getIconfontChar, getIconfontFamily } from './IconfontRegistry';
 
 export type IconfontRendererProps = {
@@ -22,7 +22,13 @@ const IconfontRenderer: React.FC<IconfontRendererProps> = ({ name, size = 24, co
     <Text
       testID={testID}
       accessibilityLabel={accessibilityLabel || `${name} icon`}
-      style={[{ fontFamily: getIconfontFamily(), fontSize: size, color }, style]}
+      style={[
+        { fontFamily: getIconfontFamily(), fontSize: size, color },
+        Platform.OS === 'android'
+          ? ({ lineHeight: Math.round(size * 1.1), includeFontPadding: false, textAlignVertical: 'center' } as any)
+          : ({ lineHeight: size + 2, paddingBottom: 1 } as any),
+        style,
+      ]}
     >
       {char}
     </Text>

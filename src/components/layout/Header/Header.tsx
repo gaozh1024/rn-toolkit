@@ -1,11 +1,13 @@
+// 顶部 import 区域（加入 TextStyle）
 import React, { useMemo } from 'react';
-import { View, Pressable, ViewStyle } from 'react-native';
+import { View, Pressable, ViewStyle, TextStyle } from 'react-native';
 import { useTheme, useSpacingStyles } from '../../../theme';
 import { useNav } from '../../../navigation/hooks/useNavigation';
 import { useSafeAreaInsets } from '../SafeAreaView';
 import { Icon } from '../../ui/Icon';
 import Text from '../../ui/Text/Text';
 
+// 接口：HeaderAction（新增大小/粗细相关配置）
 export interface HeaderAction {
     // 图标按钮（可选）
     iconName?: string;
@@ -20,6 +22,12 @@ export interface HeaderAction {
     disabled?: boolean;
     testID?: string;
     accessibilityLabel?: string;
+    // 图标大小/样式（可选）
+    iconSize?: number;
+    iconStyle?: TextStyle | ViewStyle;
+    // 文本大小/粗细（可选）
+    labelSize?: number;
+    labelWeight?: TextStyle['fontWeight'];
 }
 
 import { GradientBackground } from '../GradientBackground/GradientBackground';
@@ -162,19 +170,20 @@ export const Header: React.FC<HeaderProps> = ({
         ...(spacing.pxMd as ViewStyle),
     };
 
+    // 函数：renderBackSlot（统一高度为 contentHeight，避免底部裁切）
     const renderBackSlot = () => {
         const nav = useNav();
         const showBack = backVisible ?? true; // 默认显示返回按钮
         const handleBack = onBack ?? (() => nav.goBack());
         // 保留一个槽位，以保证左侧宽度固定（即使不显示返回按钮也占位）
         return (
-            <View style={{ width: SLOT_SIZE, height: SLOT_SIZE, justifyContent: 'center' }}>
+            <View style={{ width: SLOT_SIZE, height: contentHeight, justifyContent: 'center' }}>
                 {showBack && (
                     <Pressable
                         onPress={handleBack}
                         hitSlop={8}
                         accessibilityLabel="返回"
-                        style={{ width: LEFT_SIZE, height: SLOT_SIZE, alignItems: 'center', justifyContent: 'center' }}
+                        style={{ width: LEFT_SIZE, height: contentHeight, alignItems: 'center', justifyContent: 'center' }}
                     >
                         <Icon name={backIconName} size={iconSize} color={iconColor(backIconColor)} />
                     </Pressable>
@@ -183,15 +192,16 @@ export const Header: React.FC<HeaderProps> = ({
         );
     };
 
+    // 函数：renderActionSlots（支持大小/粗细配置并修复裁切）
     const renderActionSlots = () => {
         const slots: React.ReactNode[] = [];
         const actionsCount = actionsLimited.length;
-
-        // 先填充空槽位，使实际动作靠右显示
+    
+        // 先填充空槽位，使实际动作靠右显示（高度统一为 contentHeight）
         for (let i = 0; i < MAX_ACTIONS - actionsCount; i++) {
-            slots.push(<View key={`action-empty-${i}`} style={{ width: SLOT_SIZE, height: SLOT_SIZE }} />);
+            slots.push(<View key={`action-empty-${i}`} style={{ width: SLOT_SIZE, height: contentHeight }} />);
         }
-
+    
         // 再渲染动作槽位
         for (let i = 0; i < actionsCount; i++) {
             const act = actionsLimited[i];
@@ -206,26 +216,32 @@ export const Header: React.FC<HeaderProps> = ({
                 accessibilityLabel,
             } = act;
             slots.push(
-                <View key={`action-${i}`} style={{ width: SLOT_SIZE, height: SLOT_SIZE, justifyContent: 'center' }}>
+                <View key={`action-${i}`} style={{ width: SLOT_SIZE, height: contentHeight, justifyContent: 'center' }}>
                     <Pressable
                         onPress={onPress}
                         disabled={disabled}
                         hitSlop={8}
                         accessibilityLabel={accessibilityLabel || `${(label || iconName) ?? 'action'}`}
                         testID={actionTestID}
-                        style={{ minWidth: SLOT_SIZE, height: SLOT_SIZE, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' }}
+                        style={{ minWidth: SLOT_SIZE, height: contentHeight, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' }}
                     >
                         {label ? (
                             <Text
                                 numberOfLines={1}
                                 ellipsizeMode="tail"
-                                style={{ fontSize: nav.labelSize, fontWeight: nav.labelWeight }}
+                                style={{ fontSize: act.labelSize ?? nav.labelSize, fontWeight: act.labelWeight ?? nav.labelWeight }}
                                 color={color ?? nav.labelColor}
                             >
                                 {label}
                             </Text>
                         ) : (
-                            <Icon name={iconName!} type={type} size={iconSize} color={iconColor(color)} />
+                            <Icon
+                                name={iconName!}
+                                type={type}
+                                size={act.iconSize ?? iconSize}
+                                color={iconColor(color)}
+                                style={act.iconStyle}
+                            />
                         )}
                     </Pressable>
                 </View>

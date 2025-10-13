@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import { View, TextInput, StyleSheet, Pressable, ViewStyle, TextStyle, Text } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
-import { Icon } from '../Icon';
+import { Icon, IconType } from '../Icon';
 
 export type InputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type InputVariant = 'solid' | 'outline' | 'ghost';
@@ -21,8 +21,8 @@ export interface InputProps {
     flex?: number;
     style?: ViewStyle;
     inputStyle?: TextStyle;
-    leftIcon?: { name: string; color?: string; size?: number };
-    rightIcon?: { name: string; color?: string; size?: number; onPress?: () => void };
+    leftIcon?: { name: string; color?: string; size?: number; type?: IconType };
+    rightIcon?: { name: string; color?: string; size?: number; onPress?: () => void; type?: IconType };
     editable?: boolean;
     keyboardType?: import('react-native').KeyboardTypeOptions;
     returnKeyType?: import('react-native').ReturnKeyType;
@@ -117,7 +117,7 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
     return (
         <View style={[containerStyle, style]} testID={testID} accessible accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint}>
             {leftIcon?.name ? (
-                <Icon name={leftIcon.name} size={leftIcon.size ?? iconSize} color={leftIcon.color ?? iconColor} />
+                <Icon name={leftIcon.name} type={leftIcon.type} size={leftIcon.size ?? iconSize} color={leftIcon.color ?? iconColor} />
             ) : null}
 
             <TextInput
@@ -139,7 +139,7 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
 
             {rightIcon?.name ? (
                 <Pressable onPress={rightIcon.onPress} hitSlop={8} disabled={disabled}>
-                    <Icon name={rightIcon.name} size={rightIcon.size ?? iconSize} color={rightIcon.color ?? iconColor} />
+                    <Icon name={rightIcon.name} type={rightIcon.type} size={rightIcon.size ?? iconSize} color={rightIcon.color ?? iconColor} />
                 </Pressable>
             ) : null}
 
