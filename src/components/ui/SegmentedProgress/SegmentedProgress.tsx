@@ -84,91 +84,84 @@ export const SegmentedProgress: React.FC<SegmentedProgressProps> = ({
     const barHeight = thickness;
     const outerR = radius ?? Math.round(barHeight / 2);
     const segR = segmentRadius ?? outerR;
-    const progress01 = clamp01(value);
+    const track = resolveColor(colors, trackColor, colors.divider);
+    const labelCol = resolveColor(colors, labelColor ?? 'subtext', colors.textSecondary);
+
+    const containerStyle: ViewStyle = useMemo(() => ({
+        ...(showLabels ? {} : { height: barHeight }),
+        flexDirection: 'column',
+    }), [barHeight, showLabels]);
+
+    const trackRowStyle: ViewStyle = useMemo(() => ({
+        height: barHeight,
+        borderRadius: outerR,
+        overflow: 'hidden',
+        backgroundColor: track,
+        flexDirection: 'row',
+        alignItems: 'stretch',
+    }), [barHeight, outerR, track]);
+
+    const labelRowStyle: ViewStyle = useMemo(() => ({
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+    }), []);
 
     const normalized = useMemo(() => {
-        const arr = segments.map(seg => (
+        const items = segments.map(seg => (
             typeof seg === 'string'
                 ? { color: seg, weight: 1, label: undefined, labelStyle: undefined }
                 : { color: seg.color, weight: seg.weight ?? 1, label: seg.label, labelStyle: seg.labelStyle }
         ));
-        const total = arr.reduce((s, it) => s + (it.weight ?? 1), 0);
-        return { items: arr, totalWeight: total };
+        const totalWeight = items.reduce((sum, it) => sum + (it.weight ?? 1), 0);
+        return { items, totalWeight };
     }, [segments]);
 
-    // 新增：计算每段填充比例（0-1），供渲染使用
     const fills = useMemo(() => {
-        const P = progress01 * normalized.totalWeight;
-        const res: number[] = [];
-        let remaining = P;
-        for (const it of normalized.items) {
+        const total = normalized.totalWeight;
+        const progress = Math.max(0, Math.min(1, value)) * total;
+        let acc = 0;
+        return normalized.items.map(it => {
             const w = it.weight ?? 1;
-            if (remaining <= 0) {
-                res.push(0);
-            } else if (remaining >= w) {
-                res.push(1);
-                remaining -= w;
-            } else {
-                res.push(remaining / w);
-                remaining = 0;
-            }
-        }
-        return res;
-    }, [progress01, normalized]);
-
-    const track = resolveColor(colors, trackColor, colors.divider);
-    const labelCol = resolveColor(colors, labelColor ?? 'subtext', colors.textSecondary);
-
-    // 容器样式：显示标签时不强制固定高度
-    const containerStyle: ViewStyle = useMemo(() => ({
-        borderRadius: outerR,
-        ...(showLabels ? {} : { height: barHeight }),
-        overflow: 'hidden',
-        backgroundColor: track,
-        flexDirection: 'row',
-        alignItems: showLabels ? 'flex-start' : 'stretch',
-    }), [barHeight, outerR, showLabels, track]);
+            const f = Math.max(0, Math.min(1, (progress - acc) / w));
+            acc += w;
+            return f;
+        });
+    }, [value, normalized]);
 
     return (
         <View style={[containerStyle, style]} testID={testID}>
-            {normalized.items.map((it, idx) => {
-                const active = resolveColor(colors, it.color, colors.primary);
-                const fill = fills[idx];
-                const isLast = idx === normalized.items.length - 1;
-                const gapStyle: ViewStyle = segmentGap > 0 && !isLast ? { marginRight: segmentGap } : {};
-                const segBg = previewMode === 'dim' ? applyOpacity(active, previewOpacity) : track;
-
-                const segWrapper: ViewStyle = { flex: it.weight ?? 1 };
-                const barContainer: ViewStyle = {
-                    height: barHeight,
-                    backgroundColor: fill < 1 ? segBg : track,
-                    borderRadius: segR,
-                    overflow: 'hidden',
-                    justifyContent: 'center',
-                };
-                const filledStyle: ViewStyle = {
-                    width: `${Math.round(fill * 100)}%`,
-                    height: '100%',
-                    backgroundColor: active,
-                };
-
-                const labelNode = showLabels && it.label != null
-                    ? (typeof it.label === 'string' || typeof it.label === 'number'
-                        ? <Text style={[{ color: labelCol, marginTop: labelGap }, labelStyle as any, it.labelStyle as any]}>{it.label}</Text>
-                        : it.label)
-                    : null;
-
-                return (
-                    <View key={idx} style={[segWrapper, gapStyle]}>
-                        <View style={barContainer}>
-                            <View style={filledStyle} />
+            <View style={trackRowStyle}>
+                {normalized.items.map((it, idx) => {
+                    const active = resolveColor(colors, it.color, colors.primary);
+                    const base = previewMode === 'dim' ? applyOpacity(active, previewOpacity) : track;
+                    const gapStyle = idx > 0 && segmentGap > 0 ? { marginLeft: segmentGap } : undefined;
+                    const fill = fills[idx];
+                    return (
+                        <View key={idx} style={[{ flex: it.weight ?? 1, backgroundColor: base, borderRadius: segR }, gapStyle]}>
+                            <View style={{ height: '100%', width: `${fill * 100}%`, backgroundColor: active, borderRadius: segR }} />
                         </View>
-                        {labelNode}
-                    </View>
-                );
-            })}
+                    );
+                })}
+            </View>
+
+            {showLabels && (
+                <View style={labelRowStyle}>
+                    {normalized.items.map((it, idx) => {
+                        const gapStyle = idx > 0 && segmentGap > 0 ? { marginLeft: segmentGap } : undefined;
+                        const segWrapper: ViewStyle = { flex: it.weight ?? 1, alignItems: 'center' };
+                        const labelNode = it.label != null
+                            ? <Text style={[{ color: labelCol, marginTop: labelGap }, labelStyle as any, it.labelStyle as any]}>{it.label}</Text>
+                            : null;
+                        return (
+                            <View key={idx} style={[segWrapper, gapStyle]}>
+                                {labelNode}
+                            </View>
+                        );
+                    })}
+                </View>
+            )}
         </View>
     );
-};
+}
 
 export default SegmentedProgress;
