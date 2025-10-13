@@ -3,6 +3,7 @@
 轻量级布局原语：在容器上统一设置 `flexDirection` 与 `gap`，支持对齐、换行、分隔符等。适合替代零散的 `View` + `flexDirection` + `margin` 组合，实现一致的间距与对齐策略。
 
 ## 导入
+
 ```ts
 import { Stack } from '@gaozh1024/rn-toolkit';
 // 或按需：src/components/layout/Stack/index.ts
@@ -11,6 +12,7 @@ import { Stack } from '@gaozh1024/rn-toolkit';
 ## 基本用法
 
 ### 横向排列（居中对齐、8 间距）
+
 ```tsx
 <Stack direction="row" align="center" gap={8}>
   <Chip label="A" />
@@ -20,6 +22,7 @@ import { Stack } from '@gaozh1024/rn-toolkit';
 ```
 
 ### 纵向排列（12 间距，拉伸对齐）
+
 ```tsx
 <Stack direction="column" gap={12}>
   <Section title="标题">...</Section>
@@ -28,6 +31,7 @@ import { Stack } from '@gaozh1024/rn-toolkit';
 ```
 
 ### 带分隔符（在子元素之间插入分隔节点）
+
 ```tsx
 <Stack
   direction="row"
@@ -40,6 +44,7 @@ import { Stack } from '@gaozh1024/rn-toolkit';
 ```
 
 ### 自动换行与占满尺寸
+
 ```tsx
 <Stack direction="row" wrap="wrap" gap={8} fullWidth>
   {/* 标签列表等可自动换行 */}
@@ -54,6 +59,7 @@ import { Stack } from '@gaozh1024/rn-toolkit';
 ```
 
 ## API
+
 ```ts
 interface StackProps {
   children: React.ReactNode;
@@ -72,6 +78,7 @@ interface StackProps {
 ```
 
 ## 设计与最佳实践
+
 - 优先使用 `gap` 控制间距，避免在子项上混用 `margin` 导致不一致。
 - 需要可视分隔时使用 `divider`，否则仅用 `gap` 保持简洁。
 - `align="stretch"` 可让子项在交叉轴拉伸，适合纵向表单分区。

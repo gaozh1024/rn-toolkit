@@ -36,6 +36,8 @@ export interface ColorTheme {
   // 透明度变体
   overlay: string; // 遮罩色：弹层/模态的半透明遮罩（含透明度）
   shadow: string; // 阴影色：阴影/投影的基色（含透明度）
+  // 允许扩展任意自定义颜色键（例如：正常、品牌色等）
+  [key: string]: string;
 }
 
 // 导航主题
@@ -91,6 +93,8 @@ export interface TextTheme {
 
   // 链接
   link: TextStyle;
+  // 允许扩展任意自定义文本样式键（例如：正常、提示等）
+  [key: string]: TextStyle;
 }
 
 // 按钮主题

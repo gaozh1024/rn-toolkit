@@ -15,6 +15,7 @@ export interface CardProps {
   onPress?: () => void;
   disabled?: boolean;
   testID?: string;
+  transparent?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -29,6 +30,7 @@ export const Card: React.FC<CardProps> = ({
   shadowSize = 'md',
   onPress,
   disabled = false,
+  transparent = false,
   testID,
 }) => {
   const { theme, styles } = useTheme();
@@ -36,7 +38,7 @@ export const Card: React.FC<CardProps> = ({
   const paddingValue = typeof padding === 'number' ? padding : theme.spacing.md;
   const marginValue = typeof margin === 'number' ? margin : theme.spacing.sm;
   const borderRadiusValue = typeof borderRadius === 'number' ? borderRadius : theme.borderRadius.lg;
-  const backgroundColorValue = backgroundColor || theme.colors.card;
+  const backgroundColorValue = transparent ? 'transparent' : (backgroundColor || theme.colors.card);
 
   const shadowPreset = styles.shadow[shadowSize] || styles.shadow.md;
   const shadowStyle: ViewStyle = {
