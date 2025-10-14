@@ -46,34 +46,39 @@ export const Card: React.FC<CardProps> = ({
 
   const shadowStyle = buildShadowStyle(styles.shadow, { shadowSize, shadowColor });
 
-  const spacingStyle = useSpacingStyle(props);
-
+  // 修复：补回 cardStyle 定义
   const cardStyle: ViewStyle = {
     ...boxStyle,
     ...(props.borderRadius == null ? { borderRadius: borderRadiusValue } : {}),
     ...shadowStyle,
   };
 
-  // 拆分 spacing：padding 给内容包裹层，margin 留在容器上
-  // 旧逻辑：任何 spacing 键都会关闭默认 padding+margin
-  // const hasSpacing = ['m', 'mv', 'mh', 'mt', 'mb', 'ml', 'mr', 'p', 'pv', 'ph', 'pt', 'pb', 'pl', 'pr']
-  //   .some((k) => (props as any)[k] != null);
-  // const defaultSpacingStyle: ViewStyle = hasSpacing ? {} : { padding: theme.spacing.md, margin: theme.spacing.sm };
+  const spacingStyle = useSpacingStyle(props);
 
-  // 新逻辑：分别检测 margin 与 padding 的显式传入，独立应用默认值
-  const hasPadding = ['p', 'pv', 'ph', 'pt', 'pb', 'pl', 'pr'].some((k) => (props as any)[k] != null);
+  // 修改：分别检测水平/垂直 padding 键，仅关闭对应轴的默认值
+  const hasPaddingH = ['ph', 'pl', 'pr'].some((k) => (props as any)[k] != null);
+  const hasPaddingV = ['pv', 'pt', 'pb'].some((k) => (props as any)[k] != null);
+
   const hasMarginH = ['mh', 'ml', 'mr'].some((k) => (props as any)[k] != null);
   const hasMarginV = ['mv', 'mt', 'mb'].some((k) => (props as any)[k] != null);
 
-  const defaultSpacingStyle: ViewStyle = {
-    ...(hasPadding ? {} : { padding: theme.spacing.md }),
-    ...(props.m != null
+  const defaultPadding: ViewStyle =
+    props.p != null
+      ? {}
+      : {
+        ...(hasPaddingH ? {} : { paddingHorizontal: theme.spacing.md }),
+        ...(hasPaddingV ? {} : { paddingVertical: theme.spacing.md }),
+      };
+
+  const defaultMargin: ViewStyle =
+    props.m != null
       ? {}
       : {
         ...(hasMarginH ? {} : { marginHorizontal: theme.spacing.sm }),
         ...(hasMarginV ? {} : { marginVertical: theme.spacing.sm }),
-      }),
-  };
+      };
+
+  const defaultSpacingStyle: ViewStyle = { ...defaultPadding, ...defaultMargin };
 
   const spacingCombined = StyleSheet.flatten([defaultSpacingStyle, spacingStyle]) ?? {};
   const {
