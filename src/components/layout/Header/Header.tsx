@@ -191,7 +191,6 @@ export const Header: React.FC<HeaderProps> = (rawProps) => {
                     <Pressable
                         onPress={handleBack}
                         hitSlop={8}
-                        pointerEvents="box-only"
                         accessibilityLabel="返回"
                         style={{ width: LEFT_SIZE, height: contentHeight, alignItems: 'center', justifyContent: 'center' }}
                     >

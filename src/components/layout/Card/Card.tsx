@@ -61,12 +61,18 @@ export const Card: React.FC<CardProps> = ({
   // const defaultSpacingStyle: ViewStyle = hasSpacing ? {} : { padding: theme.spacing.md, margin: theme.spacing.sm };
 
   // 新逻辑：分别检测 margin 与 padding 的显式传入，独立应用默认值
-  const hasMargin = ['m', 'mv', 'mh', 'mt', 'mb', 'ml', 'mr'].some((k) => (props as any)[k] != null);
   const hasPadding = ['p', 'pv', 'ph', 'pt', 'pb', 'pl', 'pr'].some((k) => (props as any)[k] != null);
+  const hasMarginH = ['mh', 'ml', 'mr'].some((k) => (props as any)[k] != null);
+  const hasMarginV = ['mv', 'mt', 'mb'].some((k) => (props as any)[k] != null);
 
   const defaultSpacingStyle: ViewStyle = {
     ...(hasPadding ? {} : { padding: theme.spacing.md }),
-    ...(hasMargin ? {} : { margin: theme.spacing.sm }),
+    ...(props.m != null
+      ? {}
+      : {
+        ...(hasMarginH ? {} : { marginHorizontal: theme.spacing.sm }),
+        ...(hasMarginV ? {} : { marginVertical: theme.spacing.sm }),
+      }),
   };
 
   const spacingCombined = StyleSheet.flatten([defaultSpacingStyle, spacingStyle]) ?? {};

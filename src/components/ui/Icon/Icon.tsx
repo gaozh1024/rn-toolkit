@@ -1,5 +1,5 @@
 import React, { useMemo, forwardRef } from 'react';
-import { TextStyle, ViewStyle, Insets, Pressable, StyleProp } from 'react-native';
+import { TextStyle, ViewStyle, Insets, Pressable, StyleProp, View } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { buildTestID, TestableProps } from '../../common/test';
@@ -130,18 +130,30 @@ export const Icon = forwardRef<any, IconProps>(({
         ...props
     };
 
+    // 仅在有 onPress 且未禁用时使用 Pressable，否则使用普通 View 以允许父层接管点击
+    if (onPress && !disabled) {
+        return (
+            <Pressable
+                disabled={disabled}
+                hitSlop={hitSlop}
+                accessibilityLabel={accessibilityLabel || `${name} icon`}
+                testID={computedTestID}
+                style={spacingStyle as StyleProp<ViewStyle>}
+                onPress={onPress}
+            >
+                <IconComponent ref={ref} {...iconProps} />
+            </Pressable>
+        );
+    }
+
     return (
-        <Pressable
-            disabled={disabled}
-            hitSlop={hitSlop}
-            accessibilityLabel={accessibilityLabel || `${name} icon`}
+        <View
+            pointerEvents="box-none"
             testID={computedTestID}
             style={spacingStyle as StyleProp<ViewStyle>}
-            pointerEvents="box-only"
-            onPress={disabled ? undefined : onPress}
         >
             <IconComponent ref={ref} {...iconProps} />
-        </Pressable>
+        </View>
     );
 });
 

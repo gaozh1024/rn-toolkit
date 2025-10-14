@@ -112,7 +112,6 @@ const IconButton: React.FC<IconButtonProps> = ({
       hitSlop={hitSlop}
       onLayout={handleLayout}
       style={finalStyle as StyleProp<ViewStyle>}
-      pointerEvents="box-only"
     >
       {gradientEnabled && (
         <GradientBackground
