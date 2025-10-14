@@ -189,20 +189,45 @@ const Button: React.FC<ButtonProps> = ({
         }
     };
 
-    // 获取基础样式
+    // 获取基础样式（显式传入 height 时不再强制 minHeight）
     const getBaseStyle = (): ViewStyle => ({
         ...layout.row,
         ...layout.center,
-        minHeight: 40,
+        // 显式传入 height 时不强制最小高度
+        ...(props.height != null ? {} : { minHeight: 40 }),
     });
 
-    // 获取尺寸样式（padding 在非渐变时应用）
+    // 获取尺寸样式（显式传入 height：不再设置 minHeight，只保留横向 padding（非渐变时））
     const getSizeStyle = (): ViewStyle => {
+        // 显式传入 height：不再设置 minHeight，只保留横向 padding（非渐变时）
+        if (props.height != null) {
+            switch (size) {
+                case 'small': return { ...(gradientEnabled ? {} : spacing.pxSm) };
+                case 'large': return { ...(gradientEnabled ? {} : spacing.pxLg) };
+                default: return { ...(gradientEnabled ? {} : spacing.pxMd) };
+            }
+        }
         switch (size) {
             case 'small': return { minHeight: theme.button.secondary.height - 8, ...(gradientEnabled ? {} : spacing.pxSm) };
             case 'medium': return { minHeight: theme.button.primary.height, ...(gradientEnabled ? {} : spacing.pxMd) };
             case 'large': return { minHeight: theme.button.primary.height + 8, ...(gradientEnabled ? {} : spacing.pxLg) };
             default: return { minHeight: theme.button.primary.height, ...(gradientEnabled ? {} : spacing.pxMd) };
+        }
+    };
+
+
+    // 获取形状样式（circle 时优先使用显式 height）
+    const getShapeStyle = (): ViewStyle => {
+        const sizeConfig = getSizeConfig();
+        // 圆形形状优先使用显式 height
+        if (shape === 'circle') {
+            const h = (props.height as number) ?? sizeConfig.height;
+            return { borderRadius: h / 2, width: h, paddingHorizontal: 0 };
+        }
+        switch (shape) {
+            case 'rounded': return { borderRadius: props.borderRadius ?? theme.borderRadius.md };
+            case 'square': return { borderRadius: props.borderRadius ?? 0 };
+            default: return {};
         }
     };
 
@@ -240,17 +265,6 @@ const Button: React.FC<ButtonProps> = ({
                     borderColor: props.borderColor ?? (themeColor ?? colors.primary),
                     borderRadius: props.borderRadius ?? theme.borderRadius.md,
                 };
-        }
-    };
-
-    // 获取形状样式（不覆盖 BoxProps 中的 borderRadius）
-    const getShapeStyle = (): ViewStyle => {
-        const sizeConfig = getSizeConfig();
-        switch (shape) {
-            case 'rounded': return { borderRadius: props.borderRadius ?? theme.borderRadius.md };
-            case 'square': return { borderRadius: props.borderRadius ?? 0 };
-            case 'circle': return { borderRadius: sizeConfig.height / 2, width: sizeConfig.height, paddingHorizontal: 0 };
-            default: return {};
         }
     };
 

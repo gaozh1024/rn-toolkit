@@ -89,14 +89,14 @@ const IconButton: React.FC<IconButtonProps> = ({
     typeof flatFinal?.borderRadius === 'number'
       ? (flatFinal.borderRadius as number)
       : (() => {
-          const corners = [
-            flatFinal?.borderTopLeftRadius,
-            flatFinal?.borderTopRightRadius,
-            flatFinal?.borderBottomLeftRadius,
-            flatFinal?.borderBottomRightRadius,
-          ].filter((v) => typeof v === 'number') as number[];
-          return corners.length ? Math.max(...corners) : (theme.borderRadius?.md ?? 8);
-        })();
+        const corners = [
+          flatFinal?.borderTopLeftRadius,
+          flatFinal?.borderTopRightRadius,
+          flatFinal?.borderBottomLeftRadius,
+          flatFinal?.borderBottomRightRadius,
+        ].filter((v) => typeof v === 'number') as number[];
+        return corners.length ? Math.max(...corners) : (theme.borderRadius?.md ?? 8);
+      })();
 
   return (
     <Pressable
@@ -112,6 +112,7 @@ const IconButton: React.FC<IconButtonProps> = ({
       hitSlop={hitSlop}
       onLayout={handleLayout}
       style={finalStyle as StyleProp<ViewStyle>}
+      pointerEvents="box-only"
     >
       {gradientEnabled && (
         <GradientBackground
