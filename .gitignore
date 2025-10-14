@@ -88,3 +88,4 @@ dist/
 .yalc/
 yalc.lock
 yarn.lock
+/.trae

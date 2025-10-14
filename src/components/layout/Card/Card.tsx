@@ -1,88 +1,132 @@
+// 顶部导入处
 import React from 'react';
-import { View, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
-import { useTheme, useSpacingStyle, SpacingProps, SpacingSize } from '../../../theme';
+import { View, ViewStyle, StyleProp, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { BoxProps, buildBoxStyle } from '../../common/box';
+import { ShadowProps, buildShadowStyle } from '../../common/shadow';
+import { GradientProps, normalizeGradientConfig } from '../../common/gradient';
+import { PressEvents } from '../../common/events';
+import { TestableProps, buildTestID } from '../../common/test';
+import { GradientBackground } from '../GradientBackground/GradientBackground';
 
-export interface CardProps extends SpacingProps {
+export interface CardProps extends SpacingProps, BoxProps, PressEvents, GradientProps, TestableProps, ShadowProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
-  backgroundColor?: string;
-  padding?: SpacingSize; // 改为 SpacingSize 类型，支持 'xs'|'sm'|'md'|'lg'|'xl'|'xxl'|number
-  margin?: SpacingSize; // 改为 SpacingSize 类型，支持 'xs'|'sm'|'md'|'lg'|'xl'|'xxl'|number
-  borderRadius?: number;
-  elevation?: number;
-  shadowColor?: string;
-  shadowSize?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  onPress?: () => void;
   disabled?: boolean;
-  testID?: string;
-  transparent?: boolean;
 }
 
+/**
+ * Card 组件：通用卡片容器。
+ *
+ * - 集成边框、渐变、事件、测试工具的公共接口。
+ * - 仅使用 SpacingProps 管理内外边距；若未显式传入 spacing 键，则应用默认 padding=md 与 margin=sm。
+ */
 export const Card: React.FC<CardProps> = ({
   children,
   style,
-  backgroundColor,
-  padding,
-  margin,
-  borderRadius,
-  elevation,
-  shadowColor,
-  shadowSize = 'md',
   onPress,
   disabled = false,
-  transparent = false,
   testID,
+  shadowSize,
+  shadowColor,
   ...props
 }) => {
   const { theme, styles } = useTheme();
 
-  // 使用 spacing 系统解析 padding 和 margin
-  const paddingValue = padding !== undefined ?
-    (typeof padding === 'number' ? padding : theme.spacing[padding]) :
-    theme.spacing.md;
+  const borderRadiusValue = typeof props.borderRadius === 'number' ? props.borderRadius : theme.borderRadius.lg;
 
-  const marginValue = margin !== undefined ?
-    (typeof margin === 'number' ? margin : theme.spacing[margin]) :
-    theme.spacing.sm;
+  const styleOverrides = StyleSheet.flatten(style) ?? undefined;
+  const defaultBackground = theme.colors.background;
 
-  const borderRadiusValue = typeof borderRadius === 'number' ? borderRadius : theme.borderRadius.lg;
-  const backgroundColorValue = transparent ? 'transparent' : (backgroundColor || theme.colors.card);
+  const boxStyle = buildBoxStyle(
+    { defaultBackground },
+    props,
+    styleOverrides,
+  );
 
-  const shadowPreset = styles.shadow[shadowSize] || styles.shadow.md;
-  const shadowStyle: ViewStyle = {
-    ...shadowPreset,
-    shadowColor: shadowColor || theme.colors.shadow,
-  };
+  const shadowStyle = buildShadowStyle(styles.shadow, { shadowSize, shadowColor });
+
+  const spacingStyle = useSpacingStyle(props);
+  const hasSpacing = ['m', 'mv', 'mh', 'mt', 'mb', 'ml', 'mr', 'p', 'pv', 'ph', 'pt', 'pb', 'pl', 'pr']
+    .some((k) => (props as any)[k] != null);
+  const defaultSpacingStyle: ViewStyle = hasSpacing ? {} : { padding: theme.spacing.md, margin: theme.spacing.sm };
 
   const cardStyle: ViewStyle = {
-    backgroundColor: backgroundColorValue,
-    padding: paddingValue,
-    margin: marginValue,
-    borderRadius: borderRadiusValue,
+    ...boxStyle,
+    ...(props.borderRadius == null ? { borderRadius: borderRadiusValue } : {}),
     ...shadowStyle,
-    ...(typeof elevation === 'number' ? { elevation } : {}),
   };
 
-  // 应用其他 spacing props (m, mt, mb, p, pt, pb 等)
-  const spacingStyle = useSpacingStyle(props);
+  // 拆分 spacing：padding 给内容包裹层，margin 留在容器上
+  const spacingCombined = StyleSheet.flatten([defaultSpacingStyle, spacingStyle]) ?? {};
+  const {
+    padding, paddingHorizontal, paddingVertical, paddingTop, paddingBottom, paddingLeft, paddingRight,
+    margin, marginHorizontal, marginVertical, marginTop, marginBottom, marginLeft, marginRight,
+  } = spacingCombined as ViewStyle;
+
+  const paddingOnly: ViewStyle = {
+    ...(padding != null ? { padding } : {}),
+    ...(paddingHorizontal != null ? { paddingHorizontal } : {}),
+    ...(paddingVertical != null ? { paddingVertical } : {}),
+    ...(paddingTop != null ? { paddingTop } : {}),
+    ...(paddingBottom != null ? { paddingBottom } : {}),
+    ...(paddingLeft != null ? { paddingLeft } : {}),
+    ...(paddingRight != null ? { paddingRight } : {}),
+  };
+
+  const marginOnly: ViewStyle = {
+    ...(margin != null ? { margin } : {}),
+    ...(marginHorizontal != null ? { marginHorizontal } : {}),
+    ...(marginVertical != null ? { marginVertical } : {}),
+    ...(marginTop != null ? { marginTop } : {}),
+    ...(marginBottom != null ? { marginBottom } : {}),
+    ...(marginLeft != null ? { marginLeft } : {}),
+    ...(marginRight != null ? { marginRight } : {}),
+  };
+
+  const containerStyle = [cardStyle, marginOnly];
+
+  const computedTestID = buildTestID('Card', testID);
+
+  const normalizedGradient = normalizeGradientConfig(
+    [theme.colors.primary, theme.colors.secondary],
+    props,
+  );
+
+  // 渐变背景：作为纯背景层（绝对定位），覆盖整个卡片，包括 padding 区域
+  const gradientLayer = normalizedGradient.colors ? (
+    <GradientBackground
+      {...normalizedGradient}
+      style={StyleSheet.absoluteFillObject}
+      borderRadius={props.borderRadius ?? borderRadiusValue}
+    />
+  ) : null;
+
+  const content = (
+    <View style={paddingOnly}>
+      {children}
+    </View>
+  );
 
   if (onPress) {
     return (
       <TouchableOpacity
-        style={[cardStyle, spacingStyle, style]}
+        style={containerStyle}
         onPress={onPress}
         disabled={disabled}
         activeOpacity={0.7}
-        testID={testID}
+        testID={computedTestID}
       >
-        {children}
+        {gradientLayer}
+        {content}
       </TouchableOpacity>
     );
   }
 
   return (
-    <View style={[cardStyle, spacingStyle, style]} testID={testID}>
-      {children}
+    <View style={containerStyle} testID={computedTestID}>
+      {gradientLayer}
+      {content}
     </View>
   );
-};
+}

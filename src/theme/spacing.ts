@@ -1,6 +1,6 @@
+import type { ViewStyle, TextStyle } from 'react-native';
 import { useSpacing } from './hooks';
 import type { SpacingTheme } from './types';
-import type { ViewStyle, TextStyle } from 'react-native';
 
 export type SpacingSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | number;
 
@@ -24,8 +24,9 @@ export interface SpacingProps {
 export type SpacingStyle = Partial<ViewStyle & TextStyle>;
 
 const resolve = (spacing: SpacingTheme, v?: SpacingSize): number | undefined => {
+  if (typeof v === 'number') return v;
   if (v == null) return undefined;
-  return typeof v === 'number' ? v : spacing[v];
+  return spacing[v];
 };
 
 export const spacingPropsToStyle = (spacing: SpacingTheme, props: SpacingProps): SpacingStyle => {
