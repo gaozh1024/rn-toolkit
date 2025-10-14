@@ -1,13 +1,16 @@
+// 顶部 import 区
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, ViewStyle, TextStyle } from 'react-native';
-import { useTheme } from '../../../theme';
+import { View, Pressable, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { buildTestID, TestableProps } from '../../common/test';
 import { Icon } from '../Icon';
 import { Text } from '../Text';
 
+// 接口与类型
 export type CheckboxSize = 'small' | 'medium' | 'large' | number;
 export type CheckboxColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | string;
 
-export interface CheckboxProps {
+export interface CheckboxProps extends SpacingProps, TestableProps {
     checked?: boolean;
     defaultChecked?: boolean;
     onChange?: (checked: boolean) => void;
@@ -15,11 +18,13 @@ export interface CheckboxProps {
     disabled?: boolean;
     size?: CheckboxSize;
     color?: CheckboxColor;
-    style?: ViewStyle | ViewStyle[];
-    labelStyle?: TextStyle | TextStyle[];
+    // 统一样式类型（删除不需要的数组类型）
+    style?: StyleProp<ViewStyle>;
+    labelStyle?: StyleProp<TextStyle>;
     testID?: string;
 }
 
+// 组件：Checkbox
 const Checkbox: React.FC<CheckboxProps> = ({
     checked,
     defaultChecked = false,
@@ -31,9 +36,14 @@ const Checkbox: React.FC<CheckboxProps> = ({
     style,
     labelStyle,
     testID,
+    ...props
 }) => {
     const { theme } = useTheme();
     const { colors } = theme;
+    // 新增：公共间距样式
+    const spacingStyle = useSpacingStyle(props);
+    // 新增：规范化 testID
+    const computedTestID = buildTestID('Checkbox', testID);
 
     const isControlled = typeof checked === 'boolean';
     const [internalChecked, setInternalChecked] = useState<boolean>(defaultChecked);
@@ -92,11 +102,12 @@ const Checkbox: React.FC<CheckboxProps> = ({
             style={({ pressed }) => [
                 { flexDirection: 'row', alignItems: 'center', opacity: disabled ? 0.6 : 1 },
                 pressed && !disabled ? { opacity: 0.8 } : {},
+                spacingStyle,
                 style,
             ]}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: isChecked, disabled }}
-            testID={testID}
+            testID={computedTestID}
         >
             <View style={boxStyle}>
                 {isChecked ? <Icon name="checkmark" size={iconSize} color={iconColor} /> : null}

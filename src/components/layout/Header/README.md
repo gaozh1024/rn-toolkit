@@ -8,6 +8,9 @@ Header 提供页面标题、返回与右侧操作区，并接入安全区与主�
 - 安全区顶部自动填充（不重复叠加）
 - 主题联动：字体尺寸、颜色、分割线与高度来自 `theme.navigation`
 - 可选渐变背景：`linear/radial`，支持角度/位置/透明度与 locations
+- 间距（SpacingProps）：支持 `m/mv/mh/mt/mb/ml/mr` 与 `p/pv/ph/pt/pb/pl/pr`，统一来自主题 `spacing`
+- 阴影（ShadowProps）：支持 `shadowSize` 预设与颜色/偏移/不透明度/半径覆盖
+- 测试（TestableProps）：`testID` 会通过 `buildTestID('Header', testID)` 标准化
 
 ## 导入
 
@@ -23,13 +26,29 @@ import { Header } from '@gaozh1024/rn-toolkit';
 <Header title="操作" actions={[{ iconName: 'search' }, { iconName: 'settings' }]} />
 ```
 
+## 间距与阴影
+
+```tsx
+<Header
+  title="Spacing + Shadow"
+  p="md"            // 内边距 md（也可传 number）
+  m="sm"            // 外边距 sm
+  shadowSize="sm"   // 使用主题阴影预设
+  testID="header-basic"
+/>
+```
+
+说明：
+
+- 间距属性来自主题，支持语义键（如 `'md'`）或数值。
+- `shadowSize` 使用主题 `styles.shadow` 预设；其他阴影字段可按需覆盖。
+- `testID` 内部会标准化为 `Header-header-basic`。
+
 ## 渐变背景
 
 ```tsx
-// 线性渐变（45°，默认主题 primary→secondary）
 <Header title="Gradient" gradientEnabled gradientVariant="linear" gradientAngle={45} />
 
-// 自定义颜色与 locations
 <Header
   title="Custom"
   gradientEnabled
@@ -38,7 +57,6 @@ import { Header } from '@gaozh1024/rn-toolkit';
   gradientAngle={30}
 />
 
-// 径向渐变（居中，半径 0.6）
 <Header
   title="Radial"
   gradientEnabled
@@ -50,40 +68,17 @@ import { Header } from '@gaozh1024/rn-toolkit';
 
 ## 透明背景与顶部安全区控制
 
-在单独使用 Header 时，你可以：
-
-- 设置背景为透明，仅显示 Header 本身：
-- 关闭顶部安全区内边距，避免重复叠加：
-
 ```tsx
-// 透明背景（保留顶部安全区）
 <Header title="示例" transparent />
-
-// 透明背景 + 关闭顶部安全区，只显示 header 本身高度
 <Header title="示例" transparent safeAreaTopEnabled={false} />
-
-// 保持主题背景，但不添加顶部安全区
 <Header title="示例" safeAreaTopEnabled={false} />
 ```
 
-说明：
-
-- `transparent` 会让 Header 背景透明；若开启渐变，渐变会覆盖 Header 区域。
-- `safeAreaTopEnabled={false}` 关闭顶部安全区内边距，适合“只渲染 Header”的场景。
-- 与 `Page`/`SafeAreaView` 组合使用时，避免在外层再加顶部安全区以免重复。
-
-## 注意事项
-
-- 开启渐变后容器背景设为透明，底部分割线仍生效
-- 顶部安全区由 Header 内部处理，不需要额外在外层再加顶部 safe-area
-- 与 `Page` 的渐变同时开启时，`Page` 渐变会在 Header 之下；Header 的渐变覆盖其自身高度
-
 ## Props 摘要
 
-- `title`: 标题文本或节点
-- `backVisible`, `onBack`, `backIconName`, `backIconColor`
-- `actions`: 右侧动作（最多 3 个）
-- `backgroundColor`, `borderBottom`, `titleColor`, `height`
-- `transparent`: 启用后 Header 背景透明（默认 false）
-- `safeAreaTopEnabled`: 是否添加顶部安全区内边距（默认 true）
-- 渐变相关：`gradientEnabled`, `gradientVariant`, `gradientColors`, `gradientLocations`, `gradientAngle`, `gradientStart`, `gradientEnd`, `gradientCenter`, `gradientRadius`, `gradientOpacity`
+- 核心：`title`, `backVisible`, `onBack`, `backIconName`, `backIconColor`, `actions`, `backgroundColor`, `borderBottom`, `titleColor`, `height`
+- 安全区：`transparent`, `safeAreaTopEnabled`
+- 渐变：`gradientEnabled`, `gradientVariant`, `gradientColors`, `gradientLocations`, `gradientAngle`, `gradientStart`, `gradientEnd`, `gradientCenter`, `gradientRadius`, `gradientOpacity`
+- 间距（SpacingProps）：`m/mv/mh/mt/mb/ml/mr`、`p/pv/ph/pt/pb/pl/pr`
+- 阴影（ShadowProps）：`shadowSize`, `shadowColor`, `shadowOffset`, `shadowOpacity`, `shadowRadius`
+- 测试（TestableProps）：`testID`（内部标准化）

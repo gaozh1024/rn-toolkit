@@ -14,7 +14,7 @@ export interface ScreenProps {
     statusBarBackgroundColor?: string;
     safeAreaEdges?: Edge[];
     scrollable?: boolean;
-    padding?: number | { top?: number; bottom?: number; left?: number; right?: number };
+    padding?: number;
     preset?: 'default' | 'scroll' | 'fixed';
     testID?: string;
 }
@@ -55,7 +55,7 @@ export const Screen: React.FC<ScreenProps> = ({
             />
             <Container
                 flex={1}
-                padding={padding}
+                p={padding}
                 scrollable={isScrollable}
                 style={contentStyle}
             >

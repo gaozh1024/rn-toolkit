@@ -1,5 +1,40 @@
 # Input（输入框）
 
+- 接入的公共能力：
+  - 间距：`SpacingProps`（`m/mv/mh/p/...`，用于容器）
+  - 测试：`TestableProps`（`testID`，规范化为 `Input-${id}`）
+  - 盒子：`BoxProps`（宽高、背景、边框统一处理，覆盖变体默认）
+
+## 属性
+
+- 值与事件：`value/defaultValue/onChangeText/onFocus/onBlur`
+- 交互：`secureTextEntry/disabled/editable`
+- 外观：`size (xs~xl)/variant (solid|outline|ghost)/color (主题键或颜色值)`
+- 图标：`leftIcon/rightIcon`（`name/type/size/color`，右侧支持 `onPress`）
+- 样式：`style`（容器 `StyleProp<ViewStyle>`）、`inputStyle`（文本框 `StyleProp<TextStyle>`）
+- 公共：`SpacingProps/TestableProps/BoxProps`
+
+## 用法示例
+
+```tsx
+<Input placeholder="搜索" m="sm" />
+<Input placeholder="邮箱" variant="outline" p="md" borderRadius={12} />
+<Input
+  placeholder="密码"
+  secureTextEntry
+  variant="solid"
+  leftIcon={{ name: 'lock-closed' }}
+  rightIcon={{ name: 'eye', onPress: toggle }}
+  width="100%"
+  borderColor="#DDD"
+/>
+```
+
+## 注意
+
+- `variant` 仅影响默认背景/边框；传入 `BoxProps` 可覆盖。
+- 文本颜色跟随禁用态与主题；占位符使用 `textSecondary`。
+
 通用文本输入组件，支持图标、错误提示、变体与主题接入。
 
 ## 特性

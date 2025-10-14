@@ -16,14 +16,19 @@ import {
 } from 'react-native';
 import { useTheme, useThemeColors, useLayoutStyles, useSpacingStyles, useSpacingStyle, SpacingProps } from '../../../theme';
 import { GradientBackground } from '../../layout/GradientBackground/GradientBackground';
+import { buildTestID, TestableProps } from '../../common/test';
+import { buildBoxStyle, BoxProps } from '../../common/box';
+import { buildShadowStyle, ShadowProps } from '../../common/shadow';
+import type { PressEvents } from '../../common/events';
+import { normalizeGradientConfig, type GradientProps } from '../../common/gradient';
 
 // 文件顶部：ButtonProps 接口
-export interface ButtonProps extends SpacingProps {
+export interface ButtonProps extends SpacingProps, BoxProps, ShadowProps, TestableProps, PressEvents, GradientProps {
     // 基础属性
     children?: React.ReactNode;
     title?: string;
-    style?: ViewStyle | ViewStyle[];
-    textStyle?: TextStyle | TextStyle[];
+    style?: StyleProp<ViewStyle>;
+    textStyle?: StyleProp<TextStyle>;
 
     // 按钮变体
     variant?: 'primary' | 'secondary' | 'outline' | 'text';
@@ -59,33 +64,10 @@ export interface ButtonProps extends SpacingProps {
     // 高亮颜色（仅在touchType为highlight时有效）
     underlayColor?: string;
 
-    // 事件处理
-    onPress?: (event: GestureResponderEvent) => void;
-    onPressIn?: (event: GestureResponderEvent) => void;
-    onPressOut?: (event: GestureResponderEvent) => void;
-    onLongPress?: (event: GestureResponderEvent) => void;
-
     // 可访问性
     accessibilityLabel?: string;
     accessibilityHint?: string;
     accessibilityRole?: 'button' | 'link';
-
-    // 测试ID
-    testID?: string;
-    // 渐变（可选）
-    gradientEnabled?: boolean;
-    gradientVariant?: 'linear' | 'radial';
-    gradientColors?: string[];
-    gradientLocations?: number[];
-    gradientAngle?: number;
-    gradientStart?: { x: number; y: number };
-    gradientEnd?: { x: number; y: number };
-    gradientCenter?: { x: number; y: number };
-    gradientRadius?: number;
-    gradientOpacity?: number;
-    backgroundColor?: string; // 直接设置按钮背景色（已添加）
-    borderColor?: string;     // 新增：直接设置边框颜色
-    borderWidth?: number;     // 新增：直接设置边框宽度
 }
 
 // Button 组件（const Button: React.FC<ButtonProps> = ({ ... }) => { ... }）
@@ -116,6 +98,7 @@ const Button: React.FC<ButtonProps> = ({
     accessibilityHint,
     accessibilityRole = 'button',
     testID,
+    // 渐变相关（来自 GradientProps）
     gradientEnabled = false,
     gradientVariant = 'linear',
     gradientColors,
@@ -126,36 +109,84 @@ const Button: React.FC<ButtonProps> = ({
     gradientCenter = { x: 0.5, y: 0.5 },
     gradientRadius = 0.5,
     gradientOpacity = 1,
-    backgroundColor,
-    borderColor,
-    borderWidth,
     ...props
 }) => {
-    const { theme } = useTheme();
+    const { theme, styles } = useTheme();
     const colors = useThemeColors();
     const layout = useLayoutStyles();
     const spacing = useSpacingStyles();
     const spacingStyle = useSpacingStyle(props);
 
-    // 获取按钮样式
-    const getButtonStyle = (): ViewStyle => {
-        const baseStyle = getBaseStyle();
-        const sizeStyle = getSizeStyle();
-        const variantStyle = getVariantStyle();
-        const shapeStyle = getShapeStyle();
-        const disabledStyle = disabled ? { opacity: 0.6 } : {};
-        const widthStyle = getWidthStyle();
-        const heightStyle = getHeightStyle();
+    // 规范化 testID
+    const computedTestID = buildTestID('Button', testID);
 
-        return {
-            ...baseStyle,
-            ...sizeStyle,
-            ...variantStyle,
-            ...shapeStyle,
-            ...disabledStyle,
-            ...widthStyle,
-            ...heightStyle,
-        };
+    // 用外部样式作为 overrides；单独属性（背景/边框/圆角/尺寸）更高优先级
+    const styleOverrides = StyleSheet.flatten(style) ?? undefined;
+
+    // 获取主题颜色（未提供 color 时返回 undefined，使各变体保持主题默认）
+    const getThemeColor = (): string | undefined => {
+        if (!color) return undefined;
+        if (typeof color === 'string' && (color.startsWith('#') || color.startsWith('rgb'))) return color;
+        switch (color) {
+            case 'primary': return colors.primary;
+            case 'secondary': return colors.secondary;
+            case 'success': return colors.success;
+            case 'warning': return colors.warning;
+            case 'error': return colors.error;
+            case 'info': return colors.info;
+            default: return String(color);
+        }
+    };
+
+    // 计算默认背景色（传入 buildBoxStyle）
+    const defaultBackground = (() => {
+        const themeColor = getThemeColor();
+        switch (variant) {
+            case 'primary': return themeColor ?? colors.primary;
+            case 'secondary': return theme.button.secondary.backgroundColor;
+            case 'outline': return 'transparent';
+            case 'text': return theme.button.text.backgroundColor;
+            default: return themeColor ?? colors.primary;
+        }
+    })();
+
+    // Box 基础样式：先应用 overrides，再由 BoxProps 单独属性覆盖
+    const boxBase = buildBoxStyle({ defaultBackground }, props, styleOverrides);
+
+    // 阴影样式：主题预设 + 覆盖（修复：使用 styles.shadow）
+    const shadowStyle = buildShadowStyle(styles.shadow, props);
+
+    // 归一化渐变配置（使用主题色作为回退颜色）
+    const themeColor = getThemeColor();
+    const baseColors = themeColor ? [themeColor, themeColor] : [colors.primary, colors.secondary];
+    const gradientCfg = normalizeGradientConfig(baseColors, {
+        gradientEnabled,
+        gradientVariant,
+        gradientColors,
+        gradientLocations,
+        gradientAngle,
+        gradientStart,
+        gradientEnd,
+        gradientCenter,
+        gradientRadius,
+        gradientOpacity,
+    });
+
+    // 获取宽度样式
+    const getWidthStyle = (): ViewStyle => {
+        if (flex) return { flex: 1 };
+        if (fullWidth) return { width: '100%' };
+        return {};
+    };
+
+    // 获取高度样式
+    const getHeightStyle = (): ViewStyle => {
+        switch (size) {
+            case 'small': return { maxHeight: theme.button.secondary.height - 8 };
+            case 'medium': return { maxHeight: theme.button.primary.height };
+            case 'large': return { maxHeight: theme.button.primary.height + 8 };
+            default: return { maxHeight: theme.button.primary.height };
+        }
     };
 
     // 获取基础样式
@@ -165,196 +196,61 @@ const Button: React.FC<ButtonProps> = ({
         minHeight: 40,
     });
 
-    // 获取宽度样式
-    const getWidthStyle = (): ViewStyle => {
-        if (flex) {
-            return { flex: 1 };
-        }
-        if (fullWidth) {
-            return { width: '100%' };
-        }
-        return {};
-    };
-
-    // 获取高度样式
-    const getHeightStyle = (): ViewStyle => {
-        switch (size) {
-            case 'small':
-                return { maxHeight: theme.button.secondary.height - 8 };
-            case 'medium':
-                return { maxHeight: theme.button.primary.height };
-            case 'large':
-                return { maxHeight: theme.button.primary.height + 8 };
-            default:
-                return { maxHeight: theme.button.primary.height };
-        }
-    };
-
-    // 获取尺寸样式
+    // 获取尺寸样式（padding 在非渐变时应用）
     const getSizeStyle = (): ViewStyle => {
         switch (size) {
-            case 'small':
-                return {
-                    minHeight: theme.button.secondary.height - 8,
-                    // 渐变启用时，容器不设置横向 padding
-                    ...(gradientEnabled ? {} : spacing.pxSm),
-                };
-            case 'medium':
-                return {
-                    minHeight: theme.button.primary.height,
-                    ...(gradientEnabled ? {} : spacing.pxMd),
-                };
-            case 'large':
-                return {
-                    minHeight: theme.button.primary.height + 8,
-                    ...(gradientEnabled ? {} : spacing.pxLg),
-                };
-            default:
-                return {
-                    minHeight: theme.button.primary.height,
-                    ...(gradientEnabled ? {} : spacing.pxMd),
-                };
+            case 'small': return { minHeight: theme.button.secondary.height - 8, ...(gradientEnabled ? {} : spacing.pxSm) };
+            case 'medium': return { minHeight: theme.button.primary.height, ...(gradientEnabled ? {} : spacing.pxMd) };
+            case 'large': return { minHeight: theme.button.primary.height + 8, ...(gradientEnabled ? {} : spacing.pxLg) };
+            default: return { minHeight: theme.button.primary.height, ...(gradientEnabled ? {} : spacing.pxMd) };
         }
     };
 
-    // 获取变体样式
+    // 获取变体样式（不覆盖 BoxProps 中的同名字段）
     const getVariantStyle = (): ViewStyle => {
         const themeColor = getThemeColor();
-
         switch (variant) {
             case 'primary':
                 return {
-                    backgroundColor: backgroundColor ?? (themeColor ?? colors.primary),
-                    borderWidth: borderWidth ?? theme.button.primary.borderWidth,
-                    borderColor: borderColor ?? (themeColor ?? colors.primary),
-                    borderRadius: theme.button.primary.borderRadius,
+                    borderWidth: props.borderWidth ?? theme.button.primary.borderWidth,
+                    borderColor: props.borderColor ?? (themeColor ?? colors.primary),
+                    borderRadius: props.borderRadius ?? theme.button.primary.borderRadius,
                 };
             case 'secondary':
                 return {
-                    backgroundColor: backgroundColor ?? (themeColor ?? theme.button.secondary.backgroundColor),
-                    borderWidth: borderWidth ?? 1,
-                    borderColor: borderColor ?? theme.button.secondary.borderColor,
-                    borderRadius: theme.button.secondary.borderRadius,
+                    borderWidth: props.borderWidth ?? 1,
+                    borderColor: props.borderColor ?? theme.button.secondary.borderColor,
+                    borderRadius: props.borderRadius ?? theme.button.secondary.borderRadius,
                 };
             case 'outline':
                 return {
-                    backgroundColor: backgroundColor ?? theme.button.outline.backgroundColor,
-                    borderWidth: borderWidth ?? 1,
-                    borderColor: borderColor ?? (themeColor ?? theme.button.outline.borderColor),
-                    borderRadius: theme.button.outline.borderRadius,
+                    borderWidth: props.borderWidth ?? 1,
+                    borderColor: props.borderColor ?? (themeColor ?? theme.button.outline.borderColor),
+                    borderRadius: props.borderRadius ?? theme.button.outline.borderRadius,
                 };
             case 'text':
                 return {
-                    backgroundColor: backgroundColor ?? (themeColor ?? theme.button.text.backgroundColor),
-                    borderWidth: borderWidth ?? 0,
-                    borderColor: borderColor ?? 'transparent',
-                    borderRadius: theme.button.text.borderRadius,
+                    borderWidth: props.borderWidth ?? 0,
+                    borderColor: props.borderColor ?? 'transparent',
+                    borderRadius: props.borderRadius ?? theme.button.text.borderRadius,
                 };
             default:
                 return {
-                    backgroundColor: backgroundColor ?? themeColor,
-                    borderWidth: borderWidth ?? 0,
-                    borderColor: borderColor ?? (themeColor ?? colors.primary),
-                    borderRadius: theme.borderRadius.md,
+                    borderWidth: props.borderWidth ?? 0,
+                    borderColor: props.borderColor ?? (themeColor ?? colors.primary),
+                    borderRadius: props.borderRadius ?? theme.borderRadius.md,
                 };
         }
     };
 
-    // 获取形状样式
+    // 获取形状样式（不覆盖 BoxProps 中的 borderRadius）
     const getShapeStyle = (): ViewStyle => {
         const sizeConfig = getSizeConfig();
-
         switch (shape) {
-            case 'rounded':
-                return {
-                    borderRadius: theme.borderRadius.md,
-                };
-            case 'square':
-                return {
-                    borderRadius: 0,
-                };
-            case 'circle':
-                return {
-                    borderRadius: sizeConfig.height / 2,
-                    width: sizeConfig.height,
-                    paddingHorizontal: 0,
-                };
-            default:
-                return {};
-        }
-    };
-
-    // 获取主题颜色（未提供 color 时返回 undefined，使各变体保持主题默认）
-    const getThemeColor = (): string | undefined => {
-        if (!color) {
-            return undefined;
-        }
-        if (typeof color === 'string' && (color.startsWith('#') || color.startsWith('rgb'))) {
-            return color;
-        }
-
-        switch (color) {
-            case 'primary':
-                return colors.primary;
-            case 'secondary':
-                return colors.secondary;
-            case 'success':
-                return colors.success;
-            case 'warning':
-                return colors.warning;
-            case 'error':
-                return colors.error;
-            case 'info':
-                return colors.info;
-            default:
-                // 允许传入平台支持的命名颜色或自定义字符串
-                return String(color);
-        }
-    };
-
-    // 获取文本颜色
-    const getTextColor = (): string => {
-        if (textColor) {
-            return textColor;
-        }
-
-        switch (variant) {
-            case 'primary':
-                return theme.button.primary.textColor;
-            case 'secondary':
-                return theme.button.secondary.textColor;
-            case 'outline':
-                return theme.button.outline.textColor;
-            case 'text':
-                return theme.button.text.textColor;
-            default:
-                // 对自定义 variant，保持与 primary 相同的对比策略
-                return theme.button.primary.textColor;
-        }
-    };
-
-    // 获取高亮模式下的 UnderlayColor，保证在未提供 color/underlayColor 时也有合理回退
-    const getUnderlayColor = (): string => {
-        if (underlayColor) {
-            return underlayColor;
-        }
-
-        const themeColor = getThemeColor();
-        if (themeColor) {
-            return `${themeColor}20`;
-        }
-
-        switch (variant) {
-            case 'primary':
-                return `${theme.button.primary.backgroundColor}20`;
-            case 'secondary':
-                return `${theme.button.secondary.backgroundColor}20`;
-            case 'outline':
-                return `${theme.button.outline.borderColor}20`;
-            case 'text':
-                return `${theme.button.text.backgroundColor}20`;
-            default:
-                return `${colors.primary}20`;
+            case 'rounded': return { borderRadius: props.borderRadius ?? theme.borderRadius.md };
+            case 'square': return { borderRadius: props.borderRadius ?? 0 };
+            case 'circle': return { borderRadius: sizeConfig.height / 2, width: sizeConfig.height, paddingHorizontal: 0 };
+            default: return {};
         }
     };
 
@@ -362,29 +258,39 @@ const Button: React.FC<ButtonProps> = ({
     const getSizeConfig = () => {
         switch (size) {
             case 'small':
-                return {
-                    height: theme.button.secondary.height - 8,
-                    paddingHorizontal: theme.spacing.sm,
-                    fontSize: theme.button.secondary.fontSize - 2,
-                };
+                return { height: theme.button.secondary.height - 8, paddingHorizontal: theme.spacing.sm, fontSize: theme.button.secondary.fontSize - 2 };
             case 'medium':
-                return {
-                    height: theme.button.primary.height,
-                    paddingHorizontal: theme.spacing.md,
-                    fontSize: theme.button.primary.fontSize,
-                };
+                return { height: theme.button.primary.height, paddingHorizontal: theme.spacing.md, fontSize: theme.button.primary.fontSize };
             case 'large':
-                return {
-                    height: theme.button.primary.height + 8,
-                    paddingHorizontal: theme.spacing.lg,
-                    fontSize: theme.button.primary.fontSize + 2,
-                };
+                return { height: theme.button.primary.height + 8, paddingHorizontal: theme.spacing.lg, fontSize: theme.button.primary.fontSize + 2 };
             default:
-                return {
-                    height: theme.button.primary.height,
-                    paddingHorizontal: theme.spacing.md,
-                    fontSize: theme.button.primary.fontSize,
-                };
+                return { height: theme.button.primary.height, paddingHorizontal: theme.spacing.md, fontSize: theme.button.primary.fontSize };
+        }
+    };
+
+    // 获取文本颜色
+    const getTextColor = (): string => {
+        if (textColor) return textColor;
+        switch (variant) {
+            case 'primary': return theme.button.primary.textColor;
+            case 'secondary': return theme.button.secondary.textColor;
+            case 'outline': return theme.button.outline.textColor;
+            case 'text': return theme.button.text.textColor;
+            default: return theme.button.primary.textColor;
+        }
+    };
+
+    // 获取高亮 UnderlayColor
+    const getUnderlayColor = (): string => {
+        if (underlayColor) return underlayColor;
+        const themeColor = getThemeColor();
+        if (themeColor) return `${themeColor}20`;
+        switch (variant) {
+            case 'primary': return `${theme.button.primary.backgroundColor}20`;
+            case 'secondary': return `${theme.button.secondary.backgroundColor}20`;
+            case 'outline': return `${theme.button.outline.borderColor}20`;
+            case 'text': return `${theme.button.text.backgroundColor}20`;
+            default: return `${colors.primary}20`;
         }
     };
 
@@ -394,9 +300,7 @@ const Button: React.FC<ButtonProps> = ({
         return {
             color: getTextColor(),
             fontSize: sizeConfig.fontSize,
-            fontWeight: bold
-                ? theme.button.primary.fontWeight
-                : theme.button.secondary.fontWeight,
+            fontWeight: bold ? theme.button.primary.fontWeight : theme.button.secondary.fontWeight,
             textAlign: 'center',
         };
     };
@@ -430,8 +334,20 @@ const Button: React.FC<ButtonProps> = ({
         );
     };
 
-    // 组合最终样式（启用渐变时背景透明，容器设为相对定位以承载绝对填充的渐变层）
-    const baseButtonStyle = getButtonStyle();
+    // 组合容器样式（先 boxBase，再 shadow，再局部策略；不再在最终样式数组末尾附加 style）
+    const baseButtonStyle = {
+        ...boxBase,
+        ...shadowStyle,
+        ...getBaseStyle(),
+        ...getSizeStyle(),
+        ...getVariantStyle(),
+        ...getShapeStyle(),
+        ...(disabled ? { opacity: 0.6 } : {}),
+        ...getWidthStyle(),
+        ...getHeightStyle(),
+    } as ViewStyle;
+
+    // 渐变增强：背景透明并承载绝对填充的渐变层（改为用于内部包裹层）
     const gradientEnhancer: ViewStyle = { backgroundColor: 'transparent', position: 'relative', overflow: 'hidden' };
 
     // 测量容器尺寸并传递给渐变层
@@ -444,8 +360,8 @@ const Button: React.FC<ButtonProps> = ({
     const finalStyle: StyleProp<ViewStyle> = [
         baseButtonStyle,
         spacingStyle,
-        gradientEnabled ? gradientEnhancer : null,
-        style,
+        // 修复：不再在外层添加 overflow:hidden，避免阴影被裁剪
+        // gradientCfg.colors ? gradientEnhancer : null,
     ];
 
     // 从最终样式中计算有效圆角，优先 borderRadius，其次四角，最后回退主题值
@@ -465,15 +381,6 @@ const Button: React.FC<ButtonProps> = ({
 
     const isDisabled = disabled || loading;
 
-    // 根据传入 color 的主题/自定义色，联动默认渐变调色
-    const themeColor = getThemeColor();
-    const gradientPalette =
-        gradientColors && gradientColors.length > 0
-            ? gradientColors
-            : themeColor
-                ? [themeColor, themeColor]
-                : [colors.primary, colors.secondary];
-
     // 根据触摸类型渲染不同的组件
     // 在三种触摸容器上挂载 onLayout，并把精确尺寸传入渐变层（使用 width/height）
     if (touchType === 'highlight') {
@@ -490,27 +397,28 @@ const Button: React.FC<ButtonProps> = ({
                 accessibilityLabel={accessibilityLabel}
                 accessibilityHint={accessibilityHint}
                 accessibilityRole={accessibilityRole}
-                testID={testID}
+                testID={computedTestID}
                 {...props}
             >
-                <>
-                    {gradientEnabled && (
+                {/* 修复：将裁剪移到内部包裹层，保留外层阴影 */}
+                <View style={[gradientCfg.colors ? gradientEnhancer : null, { flex: 1 }]}>
+                    {gradientCfg.colors && (
                         <GradientBackground
-                            variant={gradientVariant}
-                            colors={gradientPalette}
-                            locations={gradientLocations}
-                            angle={gradientAngle}
-                            start={gradientStart}
-                            end={gradientEnd}
-                            center={gradientCenter}
-                            radius={gradientRadius}
-                            opacity={gradientOpacity}
+                            variant={gradientCfg.variant}
+                            colors={gradientCfg.colors}
+                            locations={gradientCfg.locations}
+                            angle={gradientCfg.angle}
+                            start={gradientCfg.start}
+                            end={gradientCfg.end}
+                            center={gradientCfg.center}
+                            radius={gradientCfg.radius}
+                            opacity={gradientCfg.opacity}
                             borderRadius={effectiveRadius}
                             style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
                         />
                     )}
                     {renderContent()}
-                </>
+                </View>
             </TouchableHighlight>
         );
     }
@@ -531,25 +439,27 @@ const Button: React.FC<ButtonProps> = ({
                 accessibilityLabel={accessibilityLabel}
                 accessibilityHint={accessibilityHint}
                 accessibilityRole={accessibilityRole}
-                testID={testID}
+                testID={computedTestID}
                 {...props}
             >
-                {gradientEnabled && (
-                    <GradientBackground
-                        variant={gradientVariant}
-                        colors={gradientPalette}
-                        locations={gradientLocations}
-                        angle={gradientAngle}
-                        start={gradientStart}
-                        end={gradientEnd}
-                        center={gradientCenter}
-                        radius={gradientRadius}
-                        opacity={gradientOpacity}
-                        borderRadius={effectiveRadius}
-                        style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
-                    />
-                )}
-                {renderContent()}
+                <View style={[gradientCfg.colors ? gradientEnhancer : null, { flex: 1 }]}>
+                    {gradientCfg.colors && (
+                        <GradientBackground
+                            variant={gradientCfg.variant}
+                            colors={gradientCfg.colors}
+                            locations={gradientCfg.locations}
+                            angle={gradientCfg.angle}
+                            start={gradientCfg.start}
+                            end={gradientCfg.end}
+                            center={gradientCfg.center}
+                            radius={gradientCfg.radius}
+                            opacity={gradientCfg.opacity}
+                            borderRadius={effectiveRadius}
+                            style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
+                        />
+                    )}
+                    {renderContent()}
+                </View>
             </Pressable>
         );
     }
@@ -567,25 +477,27 @@ const Button: React.FC<ButtonProps> = ({
             accessibilityLabel={accessibilityLabel}
             accessibilityHint={accessibilityHint}
             accessibilityRole={accessibilityRole}
-            testID={testID}
+            testID={computedTestID}
             {...props}
         >
-            {gradientEnabled && (
-                <GradientBackground
-                    variant={gradientVariant}
-                    colors={gradientPalette}
-                    locations={gradientLocations}
-                    angle={gradientAngle}
-                    start={gradientStart}
-                    end={gradientEnd}
-                    center={gradientCenter}
-                    radius={gradientRadius}
-                    opacity={gradientOpacity}
-                    borderRadius={effectiveRadius}
-                    style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
-                />
-            )}
-            {renderContent()}
+            <View style={[gradientCfg.colors ? gradientEnhancer : null, { flex: 1 }]}>
+                {gradientCfg.colors && (
+                    <GradientBackground
+                        variant={gradientCfg.variant}
+                        colors={gradientCfg.colors}
+                        locations={gradientCfg.locations}
+                        angle={gradientCfg.angle}
+                        start={gradientCfg.start}
+                        end={gradientCfg.end}
+                        center={gradientCfg.center}
+                        radius={gradientCfg.radius}
+                        opacity={gradientCfg.opacity}
+                        borderRadius={effectiveRadius}
+                        style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
+                    />
+                )}
+                {renderContent()}
+            </View>
         </TouchableOpacity>
     );
 };

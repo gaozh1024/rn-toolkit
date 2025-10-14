@@ -1,10 +1,13 @@
-import React, { forwardRef, useMemo, useState } from 'react';
-import { TextInput, View, ViewStyle, TextStyle, Pressable } from 'react-native';
+import React, { forwardRef, useState } from 'react';
+import { TextInput, View, ViewStyle, TextStyle, Pressable, StyleProp } from 'react-native';
 import { useTheme, useThemeColors } from '../../../theme';
 import { Text } from '../Text';
 import { Icon } from '../Icon';
+import { buildTestID, type TestableProps } from '../../common/test';
+import { useSpacingStyle, type SpacingProps } from '../../../theme/spacing';
+import { buildBoxStyle, type BoxProps } from '../../common/box';
 
-export interface TextAreaProps {
+export interface TextAreaProps extends TestableProps, SpacingProps, BoxProps {
     value?: string;
     defaultValue?: string;
     placeholder?: string;
@@ -17,14 +20,10 @@ export interface TextAreaProps {
     color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'text' | 'subtext' | string;
     fullWidth?: boolean;
     flex?: number;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
     inputStyle?: TextStyle;
     rows?: number; // 默认行数（最小高度）
     autoSize?: boolean; // 根据内容自动增长高度
-    // 新增：可配置内边距与圆角
-    paddingH?: number;
-    paddingV?: number;
-    radius?: number;
     // 新增：清除能力与可编辑控制
     allowClear?: boolean;
     editable?: boolean;
@@ -65,6 +64,8 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
         // 新增默认值
         allowClear = false,
         editable = true,
+        testID,
+        ...restProps
     } = props;
 
     const { theme } = useTheme();
@@ -88,20 +89,29 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
             ? colors.primary
             : colors.border;
 
+    const spacingStyle = useSpacingStyle(restProps);
+
+    const defaultBackground =
+        variant === 'solid'
+            ? colors.surface
+            : variant === 'ghost'
+                ? 'transparent'
+                : colors.background;
+
     const containerStyle: ViewStyle = {
-        backgroundColor:
-            variant === 'solid'
-                ? colors.surface
-                : variant === 'ghost'
-                    ? 'transparent'
-                    : colors.background,
-        borderWidth: variant === 'outline' ? 1 : 0,
-        borderColor: variant === 'outline' ? baseBorderColor : 'transparent',
-        borderRadius: props.radius ?? theme.borderRadius.lg,
-        opacity: disabled ? 0.6 : 1,
-        paddingHorizontal: props.paddingH ?? theme.spacing.sm,
-        paddingVertical: props.paddingV ?? theme.spacing.md,
-        ...widthStyle,
+        ...buildBoxStyle(
+            { defaultBackground },
+            restProps,
+            {
+                borderWidth: variant === 'outline' ? 1 : 0,
+                borderColor: variant === 'outline' ? baseBorderColor : 'transparent',
+                borderRadius: theme.borderRadius.lg,
+                opacity: disabled ? 0.6 : 1,
+                paddingHorizontal: theme.spacing.sm,
+                paddingVertical: theme.spacing.md,
+                ...widthStyle,
+            }
+        ),
     };
 
     const textColor = disabled ? (colors.textDisabled ?? colors.subtext) : (colors.text ?? colors.text);
@@ -124,7 +134,7 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
     };
 
     return (
-        <View style={[containerStyle, style]}>
+        <View style={[containerStyle, spacingStyle, style]} testID={buildTestID('TextArea', testID)}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                 {
                     leftIcon ? (

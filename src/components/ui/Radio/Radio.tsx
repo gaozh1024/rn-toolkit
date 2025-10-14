@@ -1,24 +1,27 @@
+// 顶部 import 区
 import React from 'react';
-import { View, Pressable, ViewStyle, TextStyle } from 'react-native';
-import { useTheme } from '../../../theme';
+import { View, Pressable, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { buildTestID, TestableProps } from '../../common/test';
 import { Icon } from '../Icon';
 import { Text } from '../Text';
 
+// 接口与类型
 export type RadioSize = 'small' | 'medium' | 'large' | number;
 export type RadioColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | string;
 
-export interface RadioProps {
+export interface RadioProps extends SpacingProps, TestableProps {
   checked?: boolean;
   onChange?: (checked: boolean) => void;
   label?: React.ReactNode | string;
   disabled?: boolean;
   size?: RadioSize;
   color?: RadioColor;
-  style?: ViewStyle | ViewStyle[];
-  labelStyle?: TextStyle | TextStyle[];
-  testID?: string;
+  style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
 }
 
+// 组件：Radio
 const Radio: React.FC<RadioProps> = ({
   checked = false,
   onChange,
@@ -29,10 +32,12 @@ const Radio: React.FC<RadioProps> = ({
   style,
   labelStyle,
   testID,
+  ...props
 }) => {
   const { theme } = useTheme();
   const colors = theme.colors;
-
+  const spacingStyle = useSpacingStyle(props);
+  const computedTestID = buildTestID('Radio', testID);
   const iconSize = typeof size === 'number' ? size : size === 'small' ? 18 : size === 'large' ? 26 : 22;
 
   const getThemeColor = (c: RadioColor): string => {
@@ -56,11 +61,12 @@ const Radio: React.FC<RadioProps> = ({
       style={({ pressed }) => [
         { flexDirection: 'row', alignItems: 'center', opacity: disabled ? 0.6 : 1 },
         pressed && !disabled ? { opacity: 0.8 } : {},
+        spacingStyle,
         style,
       ]}
       accessibilityRole="radio"
       accessibilityState={{ selected: checked, disabled }}
-      testID={testID}
+      testID={computedTestID}
     >
       <Icon name={checked ? 'radio-button-on' : 'radio-button-off'} size={iconSize} color={checked ? activeColor : inactiveColor} />
       {label !== undefined && label !== null ? (

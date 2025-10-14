@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, ViewStyle, TextStyle, StyleProp, DimensionValue } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
+import { buildTestID, type TestableProps } from '../../common/test';
+import { useSpacingStyle, type SpacingProps } from '../../../theme/spacing';
+import { buildBoxStyle, type BoxProps } from '../../common/box';
 
 export type ChatBubbleAlign = 'left' | 'right';
 export type ChatAction = React.ReactNode | { label: string; onPress?: () => void };
@@ -11,7 +14,7 @@ const isActionObject = (x: any): x is ChatActionObject => !!x && typeof x === 'o
 // 文件：ChatBubble.tsx — 更新 ChatBubbleProps 与 ChatBubble 组件
 
 // interface ChatBubbleProps：新增选择开关
-export interface ChatBubbleProps {
+export interface ChatBubbleProps extends TestableProps, SpacingProps, BoxProps {
     // 内容
     text?: string;
     children?: React.ReactNode;
@@ -29,7 +32,6 @@ export interface ChatBubbleProps {
     textStyle?: StyleProp<TextStyle>;
     footerTextStyle?: StyleProp<TextStyle>;
     style?: StyleProp<ViewStyle>;
-    testID?: string;
     /**
      * 气泡最大宽度（默认 '80%'）。支持数字（px）或百分比字符串。
      * 内容超出后将自动换行。
@@ -66,6 +68,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     textStyle,
     footerTextStyle,
     style,
+    // 移除重复 testID 声明，改由 TestableProps 提供
     testID,
     maxBubbleWidth = '80%',
     avatarVerticalAlign = 'bottom',
@@ -73,11 +76,16 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     squareCornerNearAvatar = false,
     squareCorners,
     footerPlacement = 'outside',
+    // BoxProps/SpacingProps 由接口继承
+    ...restProps
 }) => {
     const { theme, isDark } = useTheme();
     const colors = theme.colors;
 
     const isRight = align === 'right';
+
+    // 间距样式（作用于根容器）
+    const spacingStyle = useSpacingStyle(restProps);
 
     // 头像上下对齐控制
     const alignItemsRow = avatarVerticalAlign === 'top' ? 'flex-start' : 'flex-end';
@@ -117,13 +125,23 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         flexShrink: 1,
     };
 
-    const defaultBubbleStyle: ViewStyle = {
-        // 去除对气泡本身的 maxWidth，改由列容器统一约束
-        paddingHorizontal: theme.spacing.sm,
-        paddingVertical: theme.spacing.sm,
-        ...cornerRadiiStyles,
-        backgroundColor: isRight ? colors.primary : theme.button?.secondary?.backgroundColor ?? (isDark ? '#2C2C2E' : '#F2F2F7'),
-        flexShrink: 1,
+    // 默认背景基于方向与主题，交由 BoxProps 可覆盖
+    const defaultBackground = isRight
+        ? colors.primary
+        : theme.button?.secondary?.backgroundColor ?? (isDark ? '#2C2C2E' : '#F2F2F7');
+
+    // 统一构建气泡容器样式（背景/边框/尺寸）
+    const bubbleContainerStyle: ViewStyle = {
+        ...buildBoxStyle(
+            { defaultBackground },
+            restProps,
+            {
+                paddingHorizontal: theme.spacing.sm,
+                paddingVertical: theme.spacing.sm,
+                ...cornerRadiiStyles,
+                flexShrink: 1,
+            },
+        ),
     };
 
     const defaultTextStyle: TextStyle = {
@@ -131,32 +149,22 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         color: isRight ? '#FFFFFF' : (colors.text ?? (isDark ? '#FFFFFF' : '#000000')),
     };
 
-    const avatar = showAvatar ? (
-        avatarNode ?? (
-            avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={{ width: 32, height: 32, borderRadius: 16 }} />
-            ) : (
-                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.border }} />
-            )
-        )
-    ) : null;
-
-    const renderAction = (act: ChatAction, idx: number) => {
-        if (isActionObject(act)) {
-            const { label, onPress } = act;
+    const renderAction = (item: ChatAction, index: number) => {
+        if (isActionObject(item)) {
+            const { label, onPress } = item;
             return (
-                <TouchableOpacity key={`act-${idx}`} onPress={onPress} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                <TouchableOpacity key={`act-${index}`} onPress={onPress} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
                     <Text style={{ fontSize: 14, color: colors.primary }}>{label}</Text>
                 </TouchableOpacity>
             );
         }
-        if (React.isValidElement(act)) {
-            return <View key={`act-${idx}`}>{act}</View>;
+        if (React.isValidElement(item)) {
+            return <View key={`act-${index}`}>{item}</View>;
         }
-        if (typeof act === 'string' || typeof act === 'number') {
+        if (typeof item === 'string' || typeof item === 'number') {
             return (
-                <View key={`act-${idx}`} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                    <Text style={{ fontSize: 14, color: colors.primary }}>{String(act)}</Text>
+                <View key={`act-${index}`} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                    <Text style={{ fontSize: 14, color: colors.primary }}>{String(item)}</Text>
                 </View>
             );
         }
@@ -164,11 +172,11 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     };
 
     return (
-        <View style={[rootAlignStyle, style]} testID={testID}>
+        <View style={[rootAlignStyle, spacingStyle, style]} testID={buildTestID('ChatBubble', testID)}>
             <View style={{ flexDirection: isRight ? 'row-reverse' : 'row', alignItems: alignItemsRow }}>
-                {avatar && <View style={{ marginHorizontal: 8 }}>{avatar}</View>}
+                {avatarNode && <View style={{ marginHorizontal: 8 }}>{avatarNode}</View>}
                 <View style={bubbleColumnStyle}>
-                    <View style={[defaultBubbleStyle, bubbleStyle]}>
+                    <View style={[bubbleContainerStyle, bubbleStyle]}>
                         {text != null ? <Text style={[defaultTextStyle, textStyle]}>{text}</Text> : children}
                         {(leftActions?.length || rightFooterText) && footerPlacement === 'inside' && (
                             <View style={{

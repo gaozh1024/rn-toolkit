@@ -1,56 +1,29 @@
 # IconButton（图标按钮）
 
-仅呈现图标的按钮，用于轻量的可点击操作（例如收藏、分享、返回等）。
+- 接入公共能力：
+  - 间距：`SpacingProps`（`m/mv/mh/p/...`，用于容器）
+  - 测试：`TestableProps`（`testID`，规范化为 `IconButton-${id}`）
+  - 事件：`PressEvents`（`onPress/onPressIn/onPressOut/onLongPress`）
+  - 阴影：`ShadowProps`（`shadowSize/color/offset/opacity/radius`）
+  - 盒子：`BoxProps`（宽高、背景、边框）
+  - 渐变：`GradientProps`（统一启用与覆盖项）
 
-## 特性
-- 图标：`name`/`type`（兼容 Ionicons 与自定义库）
-- 样式：`variant`（`filled`/`ghost`/`outline`）
-- 状态：`disabled`（禁用时自动降低不透明度与禁用点击）
-- 尺寸与颜色：`size`（图标像素大小）、`color`（支持主题色与自定义色值）
-- 主题接入：圆角、间距、边框与表面色来源于主题 tokens
+## 属性
+
+- `name`、`type`（默认 `ionicons`）、`size`、`color`
+- `variant`: `filled | ghost | outline`
+- `style`: `StyleProp<ViewStyle>`，与盒子/阴影/间距样式合并
 
 ## 用法
+
 ```tsx
-import { IconButton } from '@gaozh1024/rn-toolkit';
-
-// 轻量操作：默认 ghost 变体
-<IconButton name="heart-outline" onPress={() => {}} />
-
-// 填充背景（filled）
-<IconButton name="share-outline" variant="filled" />
-
-// 描边（outline）
-<IconButton name="arrow-back" variant="outline" />
-
-// 自定义图标大小与颜色（主题色名或色值）
-<IconButton name="star" size={24} color="primary" />
-
-// 禁用态
-<IconButton name="trash" disabled />
+<IconButton name="heart" variant="filled" m="sm" shadowSize="lg" testID="fav" onPress={() => {}} />
+<IconButton name="share" variant="outline" mh="md" onLongPress={() => {}} />
+<IconButton name="star" variant="ghost" gradientEnabled gradientColors={['#FF9800', '#FFC107']} shadowSize="xl" />
 ```
 
-## Props
-- `name`: 图标名称（必填）
-- `type`: 图标库类型，默认 `'ionicons'`；支持通过 `Icon.registerIconLibrary` 注册的自定义库
-- `size`: 图标像素大小，默认 `20`
-- `color`: 主题色名或自定义色值；禁用态自动使用 `textDisabled`
-- `variant`: `'filled' | 'ghost' | 'outline'`，默认 `'ghost'`
-- `disabled`: 是否禁用
-- `onPress`: 点击事件
-- `style`: 容器样式（背景/边框/圆角等已按变体处理）
-- `hitSlop`: 扩大点击区域
-- `accessibilityLabel`: 无障碍标签
-- `testID`: 测试标识
+## 注意
 
-## 主题说明
-- 圆角：`theme.borderRadius.md`
-- 间距：`theme.spacing.xs`
-- 颜色：
-  - `filled` 背景：`colors.surface`
-  - `outline` 边框：`colors.border`
-  - 文本/图标颜色：传入 `color`（如 `primary`/`text`），禁用态为 `textDisabled`
-
-## 最佳实践
-- 交互面积建议不小于 `40x40`，组件已通过内边距保证可点击性
-- 与 `Icon` 搭配使用：图标库注册与主题色支持可复用 `Icon` 的能力
-- 对频繁出现的次级操作使用 `ghost`；强调操作使用 `filled` 或 `outline`
+- Android 阴影由主题 `elevation` 驱动；iOS 使用 `shadow*` 属性。
+- 渐变启用会设置 `position: 'relative'` 与 `overflow: 'hidden'`。
+- `BoxProps` 可直接设置 `width/height/background/borderColor` 等并与变体样式合并。

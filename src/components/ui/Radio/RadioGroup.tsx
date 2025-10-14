@@ -1,6 +1,8 @@
+// 顶部 import 区
 import React, { useMemo, useState } from 'react';
-import { View, ViewStyle, TextStyle } from 'react-native';
-import { useTheme } from '../../../theme';
+import { View, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { buildTestID, TestableProps } from '../../common/test';
 import Radio, { RadioSize, RadioColor } from './Radio';
 
 export type RadioGroupLayout = 'vertical' | 'horizontal';
@@ -11,7 +13,7 @@ export interface RadioGroupOption {
   disabled?: boolean;
 }
 
-export interface RadioGroupProps {
+export interface RadioGroupProps extends SpacingProps, TestableProps {
   value?: string | number;
   defaultValue?: string | number;
   onChange?: (value: string | number) => void;
@@ -21,10 +23,9 @@ export interface RadioGroupProps {
   color?: RadioColor;
   disabled?: boolean;
   gap?: number;
-  style?: ViewStyle | ViewStyle[];
-  optionStyle?: ViewStyle | ViewStyle[];
-  labelStyle?: TextStyle | TextStyle[];
-  testID?: string;
+  style?: StyleProp<ViewStyle>;
+  optionStyle?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
 }
 
 const RadioGroup: React.FC<RadioGroupProps> = ({
@@ -41,10 +42,12 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
   optionStyle,
   labelStyle,
   testID,
+  ...props
 }) => {
   const { theme } = useTheme();
   const spacing = theme.spacing;
-
+  const spacingStyle = useSpacingStyle(props);
+  const computedTestID = buildTestID('RadioGroup', testID);
   const isControlled = typeof value !== 'undefined';
   const [internalValue, setInternalValue] = useState<string | number | undefined>(defaultValue);
   const currentValue = isControlled ? value : internalValue;
@@ -59,7 +62,7 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
   const itemGap = typeof gap === 'number' ? gap : layout === 'horizontal' ? spacing.md : spacing.sm;
 
   return (
-    <View style={[containerStyle, style]} accessibilityRole="radiogroup" testID={testID}>
+    <View style={[spacingStyle, containerStyle, style]} accessibilityRole="radiogroup" testID={computedTestID}>
       {options.map((opt, idx) => {
         const isSelected = currentValue === opt.value;
         const itemStyle: ViewStyle = {

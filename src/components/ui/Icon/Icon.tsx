@@ -1,14 +1,16 @@
 import React, { useMemo, forwardRef } from 'react';
-import { TextStyle, ViewStyle, Insets } from 'react-native';
+import { TextStyle, ViewStyle, Insets, Pressable, StyleProp } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import { useTheme, useSpacingStyle, SpacingProps, SpacingSize } from '../../../theme';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { buildTestID, TestableProps } from '../../common/test';
+import type { PressEvents } from '../../common/events';
 
-// 自定义图标组件类型
+// 顶部类型声明：CustomIconComponent
 export type CustomIconComponent = React.ComponentType<{
     name: string;
     size?: number;
     color?: string;
-    style?: TextStyle | ViewStyle;
+    style?: StyleProp<TextStyle | ViewStyle>;
     onPress?: () => void;
     testID?: string;
     hitSlop?: Insets;
@@ -19,28 +21,16 @@ export type CustomIconComponent = React.ComponentType<{
 // 图标类型（支持默认的 Ionicons 和自定义图标库）
 export type IconType = 'ionicons' | string;
 
-export interface IconProps extends SpacingProps {
-    /** 图标名称 */
+export interface IconProps extends SpacingProps, TestableProps {
     name: string;
-    /** 图标类型/字体库，默认为 ionicons */
     type?: IconType;
-    /** 图标大小 */
     size?: number;
-    /** 图标颜色 - 支持主题颜色和自定义颜色 */
     color?: 'primary' | 'secondary' | 'text' | 'textSecondary' | 'textDisabled' | 'error' | 'warning' | 'success' | 'info' | string;
-    /** 自定义样式 */
-    style?: TextStyle | ViewStyle;
-    /** 点击事件 */
-    onPress?: () => void;
-    /** 是否禁用 */
+    style?: StyleProp<TextStyle | ViewStyle>;
     disabled?: boolean;
-    /** 测试ID */
-    testID?: string;
-    /** 扩大点击区域 */
     hitSlop?: Insets;
-    /** 无障碍标签 */
     accessibilityLabel?: string;
-
+    onPress?: () => void;
 }
 
 // 自定义图标库注册表
@@ -86,106 +76,72 @@ export const isIconLibraryRegistered = (name: string): boolean => {
     return name === 'ionicons' || !!customIconComponents[name];
 };
 
-export const Icon = forwardRef<any, IconProps>(({ 
+export const Icon = forwardRef<any, IconProps>(({
     name,
     type = 'ionicons',
     size = 24,
     color = 'text',
     style,
-    onPress,
     disabled = false,
     testID,
     hitSlop,
     accessibilityLabel,
-    m, mv, mh, mt, mb, ml, mr,
-    p, pv, ph, pt, pb, pl, pr,
+    onPress,
     ...props
 }, ref) => {
     const { theme } = useTheme();
     const colors = theme.colors;
 
-    // 解析 spacing 值（优先主题刻度，支持数字像素）
-    const getSpacingValue = (value: SpacingSize | undefined): number | undefined => {
-        if (value == null) return undefined;
-        if (typeof value === 'number') return value;
-        const s = theme.spacing as any;
-        return s[value] ?? undefined;
-    };
-
-    const spacingMemo = useMemo(() => ({
-        m: getSpacingValue(m),
-        mv: getSpacingValue(mv),
-        mh: getSpacingValue(mh),
-        mt: getSpacingValue(mt),
-        mb: getSpacingValue(mb),
-        ml: getSpacingValue(ml),
-        mr: getSpacingValue(mr),
-        p: getSpacingValue(p),
-        pv: getSpacingValue(pv),
-        ph: getSpacingValue(ph),
-        pt: getSpacingValue(pt),
-        pb: getSpacingValue(pb),
-        pl: getSpacingValue(pl),
-        pr: getSpacingValue(pr),
-    }), [theme.spacing, m, mv, mh, mt, mb, ml, mr, p, pv, ph, pt, pb, pl, pr]);
-
-    // 获取图标颜色
+    // 获取图标颜色（支持主题键与常见字面量）
     const getIconColor = (): string => {
-        if (!color || typeof color !== 'string') {
-            return colors.text;
-        }
+        if (!color || typeof color !== 'string') return colors.text;
         const c = color.trim();
-        // 优先：如果主题中存在同名颜色键（支持用户自定义键），直接返回
-        if (Object.prototype.hasOwnProperty.call(colors, c)) {
-            return (colors as any)[c];
-        }
-        // 兼容常见颜色字面量
+        if (Object.prototype.hasOwnProperty.call(colors, c)) return (colors as any)[c];
         const isHex = /^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(c);
         const isFuncColor = /^(rgb|rgba|hsl|hsla)\(/i.test(c);
-        if (isHex || isFuncColor || c.toLowerCase() === 'transparent') {
-            return c;
-        }
-        // 兜底返回原字符串（RN 支持部分命名颜色）
+        if (isHex || isFuncColor || c.toLowerCase() === 'transparent') return c;
         return c;
     };
-
     const iconColor = useMemo(getIconColor, [color, colors]);
 
-    // 计算样式，包括间距
-    const spacingStyle = useSpacingStyle({
-      m, mv, mh, mt, mb, ml, mr,
-      p, pv, ph, pt, pb, pl, pr,
-    });
-    const styleMerged = spacingStyle ? { ...spacingStyle, ...(style as object) } : style;
+    // 公共间距（作用于容器 Pressable）
+    const spacingStyle = useSpacingStyle(props);
+    // 规范化测试ID
+    const computedTestID = buildTestID('Icon', testID);
 
     let IconComponent: CustomIconComponent;
-
-    // 使用默认的 Ionicons
     if (type === 'ionicons') {
         IconComponent = Ionicons as CustomIconComponent;
     } else {
-        // 使用自定义图标库
         IconComponent = customIconComponents[type];
     }
-
     if (!IconComponent) {
         console.warn(`Icon type "${type}" is not registered. Available types: ${getRegisteredIconLibraries().join(', ')}`);
         return null;
     }
 
+    // 仅将样式传递给图标本身；事件与测试挂载在 Pressable 容器
     const iconProps = {
         name,
         size,
         color: iconColor,
-        style: styleMerged,
-        onPress: disabled ? undefined : onPress,
-        testID,
-        hitSlop,
-        accessibilityLabel: accessibilityLabel || `${name} icon`,
+        style,
+        // 不再把 onPress 透传给图标，避免重复回调，由容器接管事件
         ...props
     };
 
-    return <IconComponent ref={ref} {...iconProps} />;
+    return (
+        <Pressable
+            onPress={disabled ? undefined : onPress}
+            disabled={disabled}
+            hitSlop={hitSlop}
+            accessibilityLabel={accessibilityLabel || `${name} icon`}
+            testID={computedTestID}
+            style={spacingStyle as StyleProp<ViewStyle>}
+        >
+            <IconComponent ref={ref} {...iconProps} />
+        </Pressable>
+    );
 });
 
 

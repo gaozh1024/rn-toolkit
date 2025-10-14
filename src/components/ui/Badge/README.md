@@ -1,78 +1,86 @@
 # Badge（徽标）
 
-支持文本/数值、圆点、最大值截断、主题颜色、变体、角标定位。
+- 支持数值/文本与小红点模式，角标定位与偏移，尺寸与主题色。
+- 已接入公共能力：
+  - 间距：`SpacingProps`（`m/mv/mh/p/pv/ph/mt/...`）
+  - 盒子：`BoxProps`（`width/height/min/max/backgroundColor/transparent/borderColor/borderWidth/borderRadius`）
+  - 阴影：`ShadowProps`（`shadowSize/shadowColor/shadowOffset/shadowOpacity/shadowRadius`）
+  - 测试：`TestableProps`（`testID`，内部 `buildTestID('Badge', testID)` 规范化）
+- 样式合并规则：外部 `style` 作为 overrides；随后由单独属性覆盖同名字段。
 
-## 功能与属性
-- `text`/`value`: 显示的文本或数值（`text` 优先于 `value`）
-- `max`: 数值超出后显示为 `max+`
-- `dot`: 仅显示圆点（忽略文本/数值）
-- `variant`: `solid` | `outline`
-- `color`: 主题色键（primary/secondary/success/warning/error/info）或自定义颜色字符串
-- `size`: `small` | `medium` | `large` | number
-- `position`: `top-right` | `top-left` | `bottom-right` | `bottom-left`（配合 `children` 用作角标）
-- `offset`: 角标位置的偏移 `{ x?: number; y?: number }`
-- `showZero`: `value` 为 0 时是否显示（默认 true）
-- `children`: 若提供则作为角标覆盖在子元素角上
-- `style`/`containerStyle`/`textStyle`: 自定义样式
-- `testID`: 测试标识
+## 基本用法
 
-## 使用示例
-
-### 基础用法（文本/数值）
 ```tsx
-import React from 'react';
-import { View } from 'react-native';
-import { Badge } from '@gaozh1024/rn-toolkit';
+// 纯徽标
+<Badge value={12} />
 
-export default function BasicBadge() {
-  return (
-    <View style={{ flexDirection: 'row', gap: 12 }}>
-      <Badge value={8} />
-      <Badge text="New" color="success" />
-      <Badge value={120} max={99} color="error" />
-    </View>
-  );
-}
+// 文本模式
+<Badge text="NEW" variant="outline" color="secondary" />
+
+// 小红点
+<Badge dot color="error" />
 ```
 
-### 变体（solid / outline）
+## 角标附着
+
 ```tsx
-<Badge value={3} color="primary" variant="solid" />
-<Badge value={3} color="primary" variant="outline" />
+// 作为角标附着在子元素上
+<Badge value={9} position="top-right">
+  <Avatar name="Alice" />
+</Badge>
+
+// 调整偏移
+<Badge value={9} position="bottom-left" offset={{ x: 4, y: 2 }}>
+  <Avatar name="Bob" />
+</Badge>
 ```
 
-### 圆点模式
+## 间距/盒子/阴影
+
 ```tsx
-<Badge dot color="warning" />
-<Badge dot size="large" color="info" />
+<Badge
+  value={99}
+  max={99}
+  // 间距（SpacingProps）
+  ml="md"
+  // 盒子（BoxProps）
+  borderRadius={12}
+  borderWidth={1}
+  borderColor="#ECECEC"
+  // 阴影（ShadowProps）
+  shadowSize="sm"
+/>
 ```
 
-### 作为角标（配合 children）
-```tsx
-import { View, Image } from 'react-native';
+## API
 
-<View style={{ width: 64, height: 64 }}>
-  <Badge value={7} position="top-right">
-    <Image source={{ uri: 'https://...' }} style={{ width: 64, height: 64, borderRadius: 8 }} />
-  </Badge>
-</View>
+- `text?: string` 文本内容（非 dot 模式）
+- `value?: number | string` 数值/文本；`max` 限制展示上限（超出显示 `max+`）
+- `max?: number` 展示上限
+- `dot?: boolean` 小红点模式
+- `variant?: 'solid'|'outline'` 背景/边框样式
+- `color?: 'primary'|'secondary'|'success'|'warning'|'error'|'info'|string` 主题或自定义颜色
+- `size?: 'small'|'medium'|'large'|number` 徽标尺寸（数字为像素）
+- `position?: 'top-right'|'top-left'|'bottom-right'|'bottom-left'` 角标位置（有 `children` 时生效）
+- `offset?: { x?: number; y?: number }` 角标偏移
+- `children?: React.ReactNode` 作为角标附着目标
+- `showZero?: boolean` 是否显示 0
+- `style?: StyleProp<ViewStyle>` 徽标样式（拍平为 overrides，用于 `buildBoxStyle`）
+- `containerStyle?: StyleProp<ViewStyle>` 包裹子元素的容器样式
+- `textStyle?: StyleProp<TextStyle>` 文本样式
+- `SpacingProps`
+- `BoxProps`
+- `ShadowProps`
+- `TestableProps`（内部规范化为 `Badge-${testID}`）
 
-<View>
-  <Badge value={1} position="bottom-left" offset={{ x: -4, y: 2 }}>
-    <View style={{ width: 36, height: 36, backgroundColor: '#eee', borderRadius: 6 }} />
-  </Badge>
-</View>
-```
+## 样式与优先级
 
-### 自定义颜色 / 尺寸
-```tsx
-<Badge value={5} color="#222" />
-<Badge value={5} size={22} />
-```
+- 默认背景色依据 `variant`：`solid` 使用 `color`，`outline` 为 `transparent`。
+- 外部 `style` 被拍平为 overrides，随后由单独属性覆盖（例如传入 `borderWidth/borderRadius`、`backgroundColor` 等）。
+- 有 `children` 时，间距应用在外层容器；无 `children` 时，间距应用在徽标自身。
 
-## 主题说明
-- 颜色统一来源于 `useTheme().colors`，支持主题键或自定义颜色字符串。
-- 无硬编码与主题冲突的颜色（solid 文本颜色默认白色）。
+## 注意事项
 
-## 可访问性
-- 非 `dot` 模式下设置 `accessibilityRole="text"`，支持屏幕阅读。
+- `value/max/showZero` 共同决定展示文本；`dot` 模式不展示文字。
+- 作为角标时，外层容器固定为 `position: 'relative'`，角标使用绝对定位。
+- 若主题未配置阴影预设，`shadowSize` 等将静默忽略。

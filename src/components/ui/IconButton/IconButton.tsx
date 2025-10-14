@@ -1,32 +1,27 @@
+// 顶部 import
 import React from 'react';
 import { Pressable, ViewStyle, Insets, StyleProp, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Icon, IconType } from '../Icon';
 import { useTheme, useThemeColors, useSpacingStyle, SpacingProps } from '../../../theme';
 import { GradientBackground } from '../../layout/GradientBackground';
+import { buildTestID, TestableProps } from '../../common/test';
+import type { PressEvents } from '../../common/events';
+import { buildShadowStyle, type ShadowProps } from '../../common/shadow';
+import { normalizeGradientConfig, type GradientProps } from '../../common/gradient';
+import { buildBoxStyle, type BoxProps } from '../../common/box';
 
-export interface IconButtonProps extends SpacingProps {
+// 接口：统一公共能力并精简冗余字段
+export interface IconButtonProps extends SpacingProps, TestableProps, PressEvents, ShadowProps, GradientProps, BoxProps {
   name: string;
   type?: IconType;
-  size?: number; // 图标尺寸（px）
+  size?: number;
   color?: 'primary' | 'secondary' | 'text' | 'textSecondary' | 'textDisabled' | 'error' | 'warning' | 'success' | 'info' | string;
-  variant?: 'filled' | 'ghost' | 'outline'; // 按钮变体（填充、幽灵、轮廓）
+  variant?: 'filled' | 'ghost' | 'outline';
   disabled?: boolean;
-  onPress?: () => void;
-  style?: ViewStyle | ViewStyle[];
+  style?: StyleProp<ViewStyle>;
   hitSlop?: Insets;
   accessibilityLabel?: string;
   testID?: string;
-  // 渐变相关（默认与主题 primary→secondary）
-  gradientEnabled?: boolean;
-  gradientVariant?: 'linear' | 'radial';
-  gradientColors?: string[];
-  gradientLocations?: number[];
-  gradientAngle?: number;
-  gradientStart?: { x: number; y: number };
-  gradientEnd?: { x: number; y: number };
-  gradientCenter?: { x: number; y: number };
-  gradientRadius?: number;
-  gradientOpacity?: number;
 }
 
 const IconButton: React.FC<IconButtonProps> = ({
@@ -36,25 +31,15 @@ const IconButton: React.FC<IconButtonProps> = ({
   color = 'text',
   variant = 'ghost',
   disabled = false,
-  onPress,
   style,
   hitSlop,
   accessibilityLabel,
   testID,
-  // 渐变相关（默认与主题 primary→secondary）
-  gradientEnabled = false,
-  gradientVariant = 'linear',
-  gradientColors,
-  gradientLocations,
-  gradientAngle,
-  gradientStart,
-  gradientEnd,
-  gradientCenter = { x: 0.5, y: 0.5 },
-  gradientRadius = 0.5,
-  gradientOpacity = 1,
-  // 间距快捷（统一辅助）
-  m, mv, mh, mt, mb, ml, mr,
-  p, pv, ph, pt, pb, pl, pr,
+  onPress,
+  onPressIn,
+  onPressOut,
+  onLongPress,
+  ...props
 }) => {
   const { theme } = useTheme();
   const colors = useThemeColors();
@@ -65,54 +50,38 @@ const IconButton: React.FC<IconButtonProps> = ({
     setContainerSize({ width, height });
   };
 
-  const getContainerStyle = (): ViewStyle => {
-    const base: ViewStyle = {
-      alignItems: 'center',
-      justifyContent: 'center',
-      minWidth: 40,
-      minHeight: 40,
-      paddingHorizontal: (theme.spacing as any)?.xs ?? 8,
-      paddingVertical: (theme.spacing as any)?.xs ?? 8,
-      borderRadius: theme.borderRadius?.md ?? 8,
-      opacity: disabled ? 0.6 : 1,
-    };
+  // 统一的间距样式（移除手动 m/mv/... 枚举）
+  const spacingStyle = useSpacingStyle(props);
+  // 规范化 testID
+  const computedTestID = buildTestID('IconButton', testID);
+  // 渐变归一化配置（默认使用主题 primary→secondary）
+  const gradientConfig = normalizeGradientConfig([colors.primary, colors.secondary], props);
+  const gradientEnabled = !!gradientConfig.colors && gradientConfig.colors.length > 0;
 
-    switch (variant) {
-      case 'filled':
-        return {
-          ...base,
-          backgroundColor: (colors as any).surface ?? '#F2F3F5',
-          borderWidth: 0,
-        };
-      case 'outline':
-        return {
-          ...base,
-          backgroundColor: 'transparent',
-          borderWidth: 1,
-          borderColor: (colors as any).border ?? '#DADDE2',
-        };
-      case 'ghost':
-      default:
-        return {
-          ...base,
-          backgroundColor: 'transparent',
-          borderWidth: 0,
-        };
-    }
+  // 容器基础样式与变体处理
+  const base: ViewStyle = {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 40,
+    minHeight: 40,
+    paddingHorizontal: (theme.spacing as any)?.xs ?? 8,
+    paddingVertical: (theme.spacing as any)?.xs ?? 8,
+    borderRadius: theme.borderRadius?.md ?? 8,
+    opacity: disabled ? 0.6 : 1,
+    ...(gradientEnabled ? { position: 'relative', overflow: 'hidden', backgroundColor: 'transparent' } : {}),
   };
+  const isOutline = variant === 'outline';
+  const isFilled = variant === 'filled';
+  const defaultBackground = isFilled ? (colors as any).surface ?? '#F2F3F5' : 'transparent';
+  const variantOverrides: ViewStyle = isOutline
+    ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: (colors as any).border ?? '#DADDE2' }
+    : { backgroundColor: defaultBackground, borderWidth: 0 };
 
-  // 启用渐变：背景透明 + 相对定位 + 溢出裁剪
-  const gradientEnhancer: ViewStyle = { backgroundColor: 'transparent', position: 'relative', overflow: 'hidden' };
-  const containerBaseStyle = getContainerStyle();
-  const containerStyle = gradientEnabled ? { ...containerBaseStyle, ...gradientEnhancer } : containerBaseStyle;
+  // 盒子样式与阴影样式
+  const boxStyle = buildBoxStyle({ defaultBackground }, props, { ...base, ...variantOverrides });
+  const shadowStyle = buildShadowStyle((theme as any).styles?.shadow ?? {}, props);
 
-  // 统一的间距样式
-  const spacingStyle = useSpacingStyle({
-    m, mv, mh, mt, mb, ml, mr,
-    p, pv, ph, pt, pb, pl, pr,
-  });
-
-  const finalStyle: StyleProp<ViewStyle> = [containerStyle, spacingStyle, style];
+  const finalStyle: StyleProp<ViewStyle> = [boxStyle, shadowStyle, spacingStyle, style];
 
   // 扁平化获取有效圆角
   const flatFinal = StyleSheet.flatten(finalStyle) as ViewStyle | undefined;
@@ -129,31 +98,32 @@ const IconButton: React.FC<IconButtonProps> = ({
           return corners.length ? Math.max(...corners) : (theme.borderRadius?.md ?? 8);
         })();
 
-  const gradientPalette = (gradientColors && gradientColors.length > 0) ? gradientColors : [colors.primary, colors.secondary];
-
   return (
     <Pressable
-      testID={testID}
+      testID={computedTestID}
       accessible
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || `${name} icon button`}
       disabled={disabled}
       onPress={disabled ? undefined : onPress}
+      onPressIn={disabled ? undefined : onPressIn}
+      onPressOut={disabled ? undefined : onPressOut}
+      onLongPress={disabled ? undefined : onLongPress}
       hitSlop={hitSlop}
       onLayout={handleLayout}
       style={finalStyle as StyleProp<ViewStyle>}
     >
       {gradientEnabled && (
         <GradientBackground
-          variant={gradientVariant}
-          colors={gradientPalette}
-          locations={gradientLocations}
-          angle={gradientAngle}
-          start={gradientStart}
-          end={gradientEnd}
-          center={gradientCenter}
-          radius={gradientRadius}
-          opacity={gradientOpacity}
+          variant={gradientConfig.variant}
+          colors={gradientConfig.colors}
+          locations={gradientConfig.locations}
+          angle={gradientConfig.angle}
+          start={gradientConfig.start}
+          end={gradientConfig.end}
+          center={gradientConfig.center}
+          radius={gradientConfig.radius}
+          opacity={gradientConfig.opacity}
           borderRadius={effectiveRadius}
           style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
         />

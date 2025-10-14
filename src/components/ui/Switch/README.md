@@ -3,6 +3,7 @@
 一个主题化的开关组件，支持受控 `value`/`onValueChange`、禁用、尺寸与颜色配置。
 
 ## 功能特性
+
 - 受控：`value` 与 `onValueChange(value)`
 - 状态：`disabled` 禁用，按压时反馈
 - 尺寸：`small | medium | large | number`
@@ -12,6 +13,7 @@
 ## 使用示例
 
 ### 基础受控用法
+
 ```tsx
 import React, { useState } from 'react';
 import { View } from 'react-native';
@@ -28,6 +30,7 @@ export default function BasicSwitchDemo() {
 ```
 
 ### 尺寸与颜色
+
 ```tsx
 function SizeColorDemo() {
   return (
@@ -42,6 +45,7 @@ function SizeColorDemo() {
 ```
 
 ### 禁用态
+
 ```tsx
 <Switch value={false} onValueChange={() => {}} disabled />
 <Switch value={true} onValueChange={() => {}} disabled />
@@ -50,6 +54,7 @@ function SizeColorDemo() {
 ## API 参考
 
 ### SwitchProps
+
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `value` | `boolean` | ✅ | 当前开关状态（受控） |
@@ -61,10 +66,12 @@ function SizeColorDemo() {
 | `testID` | `string` | - | 测试标识符 |
 
 ## 设计说明
+
 - 开启状态使用主题色，关闭状态使用 `theme.colors.border`，禁用状态使用 `theme.colors.textDisabled`
 - 滑块（thumb）颜色固定为白色（禁用态略微变浅）以保证对比度
 - 组件使用 `Pressable` 提供按压视觉反馈，并接入无障碍属性
 
 ## 最佳实践
+
 - 在表单中与 `Checkbox`/`Radio` 保持一致的交互方式
 - 对于受控场景，始终从外部状态派发变更（`onValueChange`）

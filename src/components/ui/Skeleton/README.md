@@ -3,25 +3,31 @@
 用于在数据加载时占位，减少感知等待与布局抖动。
 
 ## 特性
+
 - 变体：`rect`（矩形）、`circle`（圆形）、`line`（行/文本占位）
 - 尺寸：`width`/`height` 支持数字与百分比（如 `'100%'`）
 - 动画：`animated` 脉冲透明度（基于 Reanimated），轻量稳定
 - 主题化：颜色取自主题（优先 `skeletonFill`），暗色模式友好
 
 ## 安装前置
+
 - 需按动画模块要求启用 Reanimated 插件（位于 `babel.config.js -> plugins` 最后一行）：
+
 ```javascript
 module.exports = {
   presets: ['module:metro-react-native-babel-preset'],
   plugins: ['react-native-reanimated/plugin'],
 };
 ```
+
 - iOS 请执行：
+
 ```bash
 cd ios && pod install
 ```
 
 ## 用法
+
 ```tsx
 import { Skeleton } from '@gaozh1024/rn-toolkit';
 
@@ -42,6 +48,7 @@ import { Skeleton } from '@gaozh1024/rn-toolkit';
 ```
 
 ## Props
+
 - `variant`: `'rect' | 'circle' | 'line'`，默认 `'rect'`
 - `width`: `number | string`（百分比如 `'100%'`），用于 `rect/line`
 - `height`: `number`，`line` 默认 `12`；`rect` 默认 `16`

@@ -2,8 +2,10 @@ import React, { forwardRef, useState } from 'react';
 import { TextInput } from 'react-native';
 import { Input, InputProps } from '../Input';
 import type { IconType } from '../Icon';
+import { useTheme } from '../../../theme/hooks';
+import { buildShadowStyle, type ShadowProps } from '../../common/shadow';
 
-export interface PasswordInputProps extends Omit<InputProps, 'secureTextEntry' | 'rightIcon'> {
+export interface PasswordInputProps extends Omit<InputProps, 'secureTextEntry' | 'rightIcon'>, ShadowProps {
     secureTextEntry?: boolean; // 默认开启密码模式
     toggleIconVisible?: boolean; // 是否显示显隐切换图标
     toggleIconNames?: { show: string; hide: string }; // 自定义图标名
@@ -25,6 +27,9 @@ const PasswordInput = forwardRef<TextInput, PasswordInputProps>((props, ref) => 
         // 透传 Input 的其他 props
         ...rest
     } = props;
+
+    const { theme } = useTheme();
+    const shadowStyle = buildShadowStyle((theme as any).styles?.shadow ?? {}, props);
 
     const [visible, setVisible] = useState<boolean>(false);
     const effectiveSecure = secureTextEntry && !visible; // 当前是否密文
@@ -50,6 +55,7 @@ const PasswordInput = forwardRef<TextInput, PasswordInputProps>((props, ref) => 
             value={value}
             defaultValue={defaultValue}
             rightIcon={rightIcon as any}
+            style={[shadowStyle, (rest as any).style]}
             {...rest}
         />
     );

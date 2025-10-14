@@ -1,9 +1,12 @@
+// 顶部导入处（加入 BackgroundProps）
 import React, { useMemo } from 'react';
 import { Text as RNText, TextStyle, StyleProp } from 'react-native';
 // 顶部导入处
-import { useTheme, useSpacingStyle, SpacingProps, SpacingSize } from '../../../theme';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { buildTestID, TestableProps } from '../../common/test';
+import { BackgroundProps, buildBackgroundStyle } from '../../common/background';
 
-export interface TextProps extends SpacingProps {
+export interface TextProps extends SpacingProps, TestableProps, BackgroundProps {
     // 基础属性
     children?: React.ReactNode;
     style?: StyleProp<TextStyle>;
@@ -53,8 +56,7 @@ export interface TextProps extends SpacingProps {
     // 事件处理
     onPress?: () => void;
     onLongPress?: () => void;
-
-    // 测试ID
+    // 测试ID（继承自 TestableProps）
     testID?: string;
 }
 
@@ -81,35 +83,23 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
     // spacing shortcuts
     m, mv, mh, mt, mb, ml, mr,
     p, pv, ph, pt, pb, pl, pr,
+    // background shortcuts
+    backgroundColor,
+    transparent,
     ...props
 }, ref) => {
     const { theme } = useTheme();
     const colors = theme.colors;
+    const computedTestID = buildTestID('Text', testID);
 
-    // 解析 spacing 值（优先主题刻度，支持数字像素）
-    const getSpacingValue = (value: SpacingSize | undefined): number | undefined => {
-        if (value == null) return undefined;
-        if (typeof value === 'number') return value;
-        const s = theme.spacing as any;
-        return s[value] ?? undefined;
-    };
+    // 间距样式（统一公共方法）
+    const spacingStyle = useSpacingStyle({
+        m, mv, mh, mt, mb, ml, mr,
+        p, pv, ph, pt, pb, pl, pr,
+    });
 
-    const spacingMemo = useMemo(() => ({
-        m: getSpacingValue(m),
-        mv: getSpacingValue(mv),
-        mh: getSpacingValue(mh),
-        mt: getSpacingValue(mt),
-        mb: getSpacingValue(mb),
-        ml: getSpacingValue(ml),
-        mr: getSpacingValue(mr),
-        p: getSpacingValue(p),
-        pv: getSpacingValue(pv),
-        ph: getSpacingValue(ph),
-        pt: getSpacingValue(pt),
-        pb: getSpacingValue(pb),
-        pl: getSpacingValue(pl),
-        pr: getSpacingValue(pr),
-    }), [theme.spacing, m, mv, mh, mt, mb, ml, mr, p, pv, ph, pt, pb, pl, pr]);
+    // 背景样式（默认透明，按需覆盖）
+    const backgroundStyle = buildBackgroundStyle('transparent', { backgroundColor, transparent });
 
     // 获取变体样式（memo）
     const getVariantStyle = (): TextStyle => {
@@ -185,21 +175,14 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
                 bold: '700',
             };
             const mapped = weightMap[weight];
-            if (!mapped) {
-                if (__DEV__) {
-                    console.warn('Invalid weight provided:', weight);
-                }
-                return normalizeFontWeight(variantStyle.fontWeight);
-            }
-            return mapped;
+            return mapped ?? normalizeFontWeight(variantStyle.fontWeight);
         }
-
         return normalizeFontWeight(variantStyle.fontWeight);
     };
 
     const fontWeightMemo = useMemo(getFontWeight, [weight, variantStyle]);
 
-    // 获取文本颜色（支持 hex、rgb(a)、hsl(a)、transparent 与命名颜色；优先主题键）
+    // 获取文本颜色（优先主题键）
     const getTextColor = (): string => {
         if (!color || typeof color !== 'string') {
             return colors.text;
@@ -219,7 +202,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
         return c;
     };
 
-    const textColorMemo = useMemo(getTextColor, [color, colors]); // 依赖 colors 引用，主题更新或自定义颜色键变化会触发重新计算
+    const textColorMemo = useMemo(getTextColor, [color, colors]);
 
     // 获取行高
     const getLineHeight = (): number | undefined => {
@@ -239,7 +222,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
 
     const lineHeightMemo = useMemo(getLineHeight, [lineHeight, fontSizeMemo, variantStyle]);
 
-    // 默认行高计算（当变体未定义且未显式传入时）
+    // 默认行高计算
     const getDefaultLineHeightForVariant = (): number => {
         const sizeValue = fontSizeMemo;
         if (typeof variant === 'string' && variant.startsWith('h')) {
@@ -253,13 +236,11 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
 
     const defaultLineHeightMemo = useMemo(getDefaultLineHeightForVariant, [variant, fontSizeMemo]);
 
-    // 组合样式（仅内部样式，用户样式通过数组传递以保留 StyleSheet 引用）
-
+    // 组合样式
     const baseStyle: TextStyle = {
         ...variantStyle,
         fontSize: fontSizeMemo,
         fontWeight: fontWeightMemo,
-        // 颜色优先级：用户传入 > 变体定义 > 默认 text
         ...(color ? { color: textColorMemo } : (!variantStyle.color ? { color: colors.text } : {})),
         ...(typeof align !== 'undefined' ? { textAlign: align } : {}),
         ...(typeof lineHeight !== 'undefined' ? { lineHeight: lineHeightMemo } : (!variantStyle.lineHeight ? { lineHeight: defaultLineHeightMemo } : {})),
@@ -267,16 +248,10 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
         ...(typeof transform !== 'undefined' ? { textTransform: transform } : {}),
     };
 
-    // 移除本地 getSpacingValue / spacingMemo，改用统一辅助
-    const spacingStyle = useSpacingStyle({
-        m, mv, mh, mt, mb, ml, mr,
-        p, pv, ph, pt, pb, pl, pr,
-    });
-
     return (
         <RNText
             ref={ref}
-            style={[baseStyle, spacingStyle, style]}
+            style={[baseStyle, spacingStyle, backgroundStyle, style]}
             selectable={selectable}
             numberOfLines={numberOfLines}
             ellipsizeMode={ellipsizeMode}
@@ -285,7 +260,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
             adjustsFontSizeToFit={adjustsFontSizeToFit}
             onPress={onPress}
             onLongPress={onLongPress}
-            testID={testID}
+            testID={computedTestID}
             {...props}
         >
             {children}

@@ -1,11 +1,16 @@
 // 顶部 import 区域（加入 TextStyle）
 import React, { useMemo } from 'react';
 import { View, Pressable, ViewStyle, TextStyle } from 'react-native';
-import { useTheme, useSpacingStyles } from '../../../theme';
-import { useNav } from '../../../navigation/hooks/useNavigation';
+import { useTheme, useSpacingStyle } from '../../../theme';
+import { Navigation, useComponentNav } from '../../../navigation';
 import { useSafeAreaInsets } from '../SafeAreaView';
 import { Icon } from '../../ui/Icon';
 import Text from '../../ui/Text/Text';
+
+import { SpacingProps } from '../../../theme';
+import { TestableProps, buildTestID } from '../../common/test';
+import { ShadowProps, buildShadowStyle } from '../../common/shadow';
+import { GradientBackground } from '../GradientBackground/GradientBackground';
 
 // 接口：HeaderAction（新增大小/粗细相关配置）
 export interface HeaderAction {
@@ -30,10 +35,7 @@ export interface HeaderAction {
     labelWeight?: TextStyle['fontWeight'];
 }
 
-import { GradientBackground } from '../GradientBackground/GradientBackground';
-
-// 在 HeaderProps 中新增两个可选属性
-export interface HeaderProps {
+export interface HeaderProps extends TestableProps, ShadowProps, SpacingProps {
     title?: string | React.ReactNode;
     // 左侧返回按钮
     backVisible?: boolean;
@@ -47,8 +49,6 @@ export interface HeaderProps {
     borderBottom?: boolean;
     titleColor?: string;
     height?: number;
-    // 其他
-    testID?: string;
     // 背景透明与安全区
     transparent?: boolean;            // 开启后 Header 背景透明
     safeAreaTopEnabled?: boolean;     // 是否添加顶部安全区内边距，默认 true
@@ -66,44 +66,50 @@ export interface HeaderProps {
 }
 
 // Header 组件布局修复：让渐变覆盖安全区+bar
-export const Header: React.FC<HeaderProps> = ({
-    title,
-    backVisible,
-    onBack,
-    backIconName = 'chevron-back',
-    backIconColor,
-    actions = [],
-    backgroundColor,
-    borderBottom = true,
-    titleColor,
-    height,
-    testID,
-    // 新增：透明与安全区控制
-    transparent = false,
-    safeAreaTopEnabled = true,
-    // 渐变相关
-    gradientEnabled = false,
-    gradientVariant = 'linear',
-    gradientColors,
-    gradientLocations,
-    gradientAngle,
-    gradientStart,
-    gradientEnd,
-    gradientCenter = { x: 0.5, y: 0.5 },
-    gradientRadius = 0.5,
-    gradientOpacity = 1,
-}) => {
-    const { theme } = useTheme();
-    const spacing = useSpacingStyles();
-    const insets = useSafeAreaInsets();
+export const Header: React.FC<HeaderProps> = (rawProps) => {
+    const {
+        title,
+        backVisible,
+        onBack,
+        backIconName = 'chevron-back',
+        backIconColor,
+        actions = [],
+        backgroundColor,
+        borderBottom = true,
+        titleColor,
+        height,
+        // 新增：透明与安全区控制
+        transparent = false,
+        safeAreaTopEnabled = true,
+        // 渐变相关
+        gradientEnabled = false,
+        gradientVariant = 'linear',
+        gradientColors,
+        gradientLocations,
+        gradientAngle,
+        gradientStart,
+        gradientEnd,
+        gradientCenter = { x: 0.5, y: 0.5 },
+        gradientRadius = 0.5,
+        gradientOpacity = 1,
+    } = rawProps;
 
-    // 主题导航配置
-    const nav = theme.navigation;
-    const contentHeight = height ?? nav.height;
-    const containerBg = transparent ? 'transparent' : (backgroundColor ?? nav.backgroundColor);
-    const titleColorFinal = titleColor ?? nav.titleColor;
-    const iconColor = (c?: string) => c ?? nav.iconColor;
-    const iconSize = nav.iconSize;
+    const { theme, styles } = useTheme();
+    const insets = useSafeAreaInsets();
+    const finalTestID = buildTestID('Header', rawProps.testID); // 构建测试ID
+    const componentNav = useComponentNav(); // 组件级导航（即时）
+
+    // 主题导航配置（避免与 navAgent 冲突）
+    const navTheme = theme.navigation;
+    const contentHeight = height ?? navTheme.height;
+    const containerBg = transparent ? 'transparent' : (backgroundColor ?? navTheme.backgroundColor);
+    const titleColorFinal = titleColor ?? navTheme.titleColor;
+    const iconColor = (c?: string) => c ?? navTheme.iconColor;
+    const iconSize = navTheme.iconSize;
+
+    // 间距/阴影公共能力
+    const spacingStyle = useSpacingStyle(rawProps);
+    const shadowStyle = buildShadowStyle(styles.shadow, rawProps);
 
     // 补齐缺失的常量定义
     const MAX_ACTIONS = 3;
@@ -120,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
     const outerContainerStyle: ViewStyle = {
         backgroundColor: gradientEnabled ? 'transparent' : containerBg,
         borderBottomWidth: borderBottom ? 1 : 0,
-        borderBottomColor: borderBottom ? nav.borderColor : 'transparent',
+        borderBottomColor: borderBottom ? navTheme.borderColor : 'transparent',
         position: 'relative',
     };
 
@@ -150,7 +156,7 @@ export const Header: React.FC<HeaderProps> = ({
 
     const rightContainerStyle: ViewStyle = {
         ...sideContainerStyle,
-        ...spacing.prXs,
+        ...styles.spacing.prXs,
         justifyContent: 'flex-end',
         backgroundColor: 'transparent',
     };
@@ -163,25 +169,29 @@ export const Header: React.FC<HeaderProps> = ({
         // 通过左右固定宽度容器，确保标题真实居中且有最大宽度限制
     };
 
-    const titleTextStyle: ViewStyle = {
-        // 使用主题导航的字体定义
-        // Text 组件支持通过 style 覆盖 fontSize/weight
-        // 颜色使用 Text 的 color 属性（支持主题键或颜色值）
-        ...(spacing.pxMd as ViewStyle),
+    const titleTextStyle: TextStyle = {
+        ...(styles.spacing.pxMd as ViewStyle),
     };
 
     // 函数：renderBackSlot（统一高度为 contentHeight，避免底部裁切）
     const renderBackSlot = () => {
-        const nav = useNav();
-        const showBack = backVisible ?? true; // 默认显示返回按钮
-        const handleBack = onBack ?? (() => nav.goBack());
-        // 保留一个槽位，以保证左侧宽度固定（即使不显示返回按钮也占位）
+        const canGoBackNow = componentNav.canGoBack() || Navigation.canGoBack();
+        const showBack = backVisible ?? canGoBackNow; // 可返回时默认显示
+        const handleBack = onBack ?? (() => {
+            if (componentNav.canGoBack()) {
+                componentNav.goBack();
+            } else {
+                Navigation.goBack();
+            }
+        });
+
         return (
             <View style={{ width: SLOT_SIZE, height: contentHeight, justifyContent: 'center' }}>
                 {showBack && (
                     <Pressable
                         onPress={handleBack}
                         hitSlop={8}
+                        pointerEvents="box-only"
                         accessibilityLabel="返回"
                         style={{ width: LEFT_SIZE, height: contentHeight, alignItems: 'center', justifyContent: 'center' }}
                     >
@@ -192,17 +202,16 @@ export const Header: React.FC<HeaderProps> = ({
         );
     };
 
-    // 函数：renderActionSlots（支持大小/粗细配置并修复裁切）
     const renderActionSlots = () => {
         const slots: React.ReactNode[] = [];
         const actionsCount = actionsLimited.length;
-    
-        // 先填充空槽位，使实际动作靠右显示（高度统一为 contentHeight）
+
+        // 填充空槽位，使实际动作靠右显示
         for (let i = 0; i < MAX_ACTIONS - actionsCount; i++) {
             slots.push(<View key={`action-empty-${i}`} style={{ width: SLOT_SIZE, height: contentHeight }} />);
         }
-    
-        // 再渲染动作槽位
+
+        // 渲染动作槽位
         for (let i = 0; i < actionsCount; i++) {
             const act = actionsLimited[i];
             const {
@@ -215,6 +224,7 @@ export const Header: React.FC<HeaderProps> = ({
                 testID: actionTestID,
                 accessibilityLabel,
             } = act;
+
             slots.push(
                 <View key={`action-${i}`} style={{ width: SLOT_SIZE, height: contentHeight, justifyContent: 'center' }}>
                     <Pressable
@@ -229,8 +239,8 @@ export const Header: React.FC<HeaderProps> = ({
                             <Text
                                 numberOfLines={1}
                                 ellipsizeMode="tail"
-                                style={{ fontSize: act.labelSize ?? nav.labelSize, fontWeight: act.labelWeight ?? nav.labelWeight }}
-                                color={color ?? nav.labelColor}
+                                style={{ fontSize: act.labelSize ?? navTheme.labelSize, fontWeight: act.labelWeight ?? navTheme.labelWeight }}
+                                color={color ?? navTheme.labelColor}
                             >
                                 {label}
                             </Text>
@@ -247,24 +257,27 @@ export const Header: React.FC<HeaderProps> = ({
                 </View>
             );
         }
+
         return slots;
     };
-
     return (
-        <View style={[outerContainerStyle]} testID={testID}>
+        <View style={[outerContainerStyle, shadowStyle, spacingStyle]} testID={finalTestID}>
             {gradientEnabled && (
-                <GradientBackground
-                    variant={gradientVariant}
-                    colors={gradientPalette}
-                    locations={gradientLocations}
-                    angle={gradientAngle}
-                    start={gradientStart}
-                    end={gradientEnd}
-                    center={gradientCenter}
-                    radius={gradientRadius}
-                    opacity={gradientOpacity}
-                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}
-                />
+                // 避免遮挡触摸：渐变包一层 pointerEvents="none"
+                <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                    <GradientBackground
+                        variant={gradientVariant}
+                        colors={gradientPalette}
+                        locations={gradientLocations}
+                        angle={gradientAngle}
+                        start={gradientStart}
+                        end={gradientEnd}
+                        center={gradientCenter}
+                        radius={gradientRadius}
+                        opacity={gradientOpacity}
+                        style={{ flex: 1 }}
+                    />
+                </View>
             )}
             <View style={contentWrapperStyle}>
                 <View style={contentRowStyle}>
@@ -274,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <View style={titleContainerStyle}>
                         {typeof title === 'string' ? (
                             <Text
-                                style={[titleTextStyle, { fontSize: nav.titleSize, fontWeight: nav.titleWeight }]}
+                                style={[titleTextStyle, { fontSize: navTheme.titleSize, fontWeight: navTheme.titleWeight }]}
                                 color={titleColorFinal}
                                 numberOfLines={1}
                                 ellipsizeMode="tail"

@@ -1,14 +1,16 @@
 import React from 'react';
-import { View, Pressable, ViewStyle, TextStyle } from 'react-native';
-import { useTheme } from '../../../theme';
+import { View, Pressable, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { buildTestID, TestableProps } from '../../common/test';
 import { Icon } from '../Icon';
 import { Text } from '../Text';
 
+// 接口与类型
 export type ChipVariant = 'solid' | 'outline';
 export type ChipColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | string;
 export type ChipSize = 'small' | 'medium' | 'large' | number;
 
-export interface ChipProps {
+export interface ChipProps extends SpacingProps, TestableProps {
     label?: React.ReactNode | string;
     icon?: React.ReactNode | { name: string; size?: number; color?: string; type?: string };
     closable?: boolean | React.ReactNode;
@@ -17,11 +19,12 @@ export interface ChipProps {
     variant?: ChipVariant;
     color?: ChipColor;
     size?: ChipSize;
-    style?: ViewStyle | ViewStyle[];
-    textStyle?: TextStyle | TextStyle[];
-    testID?: string;
+    // 统一样式类型（删除不需要的数组类型）
+    style?: StyleProp<ViewStyle>;
+    textStyle?: StyleProp<TextStyle>;
 }
 
+// 组件：Chip
 const Chip: React.FC<ChipProps> = ({
     label,
     icon,
@@ -34,6 +37,7 @@ const Chip: React.FC<ChipProps> = ({
     style,
     textStyle,
     testID,
+    ...props
 }) => {
     const { theme } = useTheme();
     const colors = theme.colors;
@@ -80,10 +84,14 @@ const Chip: React.FC<ChipProps> = ({
     const iconSize = (icon as any)?.size ?? Math.max(14, Math.round(fontSize + 2));
     const closeSize = Math.max(14, Math.round(fontSize + 2));
 
+    // 新增：公共间距与规范化 testID
+    const spacingStyle = useSpacingStyle(props);
+    const computedTestID = buildTestID('Chip', testID);
+
     return (
         <View
-            style={[containerStyle, style]}
-            testID={testID}
+            style={[spacingStyle, containerStyle, style]}
+            testID={computedTestID}
             accessible
             accessibilityRole={typeof closable === 'boolean' && closable ? 'button' : 'text'}
         >

@@ -1,13 +1,16 @@
 import React from 'react';
-import { View, Text, ViewStyle, TextStyle } from 'react-native';
-import { useTheme } from '../../../theme';
+import { View, Text, ViewStyle, TextStyle, StyleSheet, StyleProp } from 'react-native';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { buildTestID, TestableProps } from '../../common/test';
+import { buildBoxStyle, BoxProps } from '../../common/box';
+import { buildShadowStyle, ShadowProps } from '../../common/shadow';
 
 export type BadgeVariant = 'solid' | 'outline';
 export type BadgeColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | string;
 export type BadgePosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
 export type BadgeSize = 'small' | 'medium' | 'large' | number;
 
-export interface BadgeProps {
+export interface BadgeProps extends SpacingProps, BoxProps, ShadowProps, TestableProps {
   text?: string;
   value?: number | string;
   max?: number;
@@ -19,10 +22,9 @@ export interface BadgeProps {
   offset?: { x?: number; y?: number };
   children?: React.ReactNode;
   showZero?: boolean; // 针对数值 0 是否显示
-  style?: ViewStyle | ViewStyle[]; // 徽标自身样式
-  containerStyle?: ViewStyle | ViewStyle[]; // 包裹 children 的容器样式
-  textStyle?: TextStyle | TextStyle[];
-  testID?: string;
+  style?: StyleProp<ViewStyle>; // 徽标自身样式（作为 overrides）
+  containerStyle?: StyleProp<ViewStyle>; // 包裹 children 的容器样式
+  textStyle?: StyleProp<TextStyle>;
 }
 
 const Badge: React.FC<BadgeProps> = ({
@@ -41,6 +43,7 @@ const Badge: React.FC<BadgeProps> = ({
   containerStyle,
   textStyle,
   testID,
+  ...props
 }) => {
   const { theme } = useTheme();
   const colors = theme.colors;
@@ -62,7 +65,7 @@ const Badge: React.FC<BadgeProps> = ({
 
   const height = sizeNumber;
   const paddingH = isDot ? 0 : Math.round(height / 3);
-  const minWidth = isDot ? height : height; // 胶囊至少与高度一致
+  const minWidth = isDot ? height : height;
   const borderRadius = Math.round(height / 2);
 
   const bgColor = variant === 'solid' ? activeColor : 'transparent';
@@ -85,12 +88,23 @@ const Badge: React.FC<BadgeProps> = ({
     return v;
   })();
 
+  // 公共 spacing
+  const spacingStyle = useSpacingStyle(props);
+
+  // 公共 shadow（主题未配置时返回空对象）
+  const shadowStyle = buildShadowStyle((theme as any).styles?.shadow ?? ({} as any), props);
+
+  // 公共 box：将外部 style 拍平为 overrides，再由单独属性覆盖
+  const styleOverrides = StyleSheet.flatten(style) ?? undefined;
+  const boxBase = buildBoxStyle({ defaultBackground: bgColor }, props, styleOverrides);
+
   const badgeStyle: ViewStyle = {
+    ...boxBase,
+    ...shadowStyle,
     minWidth,
     height,
     paddingHorizontal: paddingH,
     borderRadius,
-    backgroundColor: bgColor,
     borderColor: bdColor,
     borderWidth: bdWidth,
     alignItems: 'center',
@@ -124,16 +138,26 @@ const Badge: React.FC<BadgeProps> = ({
   })();
 
   const content = (
-    <View style={[badgeStyle, style]} testID={testID} accessible accessibilityRole={isDot ? undefined : 'text'}>
+    <View
+      style={[badgeStyle, children ? undefined : spacingStyle]}
+      testID={buildTestID('Badge', testID)}
+      accessible
+      accessibilityRole={isDot ? undefined : 'text'}
+    >
       {isDot ? null : <Text style={[labelStyle, textStyle]}>{displayText}</Text>}
     </View>
   );
 
   if (children) {
+    // 修复：将 spacing 与容器分离，角标相对于内部锚点（children 所在层）绝对定位
     return (
-      <View style={[{ position: 'relative', alignSelf: 'flex-start' }, containerStyle]}>
-        {children}
-        <View style={cornerStyle}>{content}</View>
+      <View style={[spacingStyle, containerStyle]}>
+        <View style={{ position: 'relative', alignSelf: 'flex-start' }}>
+          {children}
+          <View style={[cornerStyle, { zIndex: 10, pointerEvents: 'none' }]}>
+            {content}
+          </View>
+        </View>
       </View>
     );
   }

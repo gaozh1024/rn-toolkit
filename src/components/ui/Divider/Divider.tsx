@@ -1,16 +1,17 @@
 import React, { useMemo } from 'react';
-import { View, ViewStyle } from 'react-native';
-import { useTheme } from '../../../theme';
+import { View, ViewStyle, StyleProp } from 'react-native';
+import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { buildTestID, TestableProps } from '../../common/test';
 
 export type DividerOrientation = 'horizontal' | 'vertical';
 export type DividerColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'text' | 'subtext' | 'border' | 'divider' | string;
 
-export interface DividerProps {
+export interface DividerProps extends SpacingProps, TestableProps {
   orientation?: DividerOrientation;
   color?: DividerColor;
   thickness?: number;
   inset?: number | { start?: number; end?: number };
-  style?: ViewStyle | ViewStyle[];
+  style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
@@ -21,9 +22,12 @@ const Divider: React.FC<DividerProps> = ({
   inset = 0,
   style,
   testID,
+  ...props
 }) => {
   const { theme } = useTheme();
   const colors = theme.colors as any;
+  const spacingStyle = useSpacingStyle(props);
+  const computedTestID = buildTestID('Divider', testID);
 
   const getThemeColor = (c: DividerColor): string => {
     if (typeof c !== 'string') return colors.divider;
@@ -56,7 +60,7 @@ const Divider: React.FC<DividerProps> = ({
 
   const containerStyle = orientation === 'vertical' ? verticalStyle : horizontalStyle;
 
-  return <View style={[containerStyle, style]} testID={testID} />;
+  return <View style={[spacingStyle, containerStyle, style]} testID={computedTestID} />;
 };
 
 export default Divider;

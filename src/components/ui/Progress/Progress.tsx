@@ -1,14 +1,18 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ViewStyle, TextStyle } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../../../theme/hooks';
 import { ColorTheme } from '../../../theme/types';
+import { useSpacingStyle, type SpacingProps } from '../../../theme/spacing';
+import { buildTestID, type TestableProps } from '../../common/test';
+import { buildBoxStyle, type BoxProps } from '../../common/box';
+import { buildShadowStyle, type ShadowProps } from '../../common/shadow';
 
 export type ProgressVariant = 'linear' | 'circular';
 export type ProgressColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'text' | 'subtext' | 'border' | 'divider' | string;
 
-export interface ProgressProps {
+export interface ProgressProps extends SpacingProps, TestableProps, BoxProps, ShadowProps {
   variant?: ProgressVariant;
   value?: number; // 0-1
   indeterminate?: boolean;
@@ -18,9 +22,8 @@ export interface ProgressProps {
   size?: 'small' | 'medium' | 'large' | number; // 线性：高度（可选）；环形：直径
   showLabel?: boolean; // 环形进度中心展示百分比
   label?: string | React.ReactNode; // 环形中心自定义文案
-  style?: ViewStyle | ViewStyle[];
-  textStyle?: TextStyle | TextStyle[];
-  testID?: string;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 const clamp01 = (v?: number) => {
@@ -51,9 +54,13 @@ const Progress: React.FC<ProgressProps> = ({
   style,
   textStyle,
   testID,
+  // SpacingProps / BoxProps / ShadowProps 透传
+  ...restProps
 }) => {
-  const { theme } = useTheme();
+  const { theme, styles } = useTheme();
   const colors = theme.colors;
+  const spacingStyle = useSpacingStyle(restProps);
+  const computedTestID = buildTestID(undefined, testID);
 
   const activeColor = resolveColor(colors, color, colors.primary);
   const track = resolveColor(colors, trackColor, colors.divider);
@@ -106,8 +113,15 @@ const Progress: React.FC<ProgressProps> = ({
       )
       : null;
 
+    const circularContainerStyle = buildBoxStyle(
+      { defaultBackground: 'transparent' },
+      restProps,
+      { width: diameter, height: diameter, justifyContent: 'center', alignItems: 'center' },
+    );
+    const shadowStyle = buildShadowStyle(styles.shadow, restProps);
+
     return (
-      <View style={[{ width: diameter, height: diameter, justifyContent: 'center', alignItems: 'center' }, style]} testID={testID}>
+      <View style={[circularContainerStyle, spacingStyle, shadowStyle, style]} testID={computedTestID}>
         <Animated.View style={[{ width: diameter, height: diameter }, rotationStyle]}>
           <Svg width={diameter} height={diameter}>
             {/* 轨道 */}
@@ -171,8 +185,19 @@ const Progress: React.FC<ProgressProps> = ({
     return { transform: [{ translateX: x }] };
   }, [containerWidth]);
 
+  const linearContainerStyle = buildBoxStyle(
+    { defaultBackground: track },
+    restProps,
+    containerStyleLinear,
+  );
+  const shadowStyle = buildShadowStyle(styles.shadow, restProps);
+
   return (
-    <View style={[containerStyleLinear, style]} onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)} testID={testID}>
+    <View
+      style={[linearContainerStyle, spacingStyle, shadowStyle, style]}
+      onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+      testID={computedTestID}
+    >
       {indeterminate ? (
         <Animated.View style={[barStyle, { width: containerWidth * 0.4 }, indeterminateStyle]} />
       ) : (

@@ -1,6 +1,37 @@
 # ListItem（列表项）
 
-用于展示标题/描述等内容，支持左右插槽与点击交互。
+- 接入的公共能力：
+  - 间距：`SpacingProps`（`m/mv/mh/p/...`，用于容器）
+  - 测试：`TestableProps`（`testID`，规范化为 `ListItem-${id}`）
+  - 盒子：`BoxProps`（宽高、背景、边框统一处理，可覆盖默认）
+
+## 属性
+
+- 内容：`title/description/left/right`
+- 行为：`onPress/disabled/selected`
+- 样式：`style/contentStyle/titleStyle/descriptionStyle`（`StyleProp`）
+- 公共：`SpacingProps/TestableProps/BoxProps`
+
+## 默认外观
+
+- `selected: true` 时，默认 `backgroundColor=surface`、`borderColor=primary`。
+- 否则默认 `backgroundColor=transparent`、`borderColor=border`。
+- 以上均可通过 `BoxProps` 覆盖，如 `backgroundColor/borderColor/borderWidth/borderRadius/...`。
+
+## 用法示例
+
+```tsx
+<ListItem title="设置" description="通知与隐私" m="sm" onPress={() => {}} />
+<ListItem
+  title="收藏"
+  selected
+  shadowSize="sm"
+  borderRadius={12}
+  p="md"
+  right={<Switch />}
+  onPress={() => {}}
+/>
+```
 
 ## 特性
 

@@ -1,12 +1,15 @@
 import React, { forwardRef } from 'react';
-import { View, TextInput, StyleSheet, Pressable, ViewStyle, TextStyle, Text } from 'react-native';
+import { View, TextInput, StyleSheet, Pressable, ViewStyle, TextStyle, Text, StyleProp } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 import { Icon, IconType } from '../Icon';
+import { useSpacingStyle, SpacingProps } from '../../../theme/spacing';
+import { buildTestID, TestableProps } from '../../common/test';
+import { buildBoxStyle, BoxProps } from '../../common/box';
 
 export type InputSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type InputVariant = 'solid' | 'outline' | 'ghost';
 
-export interface InputProps {
+export interface InputProps extends SpacingProps, TestableProps, BoxProps {
     value?: string;
     defaultValue?: string;
     placeholder?: string;
@@ -17,10 +20,11 @@ export interface InputProps {
     size?: InputSize;
     variant?: InputVariant;
     color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'text' | 'textSecondary' | string;
+    // 保留兼容：通过 BoxProps 推荐设置宽高；如需兼容旧用法，可继续传入
     fullWidth?: boolean;
     flex?: number;
-    style?: ViewStyle;
-    inputStyle?: TextStyle;
+    style?: StyleProp<ViewStyle>;
+    inputStyle?: StyleProp<TextStyle>;
     leftIcon?: { name: string; color?: string; size?: number; type?: IconType };
     rightIcon?: { name: string; color?: string; size?: number; onPress?: () => void; type?: IconType };
     editable?: boolean;
@@ -33,13 +37,6 @@ export interface InputProps {
     accessibilityLabel?: string;
     accessibilityHint?: string;
     testID?: string;
-    // 新增：可配置的内边距与圆角
-    paddingH?: number;
-    paddingV?: number;
-    radius?: number;
-    transparent?: boolean;
-    noHorizontalPadding?: boolean;
-    backgroundColor?: string; // 新增：直接设置背景色
 }
 
 const Input = forwardRef<TextInput, InputProps>((props, ref) => {
@@ -70,54 +67,68 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
         accessibilityLabel,
         accessibilityHint,
         testID,
-        transparent = false,
-        noHorizontalPadding = false,
-        backgroundColor, // 新增：背景色
     } = props;
 
     const { theme } = useTheme();
     const colors = theme.colors;
 
+    // 间距样式与测试ID
+    const spacingStyle = useSpacingStyle(props);
+    const computedTestID = buildTestID('Input', testID);
+
+    // 旧兼容：宽度/弹性
     const widthStyle: ViewStyle = flex != null ? { flex } : fullWidth ? { width: '100%' } : {};
 
+    // 错误态边框色与默认背景
     const baseBorderColor = error ? colors.error : colors.border;
-    const bgColor =
-        transparent
+    const defaultBackground =
+        variant === 'ghost'
             ? 'transparent'
-            : (backgroundColor ?? (variant === 'solid' ? colors.surface : colors.background));
-    const borderWidth = variant === 'outline' ? 1 : 0;
+            : (variant === 'solid' ? colors.surface : colors.background);
 
-    // 原默认值改为优先取 props，未传入时使用主题值
-    const paddingH = noHorizontalPadding ? 0 : (props.paddingH ?? theme.spacing.sm);
-    const paddingV = props.paddingV ?? theme.spacing.md;
-    const radius = props.radius ?? theme.borderRadius.lg;
-
-    const containerStyle: ViewStyle = {
-        backgroundColor: bgColor,
-        borderWidth,
-        borderColor: baseBorderColor,
-        borderRadius: radius,
-        opacity: disabled ? 0.6 : 1,
+    // 容器基础与变体样式
+    const base: ViewStyle = {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: paddingH,
-        paddingVertical: paddingV,
+        opacity: disabled ? 0.6 : 1,
+        paddingHorizontal: theme.spacing?.sm ?? 8,
+        paddingVertical: theme.spacing?.md ?? 12,
+    };
+    const variantOverrides: ViewStyle = {
+        backgroundColor: defaultBackground,
+        borderWidth: variant === 'outline' ? 1 : 0,
+        borderColor: baseBorderColor,
+        borderRadius: theme.borderRadius?.lg ?? 12,
         ...widthStyle,
     };
 
+    // 盒子样式（支持 BoxProps 覆盖宽高/背景/边框等）
+    const boxStyle = buildBoxStyle({ defaultBackground }, props, { ...base, ...variantOverrides });
+    const containerStyle: StyleProp<ViewStyle> = [boxStyle, spacingStyle, style];
+
+    // 文本与图标样式
     const textColor = disabled ? colors.textDisabled : colors.text;
     const placeholderTextColor = colors.textSecondary;
-
-    const iconColor = typeof color === 'string' && colors[color as keyof typeof colors]
-        ? (colors[color as keyof typeof colors] as string)
+    const iconColor = typeof color === 'string' && (colors as any)[color]
+        ? (colors as any)[color]
         : (typeof color === 'string' ? color : colors.primary);
-
     const iconSize = size === 'xs' ? 16 : size === 'sm' ? 18 : size === 'md' ? 20 : size === 'lg' ? 22 : 24;
 
     return (
-        <View style={[containerStyle, style]} testID={testID} accessible accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint}>
+        <View
+            style={containerStyle}
+            testID={computedTestID}
+            accessible
+            accessibilityLabel={accessibilityLabel}
+            accessibilityHint={accessibilityHint}
+        >
             {leftIcon?.name ? (
-                <Icon name={leftIcon.name} type={leftIcon.type} size={leftIcon.size ?? iconSize} color={leftIcon.color ?? iconColor} />
+                <Icon
+                    name={leftIcon.name}
+                    type={leftIcon.type}
+                    size={leftIcon.size ?? iconSize}
+                    color={leftIcon.color ?? iconColor}
+                />
             ) : null}
 
             <TextInput
@@ -139,7 +150,12 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
 
             {rightIcon?.name ? (
                 <Pressable onPress={rightIcon.onPress} hitSlop={8} disabled={disabled}>
-                    <Icon name={rightIcon.name} type={rightIcon.type} size={rightIcon.size ?? iconSize} color={rightIcon.color ?? iconColor} />
+                    <Icon
+                        name={rightIcon.name}
+                        type={rightIcon.type}
+                        size={rightIcon.size ?? iconSize}
+                        color={rightIcon.color ?? iconColor}
+                    />
                 </Pressable>
             ) : null}
 

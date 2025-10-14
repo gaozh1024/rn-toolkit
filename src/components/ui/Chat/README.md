@@ -12,6 +12,12 @@ import { ChatBubble } from 'src/components/ui';
 
 > 顶层 `src/components/index.ts` 已 `export * from './ui'`，因此可从 `src/components` 直接导入。
 
+## 已接入的公共能力
+
+- 间距：`SpacingProps`（`m/mv/mh/p/pv/ph/mt/...`，作用于组件外层容器）
+- 测试：`TestableProps`（`testID`，内部规范化为 `ChatBubble-${你的ID}`）
+- 盒子：`BoxProps`（宽高、背景、边框统一处理，可覆盖默认气泡外观）
+
 ## Props
 
 - `text?: string`：气泡内文本；与 `children` 二选一。
@@ -22,15 +28,25 @@ import { ChatBubble } from 'src/components/ui';
 - `align?: 'left' | 'right'`：消息方向，默认 `'left'`；`'right'` 表示自己消息。
 - `leftActions?: (React.ReactNode | { label: string; onPress?: () => void })[]`：气泡下方左侧的按钮/节点；字符串与数字将按纯文本渲染。
 - `rightFooterText?: string | React.ReactNode`：气泡下方右侧的文字或节点。
-- `bubbleStyle?: StyleProp<ViewStyle>`：气泡容器样式。
+- `bubbleStyle?: StyleProp<ViewStyle>`：气泡容器样式（在统一样式构建之后叠加）。
 - `textStyle?: StyleProp<TextStyle>`：气泡内文字样式。
 - `footerTextStyle?: StyleProp<TextStyle>`：底部右侧文字样式。
 - `style?: StyleProp<ViewStyle>`：组件最外层样式。
-- `testID?: string`：测试标识。
+- `maxBubbleWidth?: DimensionValue`：气泡列最大宽度（默认 `'80%'`）。
+- `avatarVerticalAlign?: 'top' | 'bottom'`：头像垂直对齐（默认 `'bottom'`）。
+- `bubbleRadius?: number`：气泡圆角半径（默认取 `theme.borderRadius.lg`）。
+- `squareCornerNearAvatar?: boolean`：显示头像时，靠近头像的角设为直角。
+- `squareCorners?: { topLeft?; topRight?; bottomLeft?; bottomRight? }`：独立控制四角直角。
+- `footerPlacement?: 'inside' | 'outside'`：底部内容位置（默认 `'outside'`）。
+- 公共：`SpacingProps` / `TestableProps` / `BoxProps`
+
+> 变更说明：移除了重复的 `testID` 独立声明，改由 `TestableProps` 提供并统一规范化。
 
 ## 主题适配
-- 右侧（自己）消息默认使用主题 `colors.primary` 作为气泡背景，文字为白色。
-- 左侧（对方）消息在浅色/深色主题下自动切换背景与文字颜色，遵循 `theme.button.secondary.backgroundColor` 或兜底颜色。
+
+- 右侧（自己）消息默认 `backgroundColor=colors.primary`，文字为白色。
+- 左侧（对方）消息默认使用 `theme.button.secondary.backgroundColor` 或兜底颜色。
+- 以上默认外观可通过 `BoxProps` 完全覆盖，如 `backgroundColor/borderColor/borderWidth/borderRadius/...`。
 
 ## 基础用法
 
@@ -38,6 +54,13 @@ import { ChatBubble } from 'src/components/ui';
 <ChatBubble text="你好！这是一个示例消息" />
 
 <ChatBubble align="right" text="这是我发送的消息" />
+```
+
+## 间距与测试
+
+```tsx
+<ChatBubble text="带外层间距与测试ID" m="sm" testID="hello" />
+// 实际 testID 为：ChatBubble-hello
 ```
 
 ## 头像与按钮组
@@ -56,9 +79,19 @@ import { ChatBubble } from 'src/components/ui';
 />
 ```
 
-## 自定义内容
+## 自定义内容与盒子样式
 
 ```tsx
+<ChatBubble
+  align="right"
+  text="可用 BoxProps 控制边框与圆角"
+  borderWidth={1}
+  borderColor="#DDD"
+  borderRadius={12}
+  p="md"
+  mh="sm"
+/>
+
 <ChatBubble align="right">
   <View>
     <Text>自定义内容块</Text>
@@ -79,6 +112,7 @@ import { ChatBubble } from 'src/components/ui';
 ```
 
 ## 注意事项
-- `leftActions` 内既支持对象（带 `label`/`onPress`）也支持任意 `ReactNode`（如图标、定制按钮、字符串/数字）。
-- 当传入 `avatarNode` 时会优先使用该节点显示头像；否则 fallback 到 `avatarUri` 与占位头像。
-- 组件会根据 `align` 与主题自动调整默认配色，可通过 `bubbleStyle`/`textStyle` 覆盖。
+
+- `leftActions` 既支持对象（带 `label/onPress`）也支持任意 `ReactNode`（如图标、定制按钮、字符串/数字）。
+- 当传入 `avatarNode` 时优先显示该节点；否则 fallback 到 `avatarUri` 与占位头像。
+- 组件会根据 `align` 与主题自动调整默认配色；如需覆盖，请使用 `BoxProps` 或 `bubbleStyle`。

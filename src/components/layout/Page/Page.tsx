@@ -10,8 +10,11 @@ import { GradientBackground } from '../GradientBackground/GradientBackground';
 import DrawerLayout from '../../../navigation/components/DrawerLayout';
 import { DrawerConfig } from '../../../navigation/types';
 
+import { TestableProps, buildTestID } from '../../common/test';
+import { GradientProps, normalizeGradientConfig } from '../../common/gradient';
+
 // export interface PageProps
-export interface PageProps {
+export interface PageProps extends TestableProps, GradientProps {
     children: React.ReactNode;
 
     // Header控制
@@ -26,7 +29,7 @@ export interface PageProps {
 
     // Scroll与内边距
     scrollable?: boolean;               // 是否启用滚动内容
-    padding?: number | { top?: number; bottom?: number; left?: number; right?: number };
+    padding?: number;
 
     // 安全区（避免顶部重复安全区，由 Header 自身处理顶部）
     safeAreaEdges?: Edge[];             // 默认 ['bottom', 'left', 'right']
@@ -35,18 +38,6 @@ export interface PageProps {
     statusBarStyle?: 'light-content' | 'dark-content' | 'default';
     statusBarBackgroundColor?: string;
 
-    testID?: string;
-    // 渐变背景（可选）
-    gradientEnabled?: boolean;
-    gradientVariant?: 'linear' | 'radial';
-    gradientColors?: string[];
-    gradientLocations?: number[];
-    gradientAngle?: number;
-    gradientStart?: { x: number; y: number };
-    gradientEnd?: { x: number; y: number };
-    gradientCenter?: { x: number; y: number };
-    gradientRadius?: number;
-    gradientOpacity?: number;
     // 可选：页面级左右抽屉
     leftDrawer?: DrawerConfig;
     rightDrawer?: DrawerConfig;
@@ -55,49 +46,35 @@ export interface PageProps {
 }
 
 // export const Page: React.FC<PageProps>
-export const Page: React.FC<PageProps> = ({
-    children,
-    headerShown = true,
-    headerProps,
-    headerActions, // 新增：从 Page 直传右侧动作
-    style,
-    contentStyle,
-    backgroundColor,
-    scrollable = false,
-    padding = 0,
-    safeAreaEdges = ['bottom', 'left', 'right'],
-    statusBarStyle,
-    statusBarBackgroundColor,
-    testID,
-    // 新增：渐变背景相关
-    gradientEnabled = false,
-    gradientVariant = 'linear',
-    gradientColors,
-    gradientLocations,
-    gradientAngle,
-    gradientStart,
-    gradientEnd,
-    gradientCenter = { x: 0.5, y: 0.5 },
-    gradientRadius = 0.5,
-    gradientOpacity = 1,
-    // 新增：抽屉配置
-    leftDrawer,
-    rightDrawer,
-    dismissKeyboardOnTapOutside = false,
-}) => {
+export const Page: React.FC<PageProps> = (rawProps) => {
+    const {
+        children,
+        headerShown = true,
+        headerProps,
+        headerActions,
+        style,
+        contentStyle,
+        backgroundColor,
+        scrollable = false,
+        padding = 0,
+        safeAreaEdges = ['bottom', 'left', 'right'],
+        statusBarStyle,
+        statusBarBackgroundColor,
+        // 梯度与测试ID来自公共能力（rawProps.gradientEnabled/...，rawProps.testID）
+        leftDrawer,
+        rightDrawer,
+        dismissKeyboardOnTapOutside = false,
+    } = rawProps;
+
     const { theme, isDark } = useTheme();
     const colors = theme.colors;
+    const finalTestID = buildTestID('Page', rawProps.testID);
+    const gradientCfg = normalizeGradientConfig([colors.primary, colors.secondary], rawProps);
+
     const autoStatusBarStyle = statusBarStyle || (isDark ? 'light-content' : 'dark-content');
-    const autoStatusBarBgColor = gradientEnabled ? 'transparent' : (statusBarBackgroundColor || colors.background);
+    const autoStatusBarBgColor = gradientCfg.colors ? 'transparent' : (statusBarBackgroundColor || colors.background);
+    const bgColor = gradientCfg.colors ? 'transparent' : (backgroundColor || colors.background);
 
-    // 开启渐变时让内容容器透明，避免盖住渐变
-    const bgColor = gradientEnabled ? 'transparent' : (backgroundColor || colors.background);
-
-    const gradientPalette = (gradientColors && gradientColors.length > 0)
-        ? gradientColors
-        : [colors.primary, colors.secondary];
-
-    // 条件包裹：根据是否配置抽屉进行最外层包裹
     const wrapWithDrawer = (node: React.ReactNode) => {
         if (leftDrawer || rightDrawer) {
             return (
@@ -109,80 +86,55 @@ export const Page: React.FC<PageProps> = ({
         return node;
     };
 
-    // 普通背景（不启用渐变）
-    if (!gradientEnabled) {
-        return wrapWithDrawer(
-            <SafeAreaView
-                edges={safeAreaEdges}
-                style={[{ backgroundColor: bgColor }, style]}
-                testID={testID}
+    const headerNode = headerShown ? (
+        <Header {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} />
+    ) : null;
+
+    const content = (
+        <SafeAreaView
+            edges={safeAreaEdges}
+            style={[{ backgroundColor: bgColor }, style]}
+            testID={finalTestID}
+        >
+            <StatusBar
+                barStyle={autoStatusBarStyle}
+                backgroundColor={autoStatusBarBgColor}
+                translucent={false}
+            />
+
+            {headerNode}
+
+            <Container
+                flex={1}
+                p={padding}
+                scrollable={scrollable}
+                style={contentStyle}
+                backgroundColor={bgColor}
+                dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
             >
-                <StatusBar
-                    barStyle={autoStatusBarStyle}
-                    backgroundColor={autoStatusBarBgColor}
-                    translucent={false}
-                />
+                {children}
+            </Container>
+        </SafeAreaView>
+    );
 
-                {headerShown && (
-                    <Header {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} />
-                )}
-
-                <Container
-                    flex={1}
-                    padding={padding}
-                    scrollable={scrollable}
-                    style={contentStyle}
-                    backgroundColor={bgColor}
-                    dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
-                >
-                    {children}
-                </Container>
-            </SafeAreaView>
-        );
-    }
-
-    // 开启渐变：在 SafeAreaView 外层包裹全屏渐变背景
-    return wrapWithDrawer(
+    const wrapped = gradientCfg.colors ? (
         <GradientBackground
-            variant={gradientVariant}
-            colors={gradientPalette}
-            locations={gradientLocations}
-            angle={gradientAngle}
-            start={gradientStart}
-            end={gradientEnd}
-            center={gradientCenter}
-            radius={gradientRadius}
-            opacity={gradientOpacity}
+            variant={gradientCfg.variant}
+            colors={gradientCfg.colors}
+            locations={gradientCfg.locations}
+            angle={gradientCfg.angle}
+            start={gradientCfg.start}
+            end={gradientCfg.end}
+            center={gradientCfg.center}
+            radius={gradientCfg.radius}
+            opacity={gradientCfg.opacity}
             style={{ flex: 1 }}
         >
-            <SafeAreaView
-                edges={safeAreaEdges}
-                style={[{ backgroundColor: bgColor }, style]}
-                testID={testID}
-            >
-                <StatusBar
-                    barStyle={autoStatusBarStyle}
-                    backgroundColor={autoStatusBarBgColor}
-                    translucent={false}
-                />
-
-                {headerShown && (
-                    <Header {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} />
-                )}
-
-                <Container
-                    flex={1}
-                    padding={padding}
-                    scrollable={scrollable}
-                    style={contentStyle}
-                    backgroundColor={bgColor}
-                    dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
-                >
-                    {children}
-                </Container>
-            </SafeAreaView>
+            {content}
         </GradientBackground>
-    );
+    ) : content;
+
+    return wrapWithDrawer(wrapped);
 };
 
 export default Page;

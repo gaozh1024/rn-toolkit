@@ -2,6 +2,12 @@
 
 TextArea 继承 Input 能力，新增 `rows` 与 `autoSize`，用于多行文本输入。样式与交互全部接入主题。
 
+## 已接入的公共能力
+
+- 间距：`SpacingProps`（`m/mv/mh/p/pv/ph/mt/...`，作用于容器，可覆盖默认内边距）
+- 测试：`TestableProps`（`testID`，内部规范化为 `TextArea-${你的ID}`）
+- 盒子：`BoxProps`（宽高、背景、边框统一处理，可覆盖变体默认）
+
 ## Props
 
 - `value` / `defaultValue`
@@ -16,8 +22,11 @@ TextArea 继承 Input 能力，新增 `rows` 与 `autoSize`，用于多行文本
 - `style` / `inputStyle`
 - `rows`: 最小显示行数（默认 3）
 - `autoSize`: 是否根据内容自动增高（默认 `true`）
-- `leftIcon` / `rightIcon`: 以 ReactNode 传入图标
+- `leftIcon` / `rightIcon`: 以 ReactNode 或对象传入图标
 - `onChangeText` / `onFocus` / `onBlur`
+- 公共：`SpacingProps` / `TestableProps` / `BoxProps`
+
+> 变更说明：移除了旧的 `paddingH`/`paddingV`/`radius`，请使用 `SpacingProps`（`p/pv/ph/...`）与 `BoxProps.borderRadius` 进行控制；`testID` 规范化为 `TextArea-${id}`。
 
 ## 主题接入
 
@@ -34,7 +43,8 @@ import { TextArea } from '../';
 export default function Demo() {
   return (
     <View style={{ padding: 16 }}>
-      <TextArea placeholder="请输入备注" helperText="最长 500 字" />
+      <TextArea placeholder="请输入备注" helperText="最长 500 字" m="sm" p="md" testID="note" />
+      {/* 实际 testID：TextArea-note */}
 
       <TextArea
         variant="solid"
@@ -43,6 +53,9 @@ export default function Demo() {
         autoSize
         placeholder="自动增长的多行输入"
         helperText="支持错误态与禁用态"
+        borderWidth={1}
+        borderColor="#DDD"
+        borderRadius={12}
       />
 
       <TextArea error helperText="内容不符合规则" />
