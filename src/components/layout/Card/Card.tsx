@@ -27,7 +27,7 @@ export const Card: React.FC<CardProps> = ({
   onPress,
   disabled = false,
   testID,
-  shadowSize,
+  shadowSize = 'none',
   shadowColor,
   ...props
 }) => {
@@ -47,9 +47,6 @@ export const Card: React.FC<CardProps> = ({
   const shadowStyle = buildShadowStyle(styles.shadow, { shadowSize, shadowColor });
 
   const spacingStyle = useSpacingStyle(props);
-  const hasSpacing = ['m', 'mv', 'mh', 'mt', 'mb', 'ml', 'mr', 'p', 'pv', 'ph', 'pt', 'pb', 'pl', 'pr']
-    .some((k) => (props as any)[k] != null);
-  const defaultSpacingStyle: ViewStyle = hasSpacing ? {} : { padding: theme.spacing.md, margin: theme.spacing.sm };
 
   const cardStyle: ViewStyle = {
     ...boxStyle,
@@ -58,6 +55,20 @@ export const Card: React.FC<CardProps> = ({
   };
 
   // 拆分 spacing：padding 给内容包裹层，margin 留在容器上
+  // 旧逻辑：任何 spacing 键都会关闭默认 padding+margin
+  // const hasSpacing = ['m', 'mv', 'mh', 'mt', 'mb', 'ml', 'mr', 'p', 'pv', 'ph', 'pt', 'pb', 'pl', 'pr']
+  //   .some((k) => (props as any)[k] != null);
+  // const defaultSpacingStyle: ViewStyle = hasSpacing ? {} : { padding: theme.spacing.md, margin: theme.spacing.sm };
+
+  // 新逻辑：分别检测 margin 与 padding 的显式传入，独立应用默认值
+  const hasMargin = ['m', 'mv', 'mh', 'mt', 'mb', 'ml', 'mr'].some((k) => (props as any)[k] != null);
+  const hasPadding = ['p', 'pv', 'ph', 'pt', 'pb', 'pl', 'pr'].some((k) => (props as any)[k] != null);
+
+  const defaultSpacingStyle: ViewStyle = {
+    ...(hasPadding ? {} : { padding: theme.spacing.md }),
+    ...(hasMargin ? {} : { margin: theme.spacing.sm }),
+  };
+
   const spacingCombined = StyleSheet.flatten([defaultSpacingStyle, spacingStyle]) ?? {};
   const {
     padding, paddingHorizontal, paddingVertical, paddingTop, paddingBottom, paddingLeft, paddingRight,

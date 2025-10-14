@@ -132,12 +132,13 @@ export const Icon = forwardRef<any, IconProps>(({
 
     return (
         <Pressable
-            onPress={disabled ? undefined : onPress}
             disabled={disabled}
             hitSlop={hitSlop}
             accessibilityLabel={accessibilityLabel || `${name} icon`}
             testID={computedTestID}
             style={spacingStyle as StyleProp<ViewStyle>}
+            pointerEvents="box-only"
+            onPress={disabled ? undefined : onPress}
         >
             <IconComponent ref={ref} {...iconProps} />
         </Pressable>

@@ -5,8 +5,9 @@ import { Text as RNText, TextStyle, StyleProp } from 'react-native';
 import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { buildTestID, TestableProps } from '../../common/test';
 import { BackgroundProps, buildBackgroundStyle } from '../../common/background';
+import { BoxProps, buildSizeStyle } from '../../common/box';
 
-export interface TextProps extends SpacingProps, TestableProps, BackgroundProps {
+export interface TextProps extends SpacingProps, TestableProps, BackgroundProps, BoxProps {
     // 基础属性
     children?: React.ReactNode;
     style?: StyleProp<TextStyle>;
@@ -101,6 +102,9 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
     // 背景样式（默认透明，按需覆盖）
     const backgroundStyle = buildBackgroundStyle('transparent', { backgroundColor, transparent });
 
+    // 尺寸样式（支持 width/height/minWidth/maxWidth 等）
+    const sizeStyle = buildSizeStyle(props);
+
     // 获取变体样式（memo）
     const getVariantStyle = (): TextStyle => {
         switch (variant) {
@@ -149,10 +153,10 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
                 lg: 18,
                 xl: 24,
             } as const;
-            return sizeMap[size as keyof typeof sizeMap] || 16;
+            return sizeMap[size as keyof typeof sizeMap] || 14;
         }
 
-        return variantStyle.fontSize || 16;
+        return variantStyle.fontSize || 14;
     };
 
     const fontSizeMemo = useMemo(getFontSize, [size, variantStyle]);
@@ -251,7 +255,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
     return (
         <RNText
             ref={ref}
-            style={[baseStyle, spacingStyle, backgroundStyle, style]}
+            style={[baseStyle, spacingStyle, backgroundStyle, sizeStyle, style]}
             selectable={selectable}
             numberOfLines={numberOfLines}
             ellipsizeMode={ellipsizeMode}
