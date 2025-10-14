@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
-import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
+import { useTheme, useSpacingStyle, SpacingProps, SpacingSize } from '../../../theme';
 
 export interface CardProps extends SpacingProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   backgroundColor?: string;
-  padding?: number;
-  margin?: number;
+  padding?: SpacingSize; // 改为 SpacingSize 类型，支持 'xs'|'sm'|'md'|'lg'|'xl'|'xxl'|number
+  margin?: SpacingSize; // 改为 SpacingSize 类型，支持 'xs'|'sm'|'md'|'lg'|'xl'|'xxl'|number
   borderRadius?: number;
   elevation?: number;
   shadowColor?: string;
@@ -36,8 +36,15 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   const { theme, styles } = useTheme();
 
-  const paddingValue = typeof padding === 'number' ? padding : theme.spacing.md;
-  const marginValue = typeof margin === 'number' ? margin : theme.spacing.sm;
+  // 使用 spacing 系统解析 padding 和 margin
+  const paddingValue = padding !== undefined ?
+    (typeof padding === 'number' ? padding : theme.spacing[padding]) :
+    theme.spacing.md;
+
+  const marginValue = margin !== undefined ?
+    (typeof margin === 'number' ? margin : theme.spacing[margin]) :
+    theme.spacing.sm;
+
   const borderRadiusValue = typeof borderRadius === 'number' ? borderRadius : theme.borderRadius.lg;
   const backgroundColorValue = transparent ? 'transparent' : (backgroundColor || theme.colors.card);
 
@@ -56,6 +63,7 @@ export const Card: React.FC<CardProps> = ({
     ...(typeof elevation === 'number' ? { elevation } : {}),
   };
 
+  // 应用其他 spacing props (m, mt, mb, p, pt, pb 等)
   const spacingStyle = useSpacingStyle(props);
 
   if (onPress) {
