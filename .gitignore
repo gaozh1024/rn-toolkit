@@ -87,3 +87,4 @@ package-lock.json
 dist/
 .yalc/
 yalc.lock
+yarn.lock

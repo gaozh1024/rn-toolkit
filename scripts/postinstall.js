@@ -293,6 +293,35 @@ function configureBabelReanimatedPlugin() {
 }
 
 // ---------------- 主流程 ----------------
+function ensureGestureHandlerImportAtTop() {
+  const projectRoot = findProjectRoot();
+  if (!projectRoot) {
+    console.log('⚠️  未找到 React Native 项目根目录，跳过 index.js 检查');
+    return false;
+  }
+  const indexJsPath = path.join(projectRoot, 'index.js');
+  if (!fs.existsSync(indexJsPath)) {
+    console.log('⚠️  未找到 index.js，跳过插入 react-native-gesture-handler');
+    return false;
+  }
+  try {
+    let content = fs.readFileSync(indexJsPath, 'utf8');
+    const lines = content.split(/\r?\n/);
+    const firstLine = (lines[0] || '').replace(/^\uFEFF/, '').trim();
+    const target = "import 'react-native-gesture-handler';";
+    if (firstLine === target) {
+      console.log('✅ index.js 第一行已包含 react-native-gesture-handler 导入');
+      return true;
+    }
+    const newContent = [target, ...lines].join('\n');
+    fs.writeFileSync(indexJsPath, newContent, 'utf8');
+    console.log('✅ 已在 index.js 第一行添加 react-native-gesture-handler 导入');
+    return true;
+  } catch (error) {
+    console.log('❌ 修改 index.js 失败:', error.message);
+    return false;
+  }
+}
 function main() {
   try {
     if (process.env.RN_TOOLKIT_SKIP_POSTINSTALL === '1') {
@@ -332,6 +361,8 @@ function main() {
     } else {
       log('Skip platform configuration as per host config.');
     }
+    // 新增：确保 index.js 第一行包含 react-native-gesture-handler 导入
+    ensureGestureHandlerImportAtTop();
   } catch (err) {
     warn('Postinstall encountered an error but will not fail consumer install.');
     warn(String(err && err.message ? err.message : err));
