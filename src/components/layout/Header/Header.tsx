@@ -92,6 +92,12 @@ export const Header: React.FC<HeaderProps> = (rawProps) => {
         gradientCenter = { x: 0.5, y: 0.5 },
         gradientRadius = 0.5,
         gradientOpacity = 1,
+        // 新增：默认不显示阴影
+        shadowSize = 'none',
+        shadowColor,
+        shadowOpacity,
+        shadowRadius,
+        shadowOffset,
     } = rawProps;
 
     const { theme, styles } = useTheme();
@@ -109,7 +115,13 @@ export const Header: React.FC<HeaderProps> = (rawProps) => {
 
     // 间距/阴影公共能力
     const spacingStyle = useSpacingStyle(rawProps);
-    const shadowStyle = buildShadowStyle(styles.shadow, rawProps);
+    const shadowStyle = buildShadowStyle(styles.shadow, {
+        shadowSize,
+        shadowColor,
+        shadowOpacity,
+        shadowRadius,
+        shadowOffset,
+    });
 
     // 补齐缺失的常量定义
     const MAX_ACTIONS = 3;
