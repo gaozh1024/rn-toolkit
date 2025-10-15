@@ -9,7 +9,6 @@ import {
     ViewStyle,
     TextStyle,
     ActivityIndicator,
-    GestureResponderEvent,
     StyleProp,
     StyleSheet,
     LayoutChangeEvent

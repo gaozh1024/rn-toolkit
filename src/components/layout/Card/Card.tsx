@@ -13,6 +13,7 @@ export interface CardProps extends SpacingProps, BoxProps, PressEvents, Gradient
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  flex?: number;
 }
 
 /**
@@ -106,7 +107,11 @@ export const Card: React.FC<CardProps> = ({
     ...(marginRight != null ? { marginRight } : {}),
   };
 
-  const containerStyle = [cardStyle, marginOnly];
+  // 新增：仅在传入 flex 时应用到外层容器
+  const flexStyle: ViewStyle = props.flex != null ? { flex: props.flex } : {};
+
+  // 修改：合并 flexStyle
+  const containerStyle = [cardStyle, marginOnly, flexStyle];
 
   const computedTestID = buildTestID('Card', testID);
 
