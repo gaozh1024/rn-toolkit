@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, ViewStyle, StyleProp } from 'react-native';
+import { View, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
 import { useSpacingStyle, SpacingProps } from '../../../theme';
 import { TestableProps, buildTestID } from '../../common/test';
+import { PressEvents } from '../../common/events';
 
-export interface StackProps extends SpacingProps, TestableProps {
+export interface StackProps extends SpacingProps, TestableProps, PressEvents {
   children: React.ReactNode;
   direction?: 'row' | 'column';
   gap?: number;
@@ -16,6 +17,7 @@ export interface StackProps extends SpacingProps, TestableProps {
   fullHeight?: boolean;
   divider?: React.ReactNode;
   testID?: string;
+  disabled?: boolean;
 }
 
 export const Stack: React.FC<StackProps> = ({
@@ -31,6 +33,8 @@ export const Stack: React.FC<StackProps> = ({
   fullHeight,
   divider,
   testID,
+  onPress,
+  disabled,
   ...props
 }) => {
   const containerStyle: ViewStyle = {
@@ -65,8 +69,22 @@ export const Stack: React.FC<StackProps> = ({
     content = interleaved;
   }
 
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        style={[containerStyle, useSpacingStyle(props), style]}
+        onPress={onPress}
+        disabled={disabled}
+        activeOpacity={0.7}
+        testID={finalTestID}
+      >
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
   return (
-    <View style={[containerStyle, spacingStyle, style]} testID={finalTestID}>
+    <View style={[containerStyle, useSpacingStyle(props), style]} testID={finalTestID}>
       {content}
     </View>
   );

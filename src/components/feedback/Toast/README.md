@@ -5,6 +5,7 @@
 - 默认时长：`2000ms`
 
 ## 安装与挂载
+
 在应用根部挂载一次 `ToastContainer`。例如：
 
 ```tsx
@@ -23,6 +24,7 @@ export default function App() {
 ```
 
 ## 触发使用
+
 任意位置调用：
 
 ```ts
@@ -34,6 +36,7 @@ ToastService.show({ message: '网络异常，请稍后重试', duration: 3000, p
 ```
 
 ## API
+
 ```ts
 ToastService.show({
   message: string; // 必填
@@ -43,6 +46,7 @@ ToastService.show({
 ```
 
 ## 注意事项
+
 - 请确保 `ToastContainer` 仅挂载一次（通常在 App 根）。
 - Toast 不拦截触控事件（外层 `pointerEvents` 为 `box-none`）。
 - 动画使用 `useFadeAnimation`，淡入/淡出 150ms，可按需调整。
