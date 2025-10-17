@@ -16,7 +16,7 @@ export interface DialogOptions {
   cancelText?: string;         // 取消按钮文案（confirm 快捷）
   actions?: DialogAction[];    // 自定义按钮组（存在时覆盖 confirm/cancel 文案）
   maskColor?: string;          // 遮罩色，默认 rgba(0,0,0,0.45)
-  animationDuration?: number;  // 动画时长，默认 200ms
+  animationDuration?: number;  // 动画时长，默认 250ms
 }
 
 export type DialogState = (

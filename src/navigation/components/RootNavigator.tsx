@@ -4,6 +4,7 @@ import { NavigatorConfig, TransitionMode } from '../types';
 import { TabNavigator } from './TabNavigator';
 import { StackNavigator } from './StackNavigator';
 import { Modal as DefaultModal } from '../../components/feedback/Modal';
+import { WheelPickerModal } from '../../components/feedback/Picker'
 
 const RootStack = createStackNavigator();
 
@@ -86,9 +87,14 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
   };
 
   const allModals = useMemo(() => {
-    const exists = (modals || []).some(m => m.name === 'Modal');
+    const existsDefault = (modals || []).some(m => m.name === 'Modal');
+    const existsPicker = (modals || []).some(m => m.name === 'WheelPickerModal');
     const def = { name: 'Modal', component: DefaultModal } as any;
-    return exists ? modals : [def, ...(modals || [])];
+    const picker = { name: 'WheelPickerModal', component: WheelPickerModal } as any;
+    if (existsDefault && existsPicker) return modals || [];
+    if (existsDefault && !existsPicker) return [{ ...picker }, ...(modals || [])];
+    if (!existsDefault && existsPicker) return [{ ...def }, ...(modals || [])];
+    return [{ ...def }, { ...picker }, ...(modals || [])];
   }, [modals]);
 
   return (
@@ -127,8 +133,8 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
           name={modal.name}
           component={modal.component}
           options={({ route }: any) => {
-            const direction: TransitionMode = route?.params?.direction ?? (modal.transitionMode as TransitionMode) ?? transitionMode;
-            const base = getTransitionOptions(direction);
+            // 统一：导航层动画使用 fade（不再根据 params.direction 切换）
+            const base = getTransitionOptions('fade');
             return {
               ...base,
               presentation: 'transparentModal',

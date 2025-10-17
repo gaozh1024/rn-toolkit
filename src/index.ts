@@ -10,8 +10,11 @@ export * from './statusbar';
 // 样式
 export * from './theme';
 
-// 动画 (如果需要)
+// 动画
 export * from './animation';
 
-// UI 组件 (新增)
+// UI 组件
 export * from './components';
+
+// 工具函数
+export * from './utils';

@@ -455,7 +455,8 @@ const Button: React.FC<ButtonProps> = ({
                 testID={computedTestID}
                 {...props}
             >
-                <View style={[gradientCfg.colors ? gradientEnhancer : null, { flex: 1 }]}>
+                {/* 修复：移除 { flex: 1 } */}
+                <View style={[gradientCfg.colors ? gradientEnhancer : null]}>
                     {gradientCfg.colors && (
                         <GradientBackground
                             variant={gradientCfg.variant}
@@ -493,7 +494,8 @@ const Button: React.FC<ButtonProps> = ({
             testID={computedTestID}
             {...props}
         >
-            <View style={[gradientCfg.colors ? gradientEnhancer : null, { flex: 1 }]}>
+            {/* 修复：移除 { flex: 1 } */}
+            <View style={[gradientCfg.colors ? gradientEnhancer : null]}>
                 {gradientCfg.colors && (
                     <GradientBackground
                         variant={gradientCfg.variant}

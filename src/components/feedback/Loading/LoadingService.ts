@@ -1,37 +1,37 @@
 // LoadingOverlayService: 提供全局 show/hide 与订阅
-export type LoadingOverlayMode = 'blocking' | 'semi';
+export type LoadingMode = 'blocking' | 'semi';
 
-export interface LoadingOverlayOptions {
+export interface LoadingOptions {
   message?: string;
-  mode?: LoadingOverlayMode; // 默认 blocking
+  mode?: LoadingMode; // 默认 blocking
   cancelable?: boolean;      // 默认 false
   onCancel?: () => void;
   maskColor?: string;        // 默认 rgba(0,0,0,0.45)
   animationDuration?: number;// 默认 200ms
 }
 
-export type LoadingOverlayState = (
-  { visible: true } & Required<Pick<LoadingOverlayOptions, 'mode'>> & Omit<LoadingOverlayOptions, 'mode'>
+export type LoadingState = (
+  { visible: true } & Required<Pick<LoadingOptions, 'mode'>> & Omit<LoadingOptions, 'mode'>
 ) | { visible: false };
 
-export type LoadingOverlayListener = (state: LoadingOverlayState) => void;
+export type LoadingListener = (state: LoadingState) => void;
 
-class LoadingOverlayServiceImpl {
-  private listeners = new Set<LoadingOverlayListener>();
-  private current: LoadingOverlayState = { visible: false };
+class LoadingServiceImpl {
+  private listeners = new Set<LoadingListener>();
+  private current: LoadingState = { visible: false };
 
-  subscribe(listener: LoadingOverlayListener): () => void {
+  subscribe(listener: LoadingListener): () => void {
     this.listeners.add(listener);
     listener(this.current);
     return () => this.listeners.delete(listener);
   }
 
-  private notify(next: LoadingOverlayState) {
+  private notify(next: LoadingState) {
     this.current = next;
     this.listeners.forEach(l => l(next));
   }
 
-  show(options: LoadingOverlayOptions = {}) {
+  show(options: LoadingOptions = {}) {
     const {
       message,
       mode = 'blocking',
@@ -56,5 +56,5 @@ class LoadingOverlayServiceImpl {
   }
 }
 
-export const LoadingOverlayService = new LoadingOverlayServiceImpl();
-export const LoadingOverlay = LoadingOverlayService;
+export const LoadingService = new LoadingServiceImpl();
+export const Loading = LoadingService;

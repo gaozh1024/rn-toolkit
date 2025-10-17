@@ -20,6 +20,18 @@ class NavigationService {
   }
 
   /**
+  * 始终以新实例方式打开模态（push）
+  */
+  openModal(name: string, params?: { direction?: TransitionMode; backgroundColor?: string;[key: string]: any }): void {
+    if (navigationRef.current?.isReady()) {
+      console.log('NavigationService: openModal (push)', name, params);
+      navigationRef.current.dispatch(StackActions.push(name, params));
+    } else {
+      console.warn('NavigationService: Navigation not ready');
+    }
+  }
+
+  /**
   * 以模态方式展示页面（传入方向/背景色等）
   * direction: 'left' | 'right' | 'top' | 'bottom' | 'fade' | 'none'
   */

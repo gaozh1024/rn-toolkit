@@ -124,6 +124,9 @@ export const Avatar: React.FC<AvatarProps> = ({
   // 阴影样式：使用 styles.shadow 预设，再按 ShadowProps 覆盖
   const shadowStyle = buildShadowStyle(styles.shadow, props);
 
+  // 新增：占位底色的手动设置优先级
+  const fallbackBgColor = props.backgroundColor ?? styleOverrides?.backgroundColor ?? bgColor;
+
   // 容器最终样式：不在容器上合并阴影，避免透明容器吞阴影
   const container: ViewStyle = {
     ...boxStyle,
@@ -170,7 +173,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           />
         ) : (
           <View
-            style={{ width: px, height: px, borderRadius: radius, backgroundColor: bgColor, alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: px, height: px, borderRadius: radius, backgroundColor: fallbackBgColor, alignItems: 'center', justifyContent: 'center' }}
           >
             <Text style={[textStyles, textStyle]}>{initials}</Text>
           </View>

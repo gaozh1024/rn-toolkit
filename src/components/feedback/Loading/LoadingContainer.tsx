@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Animated, TouchableWithoutFeedback, StyleSheet } from 'react-native';
-import { LoadingOverlayService, LoadingOverlayState } from './LoadingOverlayService';
+import { LoadingService, LoadingState } from './LoadingService';
 import { useTheme } from '../../../theme/hooks';
 import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-export const LoadingOverlayContainer: React.FC = () => {
+export const LoadingContainer: React.FC = () => {
     const { theme } = useTheme?.() ?? { theme: { colors: { background: '#FFFFFF', textPrimary: '#333333' } } };
     const colors = theme?.colors ?? { background: '#FFFFFF', textPrimary: '#333333' };
 
-    const [state, setState] = useState<LoadingOverlayState>({ visible: false });
+    const [state, setState] = useState<LoadingState>({ visible: false });
     const duration = state.visible && state.animationDuration != null ? state.animationDuration : 200;
 
     // 改为 reanimated：遮罩淡入/淡出
@@ -16,7 +16,7 @@ export const LoadingOverlayContainer: React.FC = () => {
     const maskStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
     useEffect(() => {
-        const unsub = LoadingOverlayService.subscribe(next => {
+        const unsub = LoadingService.subscribe(next => {
             setState(next);
             if (next.visible) {
                 opacity.value = withTiming(1, { duration: next.animationDuration ?? 200 });
@@ -34,7 +34,7 @@ export const LoadingOverlayContainer: React.FC = () => {
 
     const handleCancel = () => {
         if (!state.visible || !state.cancelable) return;
-        try { state.onCancel?.(); } finally { LoadingOverlayService.hide(); }
+        try { state.onCancel?.(); } finally { LoadingService.hide(); }
     };
 
     if (!state.visible) return null;

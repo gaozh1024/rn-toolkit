@@ -13,7 +13,7 @@ export const DialogContainer: React.FC = () => {
     const [state, setState] = useState<DialogState>({ visible: false });
     const { fadeAnim, fadeIn, fadeOut } = useFadeAnimation(0);
     const { scaleAnim, scaleIn, scaleOut } = useScaleAnimation(0);
-    const durationRef = useRef(200);
+    const durationRef = useRef(250);
 
     useEffect(() => {
         const unsub = DialogService.subscribe((next) => {

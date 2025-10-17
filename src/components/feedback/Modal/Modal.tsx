@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TouchableWithoutFeedback, TouchableOpacity, StyleSheet, Dimensions, ViewStyle, DimensionValue, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useComponentNavigation } from '../../../navigation';
@@ -34,10 +34,14 @@ export const Modal: React.FC<any> = ({ route }) => {
         height,
         closable = true,
         maskClosable = true,
-        // 新增默认值
         cardBackgroundColor = '#fff',
         titleAlign = 'left',
+        // 新增：沿用传入的方向，但只用于卡片入场动画
+        direction = 'none',
     } = params;
+
+    // 更新：获取屏幕尺寸，供方向动画使用
+    const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
     const insets = useSafeAreaInsets();
     const navigation = useComponentNavigation();
@@ -72,22 +76,42 @@ export const Modal: React.FC<any> = ({ route }) => {
     };
 
     // 新增：遮罩可见状态与过渡事件监听
-    const [maskVisible, setMaskVisible] = useState(false);
+    const [maskVisible, setMaskVisible] = useState(true);
     const { fadeAnim, fadeIn } = useFadeAnimation(0);
+    useEffect(() => {
+        fadeIn(200).start();
+    }, [fadeIn]);
+
+    // 新增：卡片入场动画（根据 direction）
+    // 初始位移（离屏）
+    const initialTranslateX =
+        direction === 'left' ? -SCREEN_WIDTH :
+            direction === 'right' ? SCREEN_WIDTH : 0;
+
+    const initialTranslateY =
+        direction === 'top' ? -SCREEN_HEIGHT :
+            direction === 'bottom' || direction === 'ios' ? SCREEN_HEIGHT : 0;
+
+    const cardTranslateX = React.useRef(new Animated.Value(initialTranslateX)).current;
+    const cardTranslateY = React.useRef(new Animated.Value(initialTranslateY)).current;
+    const cardOpacity = React.useRef(new Animated.Value(direction === 'fade' ? 0 : 1)).current;
 
     useEffect(() => {
-        const unsubEnd = navigation.addListener('transitionEnd', () => {
-            setMaskVisible(true);
-            fadeIn(200).start();
-        });
-        const unsubStart = navigation.addListener('transitionStart', () => {
-            setMaskVisible(false);
-        });
-        return () => {
-            unsubEnd?.();
-            unsubStart?.();
-        };
-    }, [navigation, fadeIn]);
+        const anims: Animated.CompositeAnimation[] = [];
+        if (direction === 'fade') {
+            anims.push(Animated.timing(cardOpacity, { toValue: 1, duration: 200, useNativeDriver: true }));
+        }
+        if (initialTranslateX !== 0) {
+            anims.push(Animated.timing(cardTranslateX, { toValue: 0, duration: 250, useNativeDriver: true }));
+        }
+        if (initialTranslateY !== 0) {
+            anims.push(Animated.timing(cardTranslateY, { toValue: 0, duration: 250, useNativeDriver: true }));
+        }
+        if (anims.length) {
+            Animated.parallel(anims).start();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <View style={[styles.root, { backgroundColor }]}>
@@ -98,14 +122,17 @@ export const Modal: React.FC<any> = ({ route }) => {
             )}
 
             <View style={[styles.container, getPositionStyle()]}>
-                <View style={[
+                <Animated.View style={[
                     styles.card,
                     {
                         width,
                         ...(height !== undefined && height !== 'auto' ? { height } : {}),
                         maxWidth: SCREEN_WIDTH - 32,
-                        // 使用可配置卡片背景色
                         backgroundColor: cardBackgroundColor,
+                    },
+                    {
+                        transform: [{ translateX: cardTranslateX }, { translateY: cardTranslateY }],
+                        opacity: cardOpacity,
                     },
                 ]}>
                     {!!title && (
@@ -134,9 +161,9 @@ export const Modal: React.FC<any> = ({ route }) => {
                     <View style={styles.content}>
                         {typeof renderContent === 'function' ? renderContent() : <Text style={styles.placeholder}>No Content</Text>}
                     </View>
-                </View>
+                </Animated.View>
             </View>
-        </View>
+        </View >
     );
 };
 

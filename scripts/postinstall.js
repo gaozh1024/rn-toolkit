@@ -37,6 +37,7 @@ const REQUIRED_DEPS = [
   { name: 'react-native-drawer-layout', version: '4.1.13' },
   { name: 'react-native-reanimated', version: '4.1.3' },
   { name: 'react-native-worklets', version: '0.6.1' },
+  { name: 'react-native-permissions', version: '5.4.2' },
 ];
 
 const VECTOR_ICONS_MODULE = '@react-native-vector-icons/ionicons';

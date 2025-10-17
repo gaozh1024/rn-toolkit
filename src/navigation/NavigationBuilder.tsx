@@ -170,7 +170,6 @@ export class NavigationBuilder {
       );
     };
 
-    // 只有标签页时，使用 TabNavigator
     if (hasTabs && !hasOther) {
       return () => wrapWithDrawer(React.createElement(TabNavigator, this.config));
     }
