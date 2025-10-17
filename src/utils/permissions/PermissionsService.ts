@@ -53,7 +53,7 @@ function getConfigHints(alias: PermissionAlias): string {
   }
 }
 
-function resolvePermissions(alias: PermissionAlias, opts?: EnsureOptions): Permission[] | 'notification' {
+function resolvePermissions(alias: PermissionAlias, _opts?: EnsureOptions): Permission[] | 'notification' {
   if (alias === 'notification') return 'notification';
 
   if (Platform.OS === 'ios') {
@@ -135,51 +135,12 @@ function isGrantedStatus(alias: PermissionAlias, status: PermissionStatus): bool
 class PermissionsServiceImpl {
   async checkAlias(alias: PermissionAlias): Promise<PermissionCheckResponse> {
     const mapping = resolvePermissions(alias);
-    if (mapping === 'notification') {
-      const res = await checkNotifications();
-      const status = res.status as PermissionStatus;
-      if (status === RESULTS.UNAVAILABLE) {
-        this.warnUnavailable(alias);
-      }
-      return { alias, status, isGranted: isGrantedStatus('notification', status) };
-    }
-    if (mapping.length === 0) {
-      // iOS storage 等无需权限，直接视为 granted
-      return { alias, status: RESULTS.GRANTED, isGranted: true };
-    }
-    const statuses = await checkMultiple(mapping);
-    const groupStatuses = Object.values(statuses) as PermissionStatus[];
-    if (groupStatuses.some((s) => s === RESULTS.UNAVAILABLE)) {
-      this.warnUnavailable(alias);
-    }
-    const isGrantedGroup = groupStatuses.every((s) => isGrantedStatus(alias, s));
-    const worst = this.pickWorstStatus(groupStatuses);
-    return { alias, status: worst, isGranted: isGrantedGroup };
+    return this.processPermissions(alias, mapping, 'check');
   }
 
   async requestAlias(alias: PermissionAlias, notificationOptions?: NotificationOptions): Promise<PermissionCheckResponse> {
     const mapping = resolvePermissions(alias);
-    if (mapping === 'notification') {
-      const res = await requestNotifications(
-        toNotificationOptionsArray(notificationOptions)
-      );
-      const status = res.status as PermissionStatus;
-      if (status === RESULTS.UNAVAILABLE) {
-        this.warnUnavailable(alias);
-      }
-      return { alias, status, isGranted: isGrantedStatus('notification', status) };
-    }
-    if (mapping.length === 0) {
-      return { alias, status: RESULTS.GRANTED, isGranted: true };
-    }
-    const statuses = await requestMultiple(mapping);
-    const groupStatuses = Object.values(statuses) as PermissionStatus[];
-    if (groupStatuses.some((s) => s === RESULTS.UNAVAILABLE)) {
-      this.warnUnavailable(alias);
-    }
-    const isGrantedGroup = groupStatuses.every((s) => isGrantedStatus(alias, s));
-    const worst = this.pickWorstStatus(groupStatuses);
-    return { alias, status: worst, isGranted: isGrantedGroup };
+    return this.processPermissions(alias, mapping, 'request', notificationOptions);
   }
 
   async ensureAlias(alias: PermissionAlias, options?: EnsureOptions): Promise<boolean> {
@@ -200,6 +161,51 @@ class PermissionsServiceImpl {
     try { await openSettings(); } catch { }
   }
 
+  private async processPermissions(
+    alias: PermissionAlias,
+    mapping: Permission[] | 'notification',
+    action: 'check' | 'request',
+    notificationOptions?: NotificationOptions
+  ): Promise<PermissionCheckResponse> {
+    if (mapping === 'notification') {
+      const res = action === 'check'
+        ? await checkNotifications()
+        : await requestNotifications(toNotificationOptionsArray(notificationOptions));
+      const status = res.status as PermissionStatus;
+      if (status === RESULTS.UNAVAILABLE) {
+        this.warnUnavailable(alias);
+      }
+      return { alias, status, isGranted: isGrantedStatus('notification', status) };
+    }
+
+    if (mapping.length === 0) {
+      // iOS storage 等无需权限，直接视为 granted
+      return { alias, status: RESULTS.GRANTED, isGranted: true };
+    }
+
+    const fn = action === 'check' ? checkMultiple : requestMultiple;
+    try {
+      const statusesObj = await fn(mapping);
+      const groupStatuses = Object.values(statusesObj) as PermissionStatus[];
+
+      // 统一触发告警：unavailable 或 Android 相机 blocked
+      if (
+        groupStatuses.some((s) => s === RESULTS.UNAVAILABLE) ||
+        (Platform.OS === 'android' && alias === 'camera' && groupStatuses.some((s) => s === RESULTS.BLOCKED))
+      ) {
+        this.warnUnavailable(alias);
+      }
+
+      const isGrantedGroup = groupStatuses.every((s) => isGrantedStatus(alias, s));
+      const worst = this.pickWorstStatus(groupStatuses);
+      return { alias, status: worst, isGranted: isGrantedGroup };
+    } catch {
+      // 未声明或设备不支持等异常情况
+      this.warnUnavailable(alias);
+      return { alias, status: RESULTS.UNAVAILABLE, isGranted: false };
+    }
+  }
+
   // 选择最“差”的状态用于汇总展示
   private pickWorstStatus(statuses: PermissionStatus[]): PermissionStatus {
     // 优先级：blocked > denied > unavailable > limited > granted
@@ -218,6 +224,11 @@ class PermissionsServiceImpl {
 
   private warnUnavailable(alias: PermissionAlias) {
     if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      // Android 相机权限未在 Manifest 声明时给出明确提示
+      if (Platform.OS === 'android' && alias === 'camera') {
+        console.warn('还未配置相机权限，请前往android的AndroidManifest.xml配置<uses-permission android:name="android.permission.CAMERA" />');
+        return;
+      }
       const hint = getConfigHints(alias);
       console.warn(`[PermissionsService] 权限不可用（${alias}）。可能未在平台配置声明或设备不支持。${hint}。参见 src/utils/permissions/README.md`);
     }
@@ -236,7 +247,6 @@ class PermissionsServiceImpl {
 
 export const PermissionsService = new PermissionsServiceImpl();
 export default PermissionsService;
-
 
 // 将对象形态的 NotificationOptions 转为 NotificationOption[]
 function toNotificationOptionsArray(opts?: NotificationOptions): NotificationOption[] {

@@ -90,4 +90,14 @@ export const Stack: React.FC<StackProps> = ({
   );
 };
 
+export type RowProps = Omit<StackProps, 'direction'>;
+export const Row: React.FC<RowProps> = ({ children, ...props }) => (
+  <Stack direction="row" {...props}>{children}</Stack>
+);
+
+export type ColProps = Omit<StackProps, 'direction'>;
+export const Col: React.FC<ColProps> = ({ children, ...props }) => (
+  <Stack direction="column" {...props}>{children}</Stack>
+);
+
 export type { StackProps as IStackProps };

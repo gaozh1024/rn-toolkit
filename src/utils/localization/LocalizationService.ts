@@ -1,6 +1,7 @@
-import RNLocalize, { Locale } from 'react-native-localize';
+// 顶层导入处
+import * as RNLocalize from 'react-native-localize';
 import { AppState, AppStateStatus } from 'react-native';
-import { LocalizationInfo, LocalizationOptions } from './types';
+import { LocalizationInfo, LocalizationOptions, Locale } from './types';
 
 // 兼容包装：不同版本可能缺少这些方法，使用可选属性访问
 type LocalizeCompat = {
@@ -29,8 +30,9 @@ class LocalizationServiceImpl {
         this.attachListeners();
     }
 
+    // readLocalizationInfo 方法
     private readLocalizationInfo(): LocalizationInfo {
-        const locales = Localize.getLocales() || [];
+        const locales = Localize.getLocales?.() ?? [];
         const primary = locales[0];
 
         const locale: Locale = {
@@ -147,7 +149,7 @@ class LocalizationServiceImpl {
             return res ? { languageTag: res.languageTag, isRTL: !!res.isRTL } : null;
         }
         // 回退：基于 getLocales 手工匹配
-        const locales = Localize.getLocales() || [];
+        const locales = Localize.getLocales?.() ?? [];
         const preferred = locales.map(l => String(l.languageTag).toLowerCase());
         const candidates = tags.map(t => String(t).toLowerCase());
 
