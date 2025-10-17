@@ -22,6 +22,16 @@ export interface DeviceInformation {
   isEmulator: boolean;
 }
 
+// 同步的基础信息类型（可选导出）
+export interface BasicDeviceInfo {
+  width: number;
+  height: number;
+  isTablet: boolean;
+  isEmulator: boolean;
+  version: string;
+  buildNumber: string;
+}
+
 class DeviceInfoService {
   private static cachedInfo: DeviceInformation | null = null;
 
@@ -198,6 +208,35 @@ class DeviceInfoService {
    */
   static clearCache(): void {
     this.cachedInfo = null;
+  }
+
+  /**
+   * 同步获取基础设备信息（非敏感、可用于布局）
+   * - 平板判定：最短边 >= 600
+   * - 模拟器：优先使用 isEmulatorSync()，否则回退为 false
+   * - 版本与构建号：同步获取
+   */
+  static getBasicInfoSync(): BasicDeviceInfo {
+    const { width, height } = Dimensions.get('window');
+    const shortest = Math.min(width, height);
+    const isTablet = shortest >= 600;
+
+    let isEmulator = false;
+    try {
+      const fn = (DeviceInfo as any).isEmulatorSync;
+      if (typeof fn === 'function') {
+        isEmulator = !!fn();
+      }
+    } catch {
+      // 回退为 false
+      isEmulator = false;
+    }
+
+    const version = typeof DeviceInfo.getVersion === 'function' ? DeviceInfo.getVersion() : 'unknown';
+    const buildNumber =
+      typeof DeviceInfo.getBuildNumber === 'function' ? DeviceInfo.getBuildNumber() : 'unknown';
+
+    return { width, height, isTablet, isEmulator, version, buildNumber };
   }
 }
 
