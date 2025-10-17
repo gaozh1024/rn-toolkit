@@ -103,6 +103,14 @@ module.exports = {
 - 布局组件（Layout）：见 [src/components/layout/README.md](src/components/layout/README.md)
 - 反馈组件（Feedback）：见 [src/components/feedback/README.md](src/components/feedback/README.md)
 
+### 工具（Utils）
+
+- 总览与快速使用：见 [src/utils/README.md](src/utils/README.md)
+- 剪贴板（Clipboard）：见 [src/utils/clipboard/README.md](src/utils/clipboard/README.md)
+- 设备信息（Device）：见 [src/utils/device/README.md](src/utils/device/README.md)
+- 本地化（Localization）：见 [src/utils/localization/README.md](src/utils/localization/README.md)
+- 权限（Permissions）：见 [src/utils/permissions/README.md](src/utils/permissions/README.md)
+
 ## 约定与最佳实践
 
 - 统一导出：组件在各自目录 `index.ts` 导出，并在聚合出口集中导出
@@ -163,4 +171,40 @@ npm install --save --save-exact \
   @react-navigation/native@7.1.17 \
   @react-navigation/stack@7.4.8 \
   @react-navigation/bottom-tabs@7.4.7
+```
+
+## 快速使用（Utils）
+
+统一从聚合出口导入：
+
+```ts
+import {
+  ClipboardService, useClipboard,
+  DeviceInfoService, useDeviceInfo,
+  LocalizationService, useLocalization,
+  PermissionsService, usePermission,
+} from '@gaozh1024/rn-toolkit/src/utils';
+```
+
+示例：复制文本与读取文本
+
+```ts
+await ClipboardService.copyToClipboard('Hello', { showToast: true });
+const { clipboardText, getFromClipboard } = useClipboard();
+await getFromClipboard();
+```
+
+示例：设备信息与本地化
+
+```ts
+const info = await DeviceInfoService.getDeviceInfo();
+const { info: loc } = useLocalization();
+```
+
+示例：权限
+
+```ts
+const ok = await PermissionsService.ensureCamera({ openSettingsIfBlocked: true });
+const { request } = usePermission('notification');
+await request({ alert: true, sound: true, badge: true });
 ```
