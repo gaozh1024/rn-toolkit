@@ -80,3 +80,7 @@ await request({ alert: true, sound: true, badge: true });
 
 - 当权限返回 `unavailable`（未声明或设备不支持），开发模式下会输出警告并指出需要的 `Info.plist`/`AndroidManifest.xml` 配置项。
 - 详情见 [src/utils/permissions/README.md](./permissions/README.md) 的“平台配置”与“常见问题”。
+
+## 更多文档
+
+- 多语言 I18n 使用文档：[`src/utils/localization/I18nService.md`](./localization/I18nService.md)

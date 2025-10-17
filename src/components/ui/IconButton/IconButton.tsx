@@ -1,6 +1,6 @@
 // 顶部 import
 import React from 'react';
-import { Pressable, ViewStyle, Insets, StyleProp, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { Pressable, ViewStyle, Insets, StyleProp, StyleSheet, LayoutChangeEvent, Animated, Easing } from 'react-native';
 import { Icon, IconType } from '../Icon';
 import { useTheme, useThemeColors, useSpacingStyle, SpacingProps } from '../../../theme';
 import { GradientBackground } from '../../layout/GradientBackground';
@@ -18,6 +18,8 @@ export interface IconButtonProps extends SpacingProps, TestableProps, PressEvent
   color?: 'primary' | 'secondary' | 'text' | 'textSecondary' | 'textDisabled' | 'error' | 'warning' | 'success' | 'info' | string;
   variant?: 'filled' | 'ghost' | 'outline';
   disabled?: boolean;
+  loading?: boolean;
+  loadingAnimation?: 'none' | 'spinOnce';
   style?: StyleProp<ViewStyle>;
   hitSlop?: Insets;
   accessibilityLabel?: string;
@@ -31,6 +33,8 @@ const IconButton: React.FC<IconButtonProps> = ({
   color = 'text',
   variant = 'ghost',
   disabled = false,
+  loading = false,
+  loadingAnimation = 'none',
   style,
   hitSlop,
   accessibilityLabel,
@@ -58,6 +62,35 @@ const IconButton: React.FC<IconButtonProps> = ({
   const gradientConfig = normalizeGradientConfig([colors.primary, colors.secondary], props);
   const gradientEnabled = !!gradientConfig.colors && gradientConfig.colors.length > 0;
 
+  // 交互禁用：loading 时也禁用
+  const isDisabled = disabled || loading;
+
+  // 加载动画：仅在 loadingAnimation='spinOnce' 且 loading 时执行一次旋转
+  const spinAnim = React.useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    if (loading && loadingAnimation === 'spinOnce') {
+      spinAnim.setValue(0);
+      Animated.timing(spinAnim, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      spinAnim.stopAnimation(() => {
+        try { spinAnim.setValue(0); } catch {}
+      });
+    }
+    return () => {
+      spinAnim.stopAnimation(() => {
+        try { spinAnim.setValue(0); } catch {}
+      });
+    };
+  }, [loading, loadingAnimation, spinAnim]);
+
+  const spin = spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const iconWrapperStyle = loading && loadingAnimation === 'spinOnce' ? { transform: [{ rotate: spin }] } : undefined;
+
   // 容器基础样式与变体处理
   const base: ViewStyle = {
     alignItems: 'center',
@@ -67,7 +100,7 @@ const IconButton: React.FC<IconButtonProps> = ({
     paddingHorizontal: (theme.spacing as any)?.xs ?? 8,
     paddingVertical: (theme.spacing as any)?.xs ?? 8,
     borderRadius: theme.borderRadius?.md ?? 8,
-    opacity: disabled ? 0.6 : 1,
+    opacity: isDisabled ? 0.6 : 1,
     ...(gradientEnabled ? { position: 'relative', overflow: 'hidden', backgroundColor: 'transparent' } : {}),
   };
   const isOutline = variant === 'outline';
@@ -104,11 +137,12 @@ const IconButton: React.FC<IconButtonProps> = ({
       accessible
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || `${name} icon button`}
-      disabled={disabled}
-      onPress={disabled ? undefined : onPress}
-      onPressIn={disabled ? undefined : onPressIn}
-      onPressOut={disabled ? undefined : onPressOut}
-      onLongPress={disabled ? undefined : onLongPress}
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      disabled={isDisabled}
+      onPress={isDisabled ? undefined : onPress}
+      onPressIn={isDisabled ? undefined : onPressIn}
+      onPressOut={isDisabled ? undefined : onPressOut}
+      onLongPress={isDisabled ? undefined : onLongPress}
       hitSlop={hitSlop}
       onLayout={handleLayout}
       style={finalStyle as StyleProp<ViewStyle>}
@@ -128,7 +162,9 @@ const IconButton: React.FC<IconButtonProps> = ({
           style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
         />
       )}
-      <Icon name={name} type={type} size={size} color={disabled ? 'textDisabled' : color} />
+      <Animated.View style={iconWrapperStyle}>
+        <Icon name={name} type={type} size={size} color={isDisabled ? 'textDisabled' : color} />
+      </Animated.View>
     </Pressable>
   );
 };
