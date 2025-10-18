@@ -12,21 +12,36 @@ export class NavigationBuilder {
     tabs: [],
     stacks: [],
     modals: [],
+    tabsScreenName: 'MainTabs',
+    tabsGroups: [],
   };
 
   /**
-   * 添加标签页
-   */
-  addTab(tab: TabConfig): NavigationBuilder {
-    this.config.tabs.push(tab);
-    return this;
-  }
-
-  /**
    * 批量添加标签页
+   * - 未提供名称且主组为空：作为主组 tabs
+   * - 提供名称，或主组已存在：新增一个独立的 Tabs 组（使用该名称作为 Root 屏幕）
    */
-  addTabs(tabs: TabConfig[]): NavigationBuilder {
-    this.config.tabs.push(...tabs);
+  addTabs(tabs: TabConfig[], tabsScreenName?: string): NavigationBuilder {
+    const hasMain = (this.config.tabs || []).length > 0;
+
+    if (!tabsScreenName && !hasMain) {
+      // 作为主组
+      this.config.tabs.push(...tabs);
+      return this;
+    }
+
+    if (tabsScreenName && !hasMain && (this.config.tabs || []).length === 0) {
+      // 首次且指定名称：作为主组并设置主组名称
+      this.config.tabs.push(...tabs);
+      this.config.tabsScreenName = tabsScreenName;
+      return this;
+    }
+
+    // 其他情况：新增一个 Tabs 组
+    const screenName =
+      tabsScreenName || `TabsGroup${(this.config.tabsGroups || []).length + 1}`;
+    this.config.tabsGroups = this.config.tabsGroups || [];
+    this.config.tabsGroups.push({ screenName, tabs });
     return this;
   }
 
@@ -154,9 +169,10 @@ export class NavigationBuilder {
    */
   build(): React.FC {
     const hasTabs = (this.config.tabs || []).length > 0;
+    const hasTabGroups = (this.config.tabsGroups || []).length > 0;
     const hasOther = (this.config.stacks || []).length > 0 || (this.config.modals || []).length > 0;
 
-    if (!hasTabs && !hasOther) {
+    if (!hasTabs && !hasOther && !hasTabGroups) {
       throw new Error('至少需要添加一个页面（tab/stack/modal）');
     }
 
@@ -170,38 +186,13 @@ export class NavigationBuilder {
       );
     };
 
-    if (hasTabs && !hasOther) {
+    // 仅有主组且无其他：仍旧返回单 TabNavigator
+    if (hasTabs && !hasOther && !hasTabGroups) {
       return () => wrapWithDrawer(React.createElement(TabNavigator, this.config));
     }
 
-    // 存在栈或模态时，使用 RootNavigator（可有可无 tabs）
+    // 存在额外 Tabs 组或有栈/模态：使用 RootNavigator
     return () => wrapWithDrawer(React.createElement(RootNavigator, this.config));
-  }
-
-  /**
-   * 构建仅标签导航器
-   */
-  buildTabsOnly(): React.FC {
-    if (this.config.tabs.length === 0) {
-      throw new Error('至少需要添加一个标签页');
-    }
-
-    return () => React.createElement(TabNavigator, this.config);
-  }
-
-  /**
-   * 获取当前配置
-   */
-  getConfig(): NavigatorConfig {
-    return { ...this.config };
-  }
-
-  /**
-   * 重置配置
-   */
-  reset(): NavigationBuilder {
-    this.config = { tabs: [], stacks: [], modals: [] };
-    return this;
   }
 }
 

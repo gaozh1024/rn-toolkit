@@ -62,6 +62,22 @@ export interface DrawerConfig {
   edgeWidth?: number;
 }
 
+/** 额外的 Tabs 组（每组渲染为一个 RootStack.Screen） */
+export interface TabsGroupConfig {
+  /** 该组在 RootStack 中的屏幕名称（例如：'HomeTabs'、'MallTabs'） */
+  screenName: string;
+  /** 该组内的标签页 */
+  tabs: TabConfig[];
+  /** 该组的初始 Tab（可选，不传则用全局 initialRouteName 或第一项） */
+  initialRouteName?: string;
+  /** 该组的外观覆盖（可选，不传则沿用全局配置） */
+  tabBarHeight?: number;
+  backgroundColor?: string;
+  activeColor?: string;
+  inactiveColor?: string;
+  showLabels?: boolean;
+}
+
 export interface NavigatorConfig {
   tabs: TabConfig[];
   stacks?: StackConfig[];
@@ -72,10 +88,13 @@ export interface NavigatorConfig {
   activeColor?: string;
   inactiveColor?: string;
   showLabels?: boolean;
-  transitionMode?: TransitionMode; // 全局过渡动画模式
-  /** 左/右抽屉配置（可选） */
+  transitionMode?: TransitionMode;
   leftDrawer?: DrawerConfig;
   rightDrawer?: DrawerConfig;
+  /** 主 Tabs 在 RootStack 中的屏幕名称（默认 'MainTabs'） */
+  tabsScreenName?: string;
+  /** 额外的 Tabs 组（每组一个 RootStack.Screen） */
+  tabsGroups?: TabsGroupConfig[];
 }
 
 export type NavigationType = 'tab' | 'stack' | 'modal';

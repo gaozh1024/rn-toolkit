@@ -14,14 +14,20 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
   modals = [],
   initialRouteName,
   transitionMode = 'ios',
+  tabsScreenName,
+  tabsGroups = [],
   ...tabConfig
 }) => {
-  // 创建标签导航器组件
+  // 创建主标签导航器组件
   const TabsComponent = () => (
     <TabNavigator
       tabs={tabs}
       initialRouteName={initialRouteName}
-      {...tabConfig}
+      tabBarHeight={tabConfig.tabBarHeight}
+      backgroundColor={tabConfig.backgroundColor}
+      activeColor={tabConfig.activeColor}
+      inactiveColor={tabConfig.inactiveColor}
+      showLabels={tabConfig.showLabels}
     />
   );
 
@@ -101,14 +107,34 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
     <RootStack.Navigator
       screenOptions={{ headerShown: false }}
     >
-      {/* 主标签导航器：仅在存在 tabs 时挂载 */}
+      {/* 主标签导航器：仅在存在主组 tabs 时挂载 */}
       {tabs.length > 0 && (
         <RootStack.Screen
-          name="MainTabs"
+          name={tabsScreenName || 'MainTabs'}
           component={TabsComponent}
           options={getTransitionOptions(transitionMode)}
         />
       )}
+
+      {/* 额外的 Tabs 组：每组一个独立屏幕 */}
+      {tabsGroups.map((group) => (
+        <RootStack.Screen
+          key={group.screenName}
+          name={group.screenName}
+          children={() => (
+            <TabNavigator
+              tabs={group.tabs}
+              initialRouteName={group.initialRouteName ?? initialRouteName}
+              tabBarHeight={group.tabBarHeight ?? tabConfig.tabBarHeight}
+              backgroundColor={group.backgroundColor ?? tabConfig.backgroundColor}
+              activeColor={group.activeColor ?? tabConfig.activeColor}
+              inactiveColor={group.inactiveColor ?? tabConfig.inactiveColor}
+              showLabels={group.showLabels ?? tabConfig.showLabels}
+            />
+          )}
+          options={getTransitionOptions(transitionMode)}
+        />
+      ))}
 
       {/* 堆栈页面 */}
       {stacks.map((stack) => (
