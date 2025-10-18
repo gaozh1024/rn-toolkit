@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import { createStackNavigator, CardStyleInterpolators, TransitionPresets } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigatorConfig, TransitionMode } from '../types';
 import { TabNavigator } from './TabNavigator';
 import { StackNavigator } from './StackNavigator';
-import { Modal as DefaultModal } from '../../components/feedback/Modal';
+import { ModalScreen } from '../../components/feedback/Modal';
 import { WheelPickerModal } from '../../components/feedback/Picker'
 
-const RootStack = createStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 export const RootNavigator: React.FC<NavigatorConfig> = ({
   tabs,
@@ -36,58 +36,40 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
       case 'fade':
         return {
           headerShown: false,
-          ...TransitionPresets.FadeFromBottomAndroid,
-          cardStyleInterpolator: CardStyleInterpolators.forFadeFromCenter,
+          animation: 'fade',
         } as const;
       case 'bottom':
         return {
           headerShown: false,
-          ...TransitionPresets.ModalSlideFromBottomIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
-          presentation: 'transparentModal' as const,
-          gestureDirection: 'vertical' as const,
-          transitionSpec: {
-            open: { animation: 'timing', config: { duration: 200 } },
-            close: { animation: 'timing', config: { duration: 100 } },
-          },
+          presentation: 'transparentModal',
+          animation: 'fade',
         } as const;
       case 'top':
         return {
           headerShown: false,
-          ...TransitionPresets.ModalSlideFromBottomIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
-          presentation: 'transparentModal' as const,
-          gestureDirection: 'vertical-inverted' as const,
-          transitionSpec: {
-            open: { animation: 'timing', config: { duration: 200 } },
-            close: { animation: 'timing', config: { duration: 100 } },
-          },
+          presentation: 'transparentModal',
+          animation: 'fade',
         } as const;
       case 'left':
         return {
           headerShown: false,
-          ...TransitionPresets.SlideFromRightIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          gestureDirection: 'horizontal-inverted' as const,
+          animation: 'slide_from_left',
         } as const;
       case 'right':
         return {
           headerShown: false,
-          ...TransitionPresets.SlideFromRightIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          gestureDirection: 'horizontal' as const,
+          animation: 'slide_from_right',
         } as const;
       case 'none':
         return {
           headerShown: false,
-          animationEnabled: false,
+          animation: 'none',
         } as const;
       case 'ios':
       default:
         return {
           headerShown: false,
-          ...TransitionPresets.SlideFromRightIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          animation: 'slide_from_right',
         } as const;
     }
   };
@@ -95,7 +77,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
   const allModals = useMemo(() => {
     const existsDefault = (modals || []).some(m => m.name === 'Modal');
     const existsPicker = (modals || []).some(m => m.name === 'WheelPickerModal');
-    const def = { name: 'Modal', component: DefaultModal } as any;
+    const def = { name: 'Modal', component: ModalScreen } as any;
     const picker = { name: 'WheelPickerModal', component: WheelPickerModal } as any;
     if (existsDefault && existsPicker) return modals || [];
     if (existsDefault && !existsPicker) return [{ ...picker }, ...(modals || [])];
@@ -152,21 +134,21 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
         />
       ))}
 
-      {/* 模态页面 */}
+      {/* 模态页面：native-stack 透明模态 */}
       {allModals.map((modal) => (
         <RootStack.Screen
           key={modal.name}
           name={modal.name}
           component={modal.component}
           options={({ route }: any) => {
-            // 统一：导航层动画使用 fade（不再根据 params.direction 切换）
             const base = getTransitionOptions('fade');
             return {
               ...base,
               presentation: 'transparentModal',
-              cardStyle: {
-                ...(typeof (modal.options as any)?.cardStyle === 'object' ? (modal.options as any).cardStyle : {}),
+              contentStyle: {
                 backgroundColor: 'transparent',
+                ...((modal.options as any)?.cardStyle || {}),
+                ...((modal.options as any)?.contentStyle || {}),
               },
               ...(typeof modal.options === 'function' ? (modal.options as any)({ route }) : (modal.options || {})),
             } as any;

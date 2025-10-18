@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { createStackNavigator, CardStyleInterpolators, TransitionPresets } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StackConfig, TransitionMode } from '../types';
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
 interface StackNavigatorProps {
   stacks: StackConfig[];
@@ -20,129 +20,82 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
       case 'fade':
         return {
           headerShown: false,
-          ...TransitionPresets.FadeFromBottomAndroid,
-          cardStyleInterpolator: CardStyleInterpolators.forFadeFromCenter,
+          animation: 'fade',
         } as const;
       case 'bottom':
         return {
           headerShown: false,
-          ...TransitionPresets.ModalSlideFromBottomIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
-          presentation: 'modal' as const,
-          gestureDirection: 'vertical' as const,
+          presentation: 'modal',
+          animation: 'fade',
         } as const;
       case 'top':
         return {
           headerShown: false,
-          ...TransitionPresets.ModalSlideFromBottomIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
-          presentation: 'modal' as const,
-          gestureDirection: 'vertical-inverted' as const,
+          presentation: 'modal',
+          animation: 'fade',
         } as const;
       case 'left':
         return {
           headerShown: false,
-          ...TransitionPresets.SlideFromRightIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          gestureDirection: 'horizontal-inverted' as const,
+          animation: 'slide_from_left',
         } as const;
       case 'right':
         return {
           headerShown: false,
-          ...TransitionPresets.SlideFromRightIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          gestureDirection: 'horizontal' as const,
+          animation: 'slide_from_right',
         } as const;
       case 'none':
         return {
           headerShown: false,
-          animationEnabled: false,
+          animation: 'none',
         } as const;
       case 'ios':
       default:
         return {
           headerShown: false,
-          ...TransitionPresets.SlideFromRightIOS,
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          animation: 'slide_from_right',
         } as const;
     }
   }, [transitionMode]);
 
-  // 新增：将父层传入的初始路由名映射为子层屏幕名（添加后缀）
+  // 将父层传入的初始路由名映射为子层屏幕名（添加后缀）
   const mapToInnerRoute = (name?: string) => (name ? `${name}__screen` : undefined);
   const initialInnerRoute = mapToInnerRoute(initialRouteName) || (stacks[0]?.name ? `${stacks[0].name}__screen` : undefined);
 
   return (
     <Stack.Navigator
-      // 修改：使用映射后的初始路由名，避免与父层重复
       initialRouteName={initialInnerRoute}
       screenOptions={commonScreenOptions as any}
     >
       {stacks.map((stack) => {
-        let screenOptions = stack.options;
-        if (stack.transitionMode) {
+        const localTransition = (() => {
           switch (stack.transitionMode) {
             case 'fade':
-              screenOptions = {
-                ...screenOptions,
-                ...TransitionPresets.FadeFromBottomAndroid,
-                cardStyleInterpolator: CardStyleInterpolators.forFadeFromCenter,
-              } as any;
-              break;
+              return { animation: 'fade' } as any;
             case 'bottom':
-              screenOptions = {
-                ...screenOptions,
-                ...TransitionPresets.ModalSlideFromBottomIOS,
-                cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
-                presentation: 'modal',
-                gestureDirection: 'vertical',
-              } as any;
-              break;
+              return { presentation: 'modal', animation: 'fade' } as any;
             case 'top':
-              screenOptions = {
-                ...screenOptions,
-                ...TransitionPresets.ModalSlideFromBottomIOS,
-                cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
-                presentation: 'modal',
-                gestureDirection: 'vertical-inverted',
-              } as any;
-              break;
+              return { presentation: 'modal', animation: 'fade' } as any;
             case 'left':
-              screenOptions = {
-                ...screenOptions,
-                ...TransitionPresets.SlideFromRightIOS,
-                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-                gestureDirection: 'horizontal-inverted',
-              } as any;
-              break;
+              return { animation: 'slide_from_left' } as any;
             case 'right':
-              screenOptions = {
-                ...screenOptions,
-                ...TransitionPresets.SlideFromRightIOS,
-                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-                gestureDirection: 'horizontal',
-              } as any;
-              break;
+              return { animation: 'slide_from_right' } as any;
             case 'none':
-              screenOptions = {
-                ...screenOptions,
-                animationEnabled: false,
-              } as any;
-              break;
+              return { animation: 'none' } as any;
             case 'ios':
             default:
-              screenOptions = {
-                ...screenOptions,
-                ...TransitionPresets.SlideFromRightIOS,
-                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-              } as any;
+              return { animation: 'slide_from_right' } as any;
           }
-        }
+        })();
+
+        const screenOptions = {
+          ...(stack.options as any),
+          ...localTransition,
+        };
 
         return (
           <Stack.Screen
             key={stack.name}
-            // 修改：为子层屏幕名称添加后缀，避免与父层同名
             name={`${stack.name}__screen`}
             component={stack.component}
             options={screenOptions}

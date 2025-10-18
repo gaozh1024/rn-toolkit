@@ -34,7 +34,7 @@ npm install @gaozh1024/rn-toolkit
 - `react-native-localize`
 - `react-native-worklets`
 - `@react-navigation/native`
-- `@react-navigation/stack`
+- `@react-navigation/native-stack`
 - `@react-navigation/bottom-tabs`
 
 > 提示：安装期间，postinstall 会自动检查缺失的依赖并安装；已存在的依赖会跳过。
@@ -169,7 +169,7 @@ npm install --save --save-exact \
   react-native-localize@3.5.2 \
   react-native-worklets@0.6.1 \
   @react-navigation/native@7.1.17 \
-  @react-navigation/stack@7.4.8 \
+  @react-navigation/native-stack@7.3.28 \
   @react-navigation/bottom-tabs@7.4.7
 ```
 

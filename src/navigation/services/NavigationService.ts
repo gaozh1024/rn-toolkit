@@ -1,5 +1,4 @@
 import { createNavigationContainerRef, StackActions, CommonActions } from '@react-navigation/native';
-import { TransitionMode } from '../types';
 import { getGlobalDrawerController } from '../DrawerContext';
 
 // 创建导航引用
@@ -20,29 +19,34 @@ class NavigationService {
   }
 
   /**
-  * 始终以新实例方式打开模态（push）
-  */
-  openModal(name: string, params?: { direction?: TransitionMode; backgroundColor?: string;[key: string]: any }): void {
-    if (navigationRef.current?.isReady()) {
-      console.log('NavigationService: openModal (push)', name, params);
-      navigationRef.current.dispatch(StackActions.push(name, params));
-    } else {
+   * 关闭当前模态（弹出栈顶一层）
+   */
+  closeModal(): void {
+    if (!navigationRef.current?.isReady()) {
       console.warn('NavigationService: Navigation not ready');
+      return;
     }
+    // 展示导航注册列表
+    console.log('关闭模态', navigationRef.current.getState().routes);
+
+    this.goBack()
+
+    // 展示导航注册列表
+    console.log('关闭模态后', navigationRef.current.getState().routes);
   }
 
   /**
-  * 以模态方式展示页面（传入方向/背景色等）
-  * direction: 'left' | 'right' | 'top' | 'bottom' | 'fade' | 'none'
-  */
-  presentModal(name: string, params?: { direction?: TransitionMode; backgroundColor?: string;[key: string]: any }): void {
+   * 按名称打开模态（push）
+   * name 为通过 NavigationBuilder.addModal 注册的屏幕名
+   */
+  openModal(name: string, params?: any): void {
     if (navigationRef.current?.isReady()) {
-      console.log('NavigationService: presentModal', name, params);
-      const navigateAction = CommonActions.navigate({
-        name,
-        params,
-      });
-      navigationRef.current.dispatch(navigateAction);
+      // 展示导航注册列表
+      console.log('打开模态', navigationRef.current.getState().routes);
+
+      console.log('NavigationService: openModal (push)', name, params);
+      this.navigate(name, params);
+      console.log('打开模态后', navigationRef.current.getState().routes);
     } else {
       console.warn('NavigationService: Navigation not ready');
     }
@@ -311,3 +315,4 @@ export const navigationService = NavigationService.getInstance();
 
 // 导出别名
 export { navigationService as Navigation };
+

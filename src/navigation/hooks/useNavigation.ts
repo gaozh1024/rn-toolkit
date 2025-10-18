@@ -92,10 +92,9 @@ export const useNavigation = () => {
         getState: () => navigationService.getState(),
         isReady: () => navigationService.isReady(),
 
-        // 暴露模态打开方法（navigate 语义）
-        presentModal: (name: string, params?: any) => navigationService.presentModal(name, params),
         // 暴露“每次都新实例”的打开方法（push 语义）
-        openModal: (name: string, params?: any) => navigationService.openModal(name, params),
+        openModal: (id: string, params?: any) => navigationService.openModal(id, params),
+        closeModal: () => navigationService.closeModal(),
 
         // 监听器
         addStateChangeListener: (listener: any) => navigationService.addStateChangeListener(listener),

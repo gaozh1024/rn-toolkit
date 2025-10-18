@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
-import { StackNavigationOptions } from '@react-navigation/stack';
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
 export interface TabConfig {
   name: string;
@@ -21,7 +21,7 @@ export interface TabConfig {
 export interface StackConfig {
   name: string;
   component: ComponentType<any>;
-  options?: StackNavigationOptions;
+  options?: NativeStackNavigationOptions;
   transitionMode?: TransitionMode; // 单屏覆盖过渡动画
 }
 

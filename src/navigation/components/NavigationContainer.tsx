@@ -20,12 +20,12 @@ export const NavigationContainer: React.FC<NavigationContainerProps> = ({
   onStateChange,
 }) => {
   const handleReady = () => {
-    console.log('NavigationContainer: Ready');
+    console.log('NavigationContainer: Ready', typeof onReady);
     onReady?.();
   };
 
   const handleStateChange = () => {
-    console.log('NavigationContainer: State changed');
+    console.log('NavigationContainer: State changed', typeof onStateChange);
     onStateChange?.();
   };
 

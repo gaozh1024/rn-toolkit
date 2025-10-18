@@ -1,3 +1,3 @@
 
-export { Modal } from './Modal';
-export type { ModalParams } from './Modal';
+export { ModalScreen} from './Modal';
+export type { ModalTagProps, ModalParams } from './Modal';

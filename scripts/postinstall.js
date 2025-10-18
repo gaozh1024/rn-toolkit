@@ -25,7 +25,7 @@ const REQUIRED_DEPS = [
   { name: '@react-native-clipboard/clipboard', version: '1.16.3' },
   { name: '@react-navigation/bottom-tabs', version: '7.4.7' },
   { name: '@react-navigation/native', version: '7.1.17' },
-  { name: '@react-navigation/stack', version: '7.4.8' },
+  { name: '@react-navigation/native-stack', version: '7.3.28' },
   { name: 'react-native-device-info', version: '14.1.1' },
   { name: 'react-native-gesture-handler', version: '2.28.0' },
   { name: 'react-native-localize', version: '3.5.2' },
