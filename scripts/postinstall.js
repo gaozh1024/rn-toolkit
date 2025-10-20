@@ -23,12 +23,12 @@ const warn = (...args) => console.warn(PREFIX, ...args);
 // 精确版本依赖列表（如需调整版本，只在此处维护）
 const REQUIRED_DEPS = [
   { name: '@react-native-clipboard/clipboard', version: '1.16.3' },
-  { name: '@react-navigation/bottom-tabs', version: '7.4.7' },
-  { name: '@react-navigation/native', version: '7.1.17' },
+  { name: '@react-navigation/bottom-tabs', version: '7.4.9' },
+  { name: '@react-navigation/native', version: '7.1.18' },
   { name: '@react-navigation/native-stack', version: '7.3.28' },
   { name: 'react-native-device-info', version: '14.1.1' },
   { name: 'react-native-gesture-handler', version: '2.28.0' },
-  { name: 'react-native-localize', version: '3.5.2' },
+  { name: 'react-native-localize', version: '3.5.4' },
   { name: 'react-native-mmkv', version: '3.3.3' },
   { name: 'react-native-safe-area-context', version: '5.6.1' },
   { name: 'react-native-screens', version: '4.16.0' },

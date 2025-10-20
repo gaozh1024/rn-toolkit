@@ -26,13 +26,13 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
         return {
           headerShown: false,
           presentation: 'modal',
-          animation: 'fade',
+          animation: 'slide_from_bottom',
         } as const;
       case 'top':
         return {
           headerShown: false,
           presentation: 'modal',
-          animation: 'fade',
+          animation: 'slide_from_top',
         } as const;
       case 'left':
         return {
@@ -73,9 +73,9 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
             case 'fade':
               return { animation: 'fade' } as any;
             case 'bottom':
-              return { presentation: 'modal', animation: 'fade' } as any;
+              return { presentation: 'modal', animation: 'slide_from_bottom' } as any;
             case 'top':
-              return { presentation: 'modal', animation: 'fade' } as any;
+              return { presentation: 'modal', animation: 'slide_from_top' } as any;
             case 'left':
               return { animation: 'slide_from_left' } as any;
             case 'right':
