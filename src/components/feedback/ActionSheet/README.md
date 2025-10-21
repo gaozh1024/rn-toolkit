@@ -5,6 +5,7 @@
 - 适配安全区（`useSafeAreaInsets`）。
 
 ## 安装与挂载
+
 在自定义导航容器中挂载一次 `ActionSheetContainer`：
 
 ```tsx
@@ -22,6 +23,7 @@ import { ActionSheetContainer } from '@/components/feedback/ActionSheet';
 ## 快速使用
 
 ### 选择操作（Promise 风格）
+
 ```ts
 import { ActionSheet } from '@/components/feedback/ActionSheet';
 
@@ -40,6 +42,7 @@ if (value === 'delete') {
 ```
 
 ### 非阻断展示
+
 ```ts
 ActionSheet.show({
   title: '分享至',
@@ -53,6 +56,7 @@ ActionSheet.show({
 ```
 
 ## API
+
 ```ts
 export interface ActionSheetOptions {
   title?: string;
@@ -71,6 +75,7 @@ ActionSheet.hide(): void;                                    // 关闭
 ```
 
 ## 设计说明
+
 - 动画：遮罩淡入（`useFadeAnimation`）+ 面板自底部滑入（`Animated.timing` + `translateY`，按高度测量进入）。
 - 手势：`PanResponder` 绑定 `translateY`，阈值 80 像素或较大下拉速度时触发关闭，失败回弹。
 - 主题：背景/文本/分隔线/危险操作颜色来自主题；可按需扩展图标与列表样式。

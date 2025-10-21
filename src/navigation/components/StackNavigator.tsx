@@ -8,11 +8,13 @@ interface StackNavigatorProps {
   stacks: StackConfig[];
   initialRouteName?: string;
   transitionMode?: TransitionMode;
+  initialParams?: any; // 新增：用于透传父路由参数到初始子屏幕
 }
 
 export const StackNavigator: React.FC<StackNavigatorProps> = ({
   stacks,
   initialRouteName,
+  initialParams, // 新增：从 props 接收
   transitionMode = 'ios',
 }) => {
   const commonScreenOptions = useMemo(() => {
@@ -93,15 +95,18 @@ export const StackNavigator: React.FC<StackNavigatorProps> = ({
           ...localTransition,
         };
 
+        const isInitial = `${stack.name}__screen` === initialInnerRoute;
+
         return (
           <Stack.Screen
             key={stack.name}
             name={`${stack.name}__screen`}
             component={stack.component}
             options={screenOptions}
+            initialParams={isInitial ? initialParams : undefined} // 新增：仅给初始子屏幕设置参数
           />
         );
       })}
     </Stack.Navigator>
   );
-};
+}

@@ -118,15 +118,16 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
         />
       ))}
 
-      {/* 堆栈页面 */}
+      {/* 堆栈页面：把父 route.params 透传给 StackNavigator */}
       {stacks.map((stack) => (
         <RootStack.Screen
           key={stack.name}
           name={stack.name}
-          children={() => (
+          children={({ route }) => (
             <StackNavigator
               stacks={[stack]}
               initialRouteName={stack.name}
+              initialParams={route.params} // 新增：将父层参数传入
               transitionMode={stack.transitionMode || transitionMode}
             />
           )}
