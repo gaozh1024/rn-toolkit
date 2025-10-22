@@ -39,58 +39,58 @@ export const spacingPropsToStyle = (spacing: SpacingTheme, props: SpacingProps):
   const r = (v?: SpacingSize) => resolve(spacing, v);
 
   // 先计算 margin（全局 -> 轴向 -> 单侧）
-  const marginTop = m != null ? r(m) : undefined;
-  const marginBottom = m != null ? r(m) : undefined;
-  const marginLeft = m != null ? r(m) : undefined;
-  const marginRight = m != null ? r(m) : undefined;
+  let marginTop    = m != null ? r(m) : undefined;
+  let marginBottom = m != null ? r(m) : undefined;
+  let marginLeft   = m != null ? r(m) : undefined;
+  let marginRight  = m != null ? r(m) : undefined;
 
   if (mv != null) {
     const v = r(mv);
-    (marginTop as any) = v;
-    (marginBottom as any) = v;
+    marginTop = v;
+    marginBottom = v;
   }
   if (mh != null) {
     const v = r(mh);
-    (marginLeft as any) = v;
-    (marginRight as any) = v;
+    marginLeft = v;
+    marginRight = v;
   }
-  if (mt != null) (marginTop as any) = r(mt);
-  if (mb != null) (marginBottom as any) = r(mb);
-  if (ml != null) (marginLeft as any) = r(ml);
-  if (mr != null) (marginRight as any) = r(mr);
+  if (mt != null) marginTop = r(mt);
+  if (mb != null) marginBottom = r(mb);
+  if (ml != null) marginLeft = r(ml);
+  if (mr != null) marginRight = r(mr);
 
   // 再计算 padding（全局 -> 轴向 -> 单侧）
-  const paddingTop = p != null ? r(p) : undefined;
-  const paddingBottom = p != null ? r(p) : undefined;
-  const paddingLeft = p != null ? r(p) : undefined;
-  const paddingRight = p != null ? r(p) : undefined;
+  let paddingTop    = p != null ? r(p) : undefined;
+  let paddingBottom = p != null ? r(p) : undefined;
+  let paddingLeft   = p != null ? r(p) : undefined;
+  let paddingRight  = p != null ? r(p) : undefined;
 
   if (pv != null) {
     const v = r(pv);
-    (paddingTop as any) = v;
-    (paddingBottom as any) = v;
+    paddingTop = v;
+    paddingBottom = v;
   }
   if (ph != null) {
     const v = r(ph);
-    (paddingLeft as any) = v;
-    (paddingRight as any) = v;
+    paddingLeft = v;
+    paddingRight = v;
   }
-  if (pt != null) (paddingTop as any) = r(pt);
-  if (pb != null) (paddingBottom as any) = r(pb);
-  if (pl != null) (paddingLeft as any) = r(pl);
-  if (pr != null) (paddingRight as any) = r(pr);
+  if (pt != null) paddingTop = r(pt);
+  if (pb != null) paddingBottom = r(pb);
+  if (pl != null) paddingLeft = r(pl);
+  if (pr != null) paddingRight = r(pr);
 
   // 仅在值存在时写入，避免污染样式
   const style: SpacingStyle = {};
-  if (marginTop != null) style.marginTop = marginTop;
+  if (marginTop    != null) style.marginTop    = marginTop;
   if (marginBottom != null) style.marginBottom = marginBottom;
-  if (marginLeft != null) style.marginLeft = marginLeft;
-  if (marginRight != null) style.marginRight = marginRight;
+  if (marginLeft   != null) style.marginLeft   = marginLeft;
+  if (marginRight  != null) style.marginRight  = marginRight;
 
-  if (paddingTop != null) style.paddingTop = paddingTop;
+  if (paddingTop    != null) style.paddingTop    = paddingTop;
   if (paddingBottom != null) style.paddingBottom = paddingBottom;
-  if (paddingLeft != null) style.paddingLeft = paddingLeft;
-  if (paddingRight != null) style.paddingRight = paddingRight;
+  if (paddingLeft   != null) style.paddingLeft   = paddingLeft;
+  if (paddingRight  != null) style.paddingRight  = paddingRight;
 
   return style;
 };
