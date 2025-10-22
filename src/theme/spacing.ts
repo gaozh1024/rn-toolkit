@@ -35,24 +35,64 @@ export const spacingPropsToStyle = (spacing: SpacingTheme, props: SpacingProps):
     p, pv, ph, pt, pb, pl, pr,
   } = props;
 
-  return {
-    // margin
-    ...(m != null ? { margin: resolve(spacing, m) } : {}),
-    ...(mv != null ? { marginTop: resolve(spacing, mv), marginBottom: resolve(spacing, mv) } : {}),
-    ...(mh != null ? { marginLeft: resolve(spacing, mh), marginRight: resolve(spacing, mh) } : {}),
-    ...(mt != null ? { marginTop: resolve(spacing, mt) } : {}),
-    ...(mb != null ? { marginBottom: resolve(spacing, mb) } : {}),
-    ...(ml != null ? { marginLeft: resolve(spacing, ml) } : {}),
-    ...(mr != null ? { marginRight: resolve(spacing, mr) } : {}),
-    // padding
-    ...(p != null ? { padding: resolve(spacing, p) } : {}),
-    ...(pv != null ? { paddingTop: resolve(spacing, pv), paddingBottom: resolve(spacing, pv) } : {}),
-    ...(ph != null ? { paddingLeft: resolve(spacing, ph), paddingRight: resolve(spacing, ph) } : {}),
-    ...(pt != null ? { paddingTop: resolve(spacing, pt) } : {}),
-    ...(pb != null ? { paddingBottom: resolve(spacing, pb) } : {}),
-    ...(pl != null ? { paddingLeft: resolve(spacing, pl) } : {}),
-    ...(pr != null ? { paddingRight: resolve(spacing, pr) } : {}),
-  };
+  // 统一解析数值（保留 0）
+  const r = (v?: SpacingSize) => resolve(spacing, v);
+
+  // 先计算 margin（全局 -> 轴向 -> 单侧）
+  const marginTop = m != null ? r(m) : undefined;
+  const marginBottom = m != null ? r(m) : undefined;
+  const marginLeft = m != null ? r(m) : undefined;
+  const marginRight = m != null ? r(m) : undefined;
+
+  if (mv != null) {
+    const v = r(mv);
+    (marginTop as any) = v;
+    (marginBottom as any) = v;
+  }
+  if (mh != null) {
+    const v = r(mh);
+    (marginLeft as any) = v;
+    (marginRight as any) = v;
+  }
+  if (mt != null) (marginTop as any) = r(mt);
+  if (mb != null) (marginBottom as any) = r(mb);
+  if (ml != null) (marginLeft as any) = r(ml);
+  if (mr != null) (marginRight as any) = r(mr);
+
+  // 再计算 padding（全局 -> 轴向 -> 单侧）
+  const paddingTop = p != null ? r(p) : undefined;
+  const paddingBottom = p != null ? r(p) : undefined;
+  const paddingLeft = p != null ? r(p) : undefined;
+  const paddingRight = p != null ? r(p) : undefined;
+
+  if (pv != null) {
+    const v = r(pv);
+    (paddingTop as any) = v;
+    (paddingBottom as any) = v;
+  }
+  if (ph != null) {
+    const v = r(ph);
+    (paddingLeft as any) = v;
+    (paddingRight as any) = v;
+  }
+  if (pt != null) (paddingTop as any) = r(pt);
+  if (pb != null) (paddingBottom as any) = r(pb);
+  if (pl != null) (paddingLeft as any) = r(pl);
+  if (pr != null) (paddingRight as any) = r(pr);
+
+  // 仅在值存在时写入，避免污染样式
+  const style: SpacingStyle = {};
+  if (marginTop != null) style.marginTop = marginTop;
+  if (marginBottom != null) style.marginBottom = marginBottom;
+  if (marginLeft != null) style.marginLeft = marginLeft;
+  if (marginRight != null) style.marginRight = marginRight;
+
+  if (paddingTop != null) style.paddingTop = paddingTop;
+  if (paddingBottom != null) style.paddingBottom = paddingBottom;
+  if (paddingLeft != null) style.paddingLeft = paddingLeft;
+  if (paddingRight != null) style.paddingRight = paddingRight;
+
+  return style;
 };
 
 export const useSpacingStyle = (props: SpacingProps): SpacingStyle => {

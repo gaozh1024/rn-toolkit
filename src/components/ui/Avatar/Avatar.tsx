@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { View, Image, Text, ViewStyle, TextStyle, StyleSheet, StyleProp } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Image, Text, ViewStyle, TextStyle, StyleSheet, StyleProp, ImageSourcePropType } from 'react-native';
 import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { TestableProps, buildTestID } from '../../common/test';
 import { BoxProps, buildBoxStyle } from '../../common/box';
@@ -13,13 +13,13 @@ export type AvatarShape = 'circle' | 'rounded' | 'square';
 export type AvatarStatus = 'online' | 'offline';
 
 export interface AvatarProps extends SpacingProps, BoxProps, TestableProps, ShadowProps {
-  src?: string; // 头像图片 URL
-  name?: string; // 用户名，用于生成初始头像
-  size?: AvatarSize; // 头像大小
-  shape?: AvatarShape; // 头像形状
-  status?: AvatarStatus; // 头像状态
-  style?: StyleProp<ViewStyle>; // 头像容器样式（参与 overrides）
-  textStyle?: StyleProp<TextStyle>; // 用户名文本样式
+  src?: string | ImageSourcePropType;
+  name?: string;
+  size?: AvatarSize;
+  shape?: AvatarShape;
+  status?: AvatarStatus;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 // 解析颜色到 RGB（支持 #RGB/#RRGGBB 与 rgb(a)）
@@ -87,7 +87,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   }, [shape, px, br]);
 
   const initials = useMemo(() => {
-    if (!name) return '';
+    if (!name || typeof name !== 'string') return '';
     const trimmed = name.trim();
     if (!trimmed) return '';
     const parts = trimmed.split(/\s+/);
@@ -155,11 +155,21 @@ export const Avatar: React.FC<AvatarProps> = ({
     zIndex: 10,
   };
 
-  const accessibilityLabel = `${name ?? ''}${status ? `, ${status}` : ''}`.trim();
-  const showImage = !!src && !imageError;
-
   // 规范化 testID
   const computedTestID = buildTestID('Avatar', testID);
+
+  // 当 src 变化时重置错误状态
+  useEffect(() => {
+    setImageError(false);
+  }, [src]);
+
+  const accessibilityLabel = `${name ?? ''}${status ? `, ${status}` : ''}`.trim();
+
+  // 统一构造 Image 的 source：远程字符串 => { uri }, 本地资源 => 直接透传
+  const imageSource: ImageSourcePropType | undefined =
+    typeof src === 'string' ? (src ? { uri: src } : undefined) : (src as ImageSourcePropType | undefined);
+
+  const showImage = !!src && !imageError;
 
   return (
     <View style={[container, spacingStyle]} testID={computedTestID} accessibilityLabel={accessibilityLabel}>
@@ -167,7 +177,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       <View style={[{ width: px, height: px, borderRadius: radius }, shadowStyle]}>
         {showImage ? (
           <Image
-            source={{ uri: src! }}
+            source={imageSource}
             style={{ width: px, height: px, borderRadius: radius }}
             onError={() => setImageError(true)}
           />
