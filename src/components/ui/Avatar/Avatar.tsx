@@ -13,7 +13,7 @@ export type AvatarShape = 'circle' | 'rounded' | 'square';
 export type AvatarStatus = 'online' | 'offline';
 
 export interface AvatarProps extends SpacingProps, BoxProps, TestableProps, ShadowProps {
-  src?: string | ImageSourcePropType;
+  src?: ImageSourcePropType;
   name?: string;
   size?: AvatarSize;
   shape?: AvatarShape;
@@ -164,11 +164,6 @@ export const Avatar: React.FC<AvatarProps> = ({
   }, [src]);
 
   const accessibilityLabel = `${name ?? ''}${status ? `, ${status}` : ''}`.trim();
-
-  // 统一构造 Image 的 source：远程字符串 => { uri }, 本地资源 => 直接透传
-  const imageSource: ImageSourcePropType | undefined =
-    typeof src === 'string' ? (src ? { uri: src } : undefined) : (src as ImageSourcePropType | undefined);
-
   const showImage = !!src && !imageError;
 
   return (
@@ -177,7 +172,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       <View style={[{ width: px, height: px, borderRadius: radius }, shadowStyle]}>
         {showImage ? (
           <Image
-            source={imageSource}
+            source={src}
             style={{ width: px, height: px, borderRadius: radius }}
             onError={() => setImageError(true)}
           />
