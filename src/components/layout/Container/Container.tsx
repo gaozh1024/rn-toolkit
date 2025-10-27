@@ -169,7 +169,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
       scrollViewProps?.onContentSizeChange?.(w, h);
     };
 
-    const refreshControlElement = pullToRefresh
+    const refreshControlElement = (pullToRefresh || !!onRefresh)
       ? (
         <RefreshControl
           refreshing={refreshing}

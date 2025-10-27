@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useComponentNavigation } from '../../../navigation';
 import { useFadeAnimation } from '../../../animation';
 import { StackActions } from '@react-navigation/native';
+import Icon from '../../ui/Icon';
 
 // 路由参数：移除 renderContent（避免将函数作为非序列化值放入导航状态）
 export type ModalParams = {
@@ -121,7 +122,7 @@ export const ModalScreen: React.FC<any> = ({ route }) => {
                         <View style={[styles.header, titleAlign === 'center' ? styles.headerCenter : undefined]}>
                             {titleAlign === 'center' && closable && (
                                 <TouchableOpacity onPress={onClose} style={styles.closeAbsolute}>
-                                    <Text style={styles.close}>✕</Text>
+                                    <Icon name="close" size={24} />
                                 </TouchableOpacity>
                             )}
                             <Text
