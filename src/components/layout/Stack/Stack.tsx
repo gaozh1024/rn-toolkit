@@ -72,7 +72,7 @@ export const Stack: React.FC<StackProps> = ({
   if (onPress) {
     return (
       <TouchableOpacity
-        style={[containerStyle, useSpacingStyle(props), style]}
+        style={[containerStyle, spacingStyle, style]}
         onPress={onPress}
         disabled={disabled}
         activeOpacity={0.7}
@@ -84,7 +84,7 @@ export const Stack: React.FC<StackProps> = ({
   }
 
   return (
-    <View style={[containerStyle, useSpacingStyle(props), style]} testID={finalTestID}>
+    <View style={[containerStyle, spacingStyle, style]} testID={finalTestID}>
       {content}
     </View>
   );
