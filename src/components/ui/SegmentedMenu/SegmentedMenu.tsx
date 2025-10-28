@@ -20,7 +20,7 @@ export interface SegmentedMenuProps {
   lineColor?: ColorValue; // 指示条颜色（默认取主题 primary）
   lineSize?: number; // 指示条宽度（px），默认 24
   edge?: number; // 每项左右内边距，默认 16
-  size?: number; // 字体大小，默认 14
+  fontSize?: number; // 字体大小，默认 14
   animatedDuration?: number; // 动画时长，默认 240ms
   // 容器/项样式
   style?: ViewStyle | ViewStyle[];
@@ -41,7 +41,7 @@ const SegmentedMenu: React.FC<SegmentedMenuProps> = ({
   lineColor,
   lineSize = 24,
   edge = 16,
-  size = 14,
+  fontSize = 14,
   animatedDuration = 240,
   style,
   styleInner,
@@ -153,7 +153,7 @@ const SegmentedMenu: React.FC<SegmentedMenuProps> = ({
               {typeof item.label === 'string' ? (
                 <Text style={[
                   styles.text,
-                  { fontSize: size, color: isActive ? (textActiveColor as string) : (textColor as string) },
+                  { fontSize, color: isActive ? (textActiveColor as string) : (textColor as string) },
                   isActive ? selectStyle : null,
                 ]}>
                   {item.label}
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
   item: {
     height: 44,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     fontWeight: '500',

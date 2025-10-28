@@ -12,6 +12,7 @@ export interface PasswordInputProps extends Omit<InputProps, 'secureTextEntry' |
     toggleIconType?: IconType; // 新增：切换图标库类型（如 'iconfont'）
     onVisibilityChange?: (visible: boolean) => void; // 显隐变化回调
     toggleIconColor?: string; // 可选自定义图标颜色（否则沿用 Input 的 color 逻辑）
+    maxLength?: number;
 }
 
 const PasswordInput = forwardRef<TextInput, PasswordInputProps>((props, ref) => {
@@ -24,6 +25,7 @@ const PasswordInput = forwardRef<TextInput, PasswordInputProps>((props, ref) => 
         toggleIconColor,
         value,
         defaultValue,
+        maxLength,
         // 透传 Input 的其他 props
         ...rest
     } = props;
@@ -56,6 +58,7 @@ const PasswordInput = forwardRef<TextInput, PasswordInputProps>((props, ref) => 
             defaultValue={defaultValue}
             rightIcon={rightIcon as any}
             style={[shadowStyle, (rest as any).style]}
+            maxLength={maxLength}
             {...rest}
         />
     );

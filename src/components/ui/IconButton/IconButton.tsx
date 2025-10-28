@@ -1,6 +1,6 @@
 // 顶部 import
 import React from 'react';
-import { Pressable, ViewStyle, Insets, StyleProp, StyleSheet, LayoutChangeEvent, Animated, Easing } from 'react-native';
+import { Pressable, ViewStyle, Insets, StyleProp, StyleSheet, LayoutChangeEvent, Animated } from 'react-native';
 import { Icon, IconType } from '../Icon';
 import { useTheme, useThemeColors, useSpacingStyle, SpacingProps } from '../../../theme';
 import { GradientBackground } from '../../layout/GradientBackground';
@@ -9,6 +9,7 @@ import type { PressEvents } from '../../common/events';
 import { buildShadowStyle, type ShadowProps } from '../../common/shadow';
 import { normalizeGradientConfig, type GradientProps } from '../../common/gradient';
 import { buildBoxStyle, type BoxProps } from '../../common/box';
+import { useIconPressRotate } from '../../common/animation';
 
 // 接口：统一公共能力并精简冗余字段
 export interface IconButtonProps extends SpacingProps, TestableProps, PressEvents, ShadowProps, GradientProps, BoxProps {
@@ -19,11 +20,12 @@ export interface IconButtonProps extends SpacingProps, TestableProps, PressEvent
   variant?: 'filled' | 'ghost' | 'outline';
   disabled?: boolean;
   loading?: boolean;
-  loadingAnimation?: 'none' | 'spinOnce';
-  style?: StyleProp<ViewStyle>;
-  hitSlop?: Insets;
-  accessibilityLabel?: string;
-  testID?: string;
+  style?: StyleProp<ViewStyle>;// 自定义样式
+  hitSlop?: Insets;// 点击区域扩展（默认 8px）
+  accessibilityLabel?: string;// 无障碍标签（默认 `${name} 图标按钮`）
+  animationName?: 'none' | 'rotate';       // 新增：动画名称（默认无动画）
+  animationIterations?: number;            // 新增：动画次数（默认 0，不播放）
+  testID?: string;// 测试 ID（默认 `${name}IconButton`）
 }
 
 const IconButton: React.FC<IconButtonProps> = ({
@@ -34,10 +36,11 @@ const IconButton: React.FC<IconButtonProps> = ({
   variant = 'ghost',
   disabled = false,
   loading = false,
-  loadingAnimation = 'none',
   style,
   hitSlop,
   accessibilityLabel,
+  animationName = 'none',
+  animationIterations = 0,
   testID,
   onPress,
   onPressIn,
@@ -64,32 +67,6 @@ const IconButton: React.FC<IconButtonProps> = ({
 
   // 交互禁用：loading 时也禁用
   const isDisabled = disabled || loading;
-
-  // 加载动画：仅在 loadingAnimation='spinOnce' 且 loading 时执行一次旋转
-  const spinAnim = React.useRef(new Animated.Value(0)).current;
-  React.useEffect(() => {
-    if (loading && loadingAnimation === 'spinOnce') {
-      spinAnim.setValue(0);
-      Animated.timing(spinAnim, {
-        toValue: 1,
-        duration: 1000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      spinAnim.stopAnimation(() => {
-        try { spinAnim.setValue(0); } catch {}
-      });
-    }
-    return () => {
-      spinAnim.stopAnimation(() => {
-        try { spinAnim.setValue(0); } catch {}
-      });
-    };
-  }, [loading, loadingAnimation, spinAnim]);
-
-  const spin = spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-  const iconWrapperStyle = loading && loadingAnimation === 'spinOnce' ? { transform: [{ rotate: spin }] } : undefined;
 
   // 容器基础样式与变体处理
   const base: ViewStyle = {
@@ -131,6 +108,15 @@ const IconButton: React.FC<IconButtonProps> = ({
         return corners.length ? Math.max(...corners) : (theme.borderRadius?.md ?? 8);
       })();
 
+  // 创建本地动画值与公共 Hook
+  const rotateAnim = React.useRef(new Animated.Value(0)).current;
+  const { rotateStyle, runPressAnimation } = useIconPressRotate(rotateAnim, {
+    animationName,
+    iterations: animationIterations,
+    duration: 400,
+    disabled: isDisabled,
+  });
+
   return (
     <Pressable
       testID={computedTestID}
@@ -139,7 +125,12 @@ const IconButton: React.FC<IconButtonProps> = ({
       accessibilityLabel={accessibilityLabel || `${name} icon button`}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      onPress={isDisabled ? undefined : onPress}
+      onPress={isDisabled ? undefined : (event) => {
+        // 业务回调需接收事件对象
+        onPress?.(event);
+        // 点击旋转动画随后播放（并行、不阻塞）
+        runPressAnimation();
+      }}
       onPressIn={isDisabled ? undefined : onPressIn}
       onPressOut={isDisabled ? undefined : onPressOut}
       onLongPress={isDisabled ? undefined : onLongPress}
@@ -162,8 +153,16 @@ const IconButton: React.FC<IconButtonProps> = ({
           style={{ position: 'absolute', top: 0, left: 0, width: containerSize?.width, height: containerSize?.height }}
         />
       )}
-      <Animated.View style={iconWrapperStyle}>
-        <Icon name={name} type={type} size={size} color={isDisabled ? 'textDisabled' : color} />
+      <Animated.View style={rotateStyle}>
+        <Icon
+          name={name}
+          type={type}
+          size={size}
+          // 避免 Icon 内部生成 Pressable，动画由 IconButton 统一控制
+          animationName={'none'}
+          animationIterations={0}
+          color={isDisabled ? 'textDisabled' : color}
+        />
       </Animated.View>
     </Pressable>
   );

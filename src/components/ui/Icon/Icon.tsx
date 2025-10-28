@@ -1,9 +1,9 @@
 import React, { useMemo, forwardRef } from 'react';
-import { TextStyle, ViewStyle, Insets, Pressable, StyleProp, View } from 'react-native';
+import { TextStyle, ViewStyle, Insets, Pressable, StyleProp, View, Animated } from 'react-native';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { buildTestID, TestableProps } from '../../common/test';
-import type { PressEvents } from '../../common/events';
+import { useIconPressRotate } from '../../common/animation';
 
 // 顶部类型声明：CustomIconComponent
 export type CustomIconComponent = React.ComponentType<{
@@ -31,6 +31,8 @@ export interface IconProps extends SpacingProps, TestableProps {
     hitSlop?: Insets;
     accessibilityLabel?: string;
     onPress?: () => void;
+    animationName?: 'none' | 'rotate';       // 新增：动画名称（默认无动画）
+    animationIterations?: number;            // 新增：动画次数（默认 0，不播放）
 }
 
 // 自定义图标库注册表
@@ -87,6 +89,8 @@ export const Icon = forwardRef<any, IconProps>(({
     hitSlop,
     accessibilityLabel,
     onPress,
+    animationName = 'none',
+    animationIterations = 0,
     ...props
 }, ref) => {
     const { theme } = useTheme();
@@ -130,8 +134,21 @@ export const Icon = forwardRef<any, IconProps>(({
         ...props
     };
 
-    // 仅在有 onPress 且未禁用时使用 Pressable，否则使用普通 View 以允许父层接管点击
-    if (onPress && !disabled) {
+    // 点击旋转动画（使用 AnimationService 插值）
+    const rotateAnim = React.useRef(new Animated.Value(0)).current;
+
+    // 使用公共动画 Hook
+    const { rotateStyle, runPressAnimation } = useIconPressRotate(rotateAnim, {
+        animationName,
+        iterations: animationIterations,
+        duration: 400,
+        disabled,
+    });
+
+    // 若有 onPress 或配置了动画，需要用 Pressable 捕获点击
+    const shouldUsePressable = !disabled && ((!!onPress) || (animationName !== 'none' && animationIterations > 0));
+
+    if (shouldUsePressable) {
         return (
             <Pressable
                 disabled={disabled}
@@ -139,9 +156,14 @@ export const Icon = forwardRef<any, IconProps>(({
                 accessibilityLabel={accessibilityLabel || `${name} icon`}
                 testID={computedTestID}
                 style={spacingStyle as StyleProp<ViewStyle>}
-                onPress={onPress}
+                onPress={() => {
+                    onPress?.();
+                    runPressAnimation();
+                }}
             >
-                <IconComponent ref={ref} {...iconProps} />
+                <Animated.View style={rotateStyle}>
+                    <IconComponent ref={ref} {...iconProps} />
+                </Animated.View>
             </Pressable>
         );
     }

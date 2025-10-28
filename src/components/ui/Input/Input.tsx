@@ -31,6 +31,7 @@ export interface InputProps extends SpacingProps, TestableProps, BoxProps {
     keyboardType?: import('react-native').KeyboardTypeOptions;
     returnKeyType?: import('react-native').ReturnKeyType;
     autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+    maxLength?: number;
     onChangeText?: (text: string) => void;
     onFocus?: () => void;
     onBlur?: () => void;
@@ -61,6 +62,7 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
         keyboardType,
         returnKeyType,
         autoCapitalize = 'none',
+        maxLength,
         onChangeText,
         onFocus,
         onBlur,
@@ -142,6 +144,7 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
                 keyboardType={keyboardType}
                 returnKeyType={returnKeyType}
                 autoCapitalize={autoCapitalize}
+                maxLength={maxLength}
                 onChangeText={onChangeText}
                 onFocus={onFocus}
                 onBlur={onBlur}
