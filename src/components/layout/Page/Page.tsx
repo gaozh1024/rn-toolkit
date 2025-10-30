@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatusBar, ViewStyle, StyleProp } from 'react-native';
+import { StatusBar, ViewStyle, StyleProp, Platform } from 'react-native';
 import { Edge } from 'react-native-safe-area-context';
 import { SafeAreaView } from '../SafeAreaView/SafeAreaView';
 import { Container } from '../Container/Container';
@@ -71,9 +71,12 @@ export const Page: React.FC<PageProps> = (rawProps) => {
     const finalTestID = buildTestID('Page', rawProps.testID);
     const gradientCfg = normalizeGradientConfig([colors.primary, colors.secondary], rawProps);
 
+    // 渐变启用时使用透明状态栏
+    const useTransparentStatusBar = !!gradientCfg.colors;
+
     const autoStatusBarStyle = statusBarStyle || (isDark ? 'light-content' : 'dark-content');
-    const autoStatusBarBgColor = gradientCfg.colors ? 'transparent' : (statusBarBackgroundColor || colors.background);
-    const bgColor = gradientCfg.colors ? 'transparent' : (backgroundColor || colors.background);
+    const autoStatusBarBgColor = useTransparentStatusBar ? 'transparent' : (statusBarBackgroundColor || colors.background);
+    const bgColor = useTransparentStatusBar ? 'transparent' : (backgroundColor || colors.background);
 
     const wrapWithDrawer = (node: React.ReactNode) => {
         if (leftDrawer || rightDrawer) {
@@ -99,7 +102,7 @@ export const Page: React.FC<PageProps> = (rawProps) => {
             <StatusBar
                 barStyle={autoStatusBarStyle}
                 backgroundColor={autoStatusBarBgColor}
-                translucent={false}
+                translucent={useTransparentStatusBar}
             />
 
             {headerNode}

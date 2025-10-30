@@ -1,6 +1,6 @@
 // 顶部导入处（加入 BackgroundProps）
 import React, { useMemo } from 'react';
-import { Text as RNText, TextStyle, StyleProp } from 'react-native';
+import { Text as RNText, TextStyle, StyleProp, Platform } from 'react-native';
 // 顶部导入处
 import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { buildTestID, TestableProps } from '../../common/test';
@@ -251,6 +251,9 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
         ...(typeof decoration !== 'undefined' ? { textDecorationLine: decoration } : {}),
         ...(typeof transform !== 'undefined' ? { textTransform: transform } : {}),
     };
+    if (Platform.OS === 'android') {
+        baseStyle.fontFamily = 'lucida grande, tahoma, verdana, arial, sans-serif';
+    }
 
     return (
         <RNText

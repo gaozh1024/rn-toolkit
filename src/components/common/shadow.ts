@@ -45,7 +45,8 @@ export function resolveShadowPreset(
 ): ViewStyle {
   if (!shadowStyles) return {};
   if (size && shadowStyles[size]) return shadowStyles[size];
-  return shadowStyles.md ?? {};
+  // 默认不显示阴影：未传 size 时使用 none（不存在则回退空对象）
+  return shadowStyles.none ?? {};
 }
 
 /**

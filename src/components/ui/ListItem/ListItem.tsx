@@ -21,6 +21,8 @@ export interface ListItemProps extends SpacingProps, TestableProps, BoxProps {
     descriptionStyle?: StyleProp<TextStyle>;
     accessibilityLabel?: string;
     hitSlop?: Insets;
+    // 新增：尺寸预设（控制 minHeight 与内边距）
+    size?: 'sm' | 'md' | 'lg';
 }
 
 const ListItem: React.FC<ListItemProps> = ({
@@ -38,6 +40,7 @@ const ListItem: React.FC<ListItemProps> = ({
     accessibilityLabel,
     hitSlop,
     testID,
+    size = 'md', // 新增：默认中等尺寸
     ...restProps
 }) => {
     const { theme } = useTheme();
@@ -53,12 +56,21 @@ const ListItem: React.FC<ListItemProps> = ({
         ? ((colors as any).primary ?? '#3B82F6')
         : ((colors as any).border ?? '#DADDE2');
 
+    // 新增：根据尺寸预设计算高度与内边距
+    const s = theme.spacing as any;
+    const sizeMap = {
+        sm: { minHeight: 40, ph: s?.sm ?? 12, pv: s?.xs ?? 8 },
+        md: { minHeight: 56, ph: s?.md ?? 16, pv: s?.sm ?? 12 },
+        lg: { minHeight: 72, ph: s?.lg ?? 20, pv: s?.md ?? 16 },
+    } as const;
+    const sizing = sizeMap[size] ?? sizeMap.md;
+
     const base: ViewStyle = {
         flexDirection: 'row',
         alignItems: 'center',
-        minHeight: 56,
-        paddingHorizontal: (theme.spacing as any)?.md ?? 16,
-        paddingVertical: (theme.spacing as any)?.sm ?? 12,
+        minHeight: sizing.minHeight,
+        paddingHorizontal: sizing.ph,
+        paddingVertical: sizing.pv,
         opacity: disabled ? 0.6 : 1,
     };
 
@@ -86,24 +98,33 @@ const ListItem: React.FC<ListItemProps> = ({
             hitSlop={hitSlop}
             style={containerStyle}
         >
-            {left ? <View style={{ marginRight: (theme.spacing as any)?.md ?? 16 }}>{left}</View> : null}
+            {
+                left ?
+                    <View style={{ marginRight: (theme.spacing as any)?.md ?? 16 }}>{left}</View> : null
+            }
             <View style={[contentWrapStyle, contentStyle]}>
-                {title != null && (
-                    typeof title === 'string' ? (
-                        <Text variant="body1" weight="semibold" style={titleStyle}>{title}</Text>
-                    ) : (
-                        title as React.ReactNode
+                {
+                    title != null && (
+                        typeof title === 'string' ? (
+                            <Text variant="body1" weight="semibold" style={titleStyle}>{title}</Text>
+                        ) : (
+                            title as React.ReactNode
+                        )
                     )
-                )}
-                {description != null && (
-                    typeof description === 'string' ? (
-                        <Text variant="body2" color="textSecondary" style={descriptionStyle}>{description}</Text>
-                    ) : (
-                        description as React.ReactNode
+                }
+                {
+                    description != null && (
+                        typeof description === 'string' ? (
+                            <Text variant="body2" color="textSecondary" style={descriptionStyle}>{description}</Text>
+                        ) : (
+                            description as React.ReactNode
+                        )
                     )
-                )}
+                }
             </View>
-            {right ? <View style={{ marginLeft: (theme.spacing as any)?.md ?? 16 }}>{right}</View> : null}
+            {
+                right ? <View style={{ marginLeft: (theme.spacing as any)?.md ?? 16 }}>{right}</View> : null
+            }
         </Pressable>
     );
 };

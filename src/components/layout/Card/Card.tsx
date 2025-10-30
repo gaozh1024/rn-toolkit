@@ -107,9 +107,10 @@ export const Card: React.FC<CardProps> = ({
     ...(marginRight != null ? { marginRight } : {}),
   };
 
+  // 新增：仅当 Card 传入 flex 时，让内容层也拉伸填满
+  const contentFlexStyle: ViewStyle = props.flex != null ? { flex: 1 } : {};
   // 新增：仅在传入 flex 时应用到外层容器
   const flexStyle: ViewStyle = props.flex != null ? { flex: props.flex } : {};
-
   // 修改：合并 flexStyle
   const containerStyle = [cardStyle, marginOnly, flexStyle];
 
@@ -130,7 +131,7 @@ export const Card: React.FC<CardProps> = ({
   ) : null;
 
   const content = (
-    <View style={paddingOnly}>
+    <View style={[contentFlexStyle, paddingOnly]}>
       {children}
     </View>
   );

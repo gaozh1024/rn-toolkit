@@ -15,6 +15,7 @@ type PickerParams = {
 
 const ITEM_HEIGHT = 40;
 const VISIBLE_COUNT = 5;
+const HALF = Math.floor(VISIBLE_COUNT / 2);
 
 const WheelPickerModal: React.FC<any> = ({ route }) => {
     const params = (route?.params || {}) as PickerParams;
@@ -71,12 +72,12 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
                     if (ref && col.length > 0) {
                         try {
                             ref.scrollToIndex({ index: Math.min(idx, col.length - 1), animated: false });
-                        } catch { }
+                        } catch {}
                     }
                 });
             }, 0);
         });
-        return unsub;
+        return () => unsub();
     }, [id, selectedIndices]);
 
     useEffect(() => {
@@ -96,7 +97,7 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
                     if (ref && maxIdx >= 0) {
                         try {
                             ref.scrollToIndex({ index: clamped, animated: false });
-                        } catch { }
+                        } catch {}
                     }
                 });
             }, 0);
@@ -112,7 +113,7 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
                 if (ref && col.length > 0) {
                     try {
                         ref.scrollToIndex({ index: Math.min(idx, col.length - 1), animated: false });
-                    } catch { }
+                    } catch {}
                 }
             });
         }, 0);
@@ -124,13 +125,15 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
         index,
     });
 
-    const onMomentumEnd = (colIndex: number, e: any) => {
-        const offsetY = e.nativeEvent.contentOffset?.y ?? 0;
-        const idx = Math.round(offsetY / ITEM_HEIGHT);
+    const onSnapEnd = (colIndex: number, offsetY: number) => {
+        const raw = offsetY / ITEM_HEIGHT;
+        const idx = Math.min(
+            Math.max(Math.round(raw), 0),
+            Math.max(columns[colIndex].length - 1, 0)
+        );
         setSelectedIndices((prev) => {
             const next = [...prev];
-            const maxIdx = Math.max(columns[colIndex].length - 1, 0);
-            next[colIndex] = Math.min(Math.max(idx, 0), maxIdx);
+            next[colIndex] = idx;
             return next;
         });
     };
@@ -154,7 +157,7 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
 
     const highlightStyle = {
         position: 'absolute' as const,
-        top: (Math.floor(VISIBLE_COUNT / 2)) * ITEM_HEIGHT,
+        top: HALF * ITEM_HEIGHT,
         height: ITEM_HEIGHT,
         left: 0,
         right: 0,
@@ -189,19 +192,21 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
                         {columns.map((col, colIndex) => (
                             <View key={colIndex} style={{ flex: 1 }}>
                                 <FlatList
-                                    ref={(r) => {
-                                        listsRef.current[colIndex] = r;
-                                    }}
+                                    ref={(r) => { listsRef.current[colIndex] = r; }}
                                     data={col}
                                     keyExtractor={(item, i) => String(item.value ?? i)}
                                     getItemLayout={getItemLayout}
                                     initialScrollIndex={selectedIndices[colIndex] ?? 0}
                                     showsVerticalScrollIndicator={false}
-                                    snapToInterval={ITEM_HEIGHT}
-                                    decelerationRate="fast"
-                                    onMomentumScrollEnd={(e) => onMomentumEnd(colIndex, e)}
+                                    // 明确指定每一格的吸附偏移，避免浮点误差
+                                    snapToOffsets={col.map((_, i) => i * ITEM_HEIGHT)}
+                                    disableIntervalMomentum={true}
+                                    decelerationRate="normal"
+                                    scrollEventThrottle={16}
+                                    onMomentumScrollEnd={(e) => onSnapEnd(colIndex, e.nativeEvent.contentOffset?.y ?? 0)}
+                                    onScrollEndDrag={(e) => onSnapEnd(colIndex, e.nativeEvent.contentOffset?.y ?? 0)}
                                     contentContainerStyle={{
-                                        paddingVertical: (Math.floor(VISIBLE_COUNT / 2)) * ITEM_HEIGHT,
+                                        paddingVertical: HALF * ITEM_HEIGHT,
                                     }}
                                     renderItem={({ item, index }) => {
                                         const isActive = index === selectedIndices[colIndex];

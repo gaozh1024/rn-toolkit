@@ -1,4 +1,5 @@
 export * from './clipboard';
-export * from './device';
+export * from './deviceInfo';
 export * from './localization';
 export * from './permissions';
+export * from './events';

@@ -72,9 +72,9 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingVertical: 10,
         paddingHorizontal: 16,
-        maxWidth: '90%',
+        maxWidth: '100%',
     },
-    text: { color: '#fff', fontSize: 14 },
+    text: { color: '#fff', fontSize: 14, textAlign: 'center' },
 });
 
 export default ToastContainer;

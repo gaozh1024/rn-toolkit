@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { View, TextInput, StyleSheet, Pressable, ViewStyle, TextStyle, Text, StyleProp } from 'react-native';
+import { View, TextInput, StyleSheet, Pressable, ViewStyle, TextStyle, Text, StyleProp, Platform } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 import { Icon, IconType } from '../Icon';
 import { useSpacingStyle, SpacingProps } from '../../../theme/spacing';
@@ -124,6 +124,7 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
             accessibilityLabel={accessibilityLabel}
             accessibilityHint={accessibilityHint}
         >
+            {/* 左侧图标 */}
             {leftIcon?.name ? (
                 <Icon
                     name={leftIcon.name}
@@ -148,9 +149,15 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
                 onChangeText={onChangeText}
                 onFocus={onFocus}
                 onBlur={onBlur}
-                style={[styles.input, { color: textColor }, inputStyle]}
+                style={[
+                  styles.input,
+                  Platform.OS === 'android' ? { textAlignVertical: 'center', lineHeight: 20, paddingTop: 2 } : undefined,
+                  { color: textColor },
+                  inputStyle
+                ]}
             />
 
+            {/* 右侧图标 */}
             {rightIcon?.name ? (
                 <Pressable onPress={rightIcon.onPress} hitSlop={8} disabled={disabled}>
                     <Icon
