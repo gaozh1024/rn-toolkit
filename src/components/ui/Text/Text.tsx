@@ -57,6 +57,8 @@ export interface TextProps extends SpacingProps, TestableProps, BackgroundProps,
     // 事件处理
     onPress?: () => void;
     onLongPress?: () => void;
+    // iOS：是否抑制点击高亮背景（默认：在有 onPress/onLongPress 时为 true）
+    suppressHighlighting?: boolean;
     // 测试ID（继承自 TestableProps）
     testID?: string;
 }
@@ -80,6 +82,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
     adjustsFontSizeToFit = false,
     onPress,
     onLongPress,
+    suppressHighlighting,
     testID,
     // spacing shortcuts
     m, mv, mh, mt, mb, ml, mr,
@@ -89,6 +92,18 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
     transparent,
     ...props
 }, ref) => {
+    /**
+     * 在 iOS 上移除 Text 的点击高亮背景：
+     * - 默认：当存在 onPress/onLongPress 时关闭高亮
+     * - 可通过 suppressHighlighting 显式控制（true 关闭，false 开启）
+     */
+    const iosSuppressHighlighting =
+        Platform.OS === 'ios'
+            ? (typeof suppressHighlighting === 'boolean'
+                ? suppressHighlighting
+                : (typeof onPress === 'function' || typeof onLongPress === 'function'))
+            : undefined;
+
     const { theme } = useTheme();
     const colors = theme.colors;
     const computedTestID = buildTestID('Text', testID);
@@ -267,6 +282,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(({
             adjustsFontSizeToFit={adjustsFontSizeToFit}
             onPress={onPress}
             onLongPress={onLongPress}
+            suppressHighlighting={iosSuppressHighlighting as boolean | undefined}
             testID={computedTestID}
             {...props}
         >

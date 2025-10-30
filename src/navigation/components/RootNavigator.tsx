@@ -5,6 +5,7 @@ import { TabNavigator } from './TabNavigator';
 import { StackNavigator } from './StackNavigator';
 import { ModalScreen } from '../../components/feedback/Modal';
 import { WheelPickerModal } from '../../components/feedback/Picker'
+import { Platform } from 'react-native';
 
 const RootStack = createNativeStackNavigator();
 
@@ -31,47 +32,52 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
     />
   );
 
+  /**
+   * getTransitionOptions
+   * 说明：根据过渡模式返回屏幕选项。
+   * 修复：iOS 上将模态展示改为 containedTransparentModal，避免以独立 VC 覆盖根视图，从而允许顶层浮窗覆盖显示。
+   */
   const getTransitionOptions = (mode: TransitionMode) => {
-    switch (mode) {
-      case 'fade':
-        return {
-          headerShown: false,
-          animation: 'fade',
-        } as const;
-      case 'bottom':
-        return {
-          headerShown: false,
-          presentation: 'transparentModal',
-          animation: 'fade',
-        } as const;
-      case 'top':
-        return {
-          headerShown: false,
-          presentation: 'transparentModal',
-          animation: 'fade',
-        } as const;
-      case 'left':
-        return {
-          headerShown: false,
-          animation: 'slide_from_left',
-        } as const;
-      case 'right':
-        return {
-          headerShown: false,
-          animation: 'slide_from_right',
-        } as const;
-      case 'none':
-        return {
-          headerShown: false,
-          animation: 'none',
-        } as const;
-      case 'ios':
-      default:
-        return {
-          headerShown: false,
-          animation: 'slide_from_right',
-        } as const;
-    }
+      switch (mode) {
+          case 'fade':
+              return {
+                  headerShown: false,
+                  animation: 'fade',
+              } as const;
+          case 'bottom':
+              return {
+                  headerShown: false,
+                  presentation: Platform.OS === 'ios' ? 'containedTransparentModal' : 'transparentModal',
+                  animation: 'fade',
+              } as const;
+          case 'top':
+              return {
+                  headerShown: false,
+                  presentation: Platform.OS === 'ios' ? 'containedTransparentModal' : 'transparentModal',
+                  animation: 'fade',
+              } as const;
+          case 'left':
+              return {
+                  headerShown: false,
+                  animation: 'slide_from_left',
+              } as const;
+          case 'right':
+              return {
+                  headerShown: false,
+                  animation: 'slide_from_right',
+              } as const;
+          case 'none':
+              return {
+                  headerShown: false,
+                  animation: 'none',
+              } as const;
+          case 'ios':
+          default:
+              return {
+                  headerShown: false,
+                  animation: 'slide_from_right',
+              } as const;
+      }
   };
 
   const allModals = useMemo(() => {
@@ -135,7 +141,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
         />
       ))}
 
-      {/* 模态页面：native-stack 透明模态 */}
+      {/* 模态页面：native-stack 透明模态（iOS 使用 containedTransparentModal） */}
       {allModals.map((modal) => (
         <RootStack.Screen
           key={modal.name}
@@ -145,7 +151,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
             const base = getTransitionOptions('fade');
             return {
               ...base,
-              presentation: 'transparentModal',
+              presentation: Platform.OS === 'ios' ? 'containedTransparentModal' : 'transparentModal',
               contentStyle: {
                 backgroundColor: 'transparent',
                 ...((modal.options as any)?.cardStyle || {}),

@@ -36,13 +36,13 @@ export const NavigationContainer: React.FC<NavigationContainerProps> = ({
         onReady={handleReady}
         onStateChange={handleStateChange}
       >
-        {children}
         <LoadingContainer />
         <ToastContainer />
         <DialogContainer />
         <ActionSheetContainer />
         {/* Snackbar 挂载 */}
         <SnackbarContainer />
+        {children}
       </RNNavigationContainer>
     </SafeAreaProvider>
   );

@@ -1,5 +1,6 @@
-import React, { forwardRef } from 'react';
-import { View, TextInput, StyleSheet, Pressable, ViewStyle, TextStyle, Text, StyleProp, Platform } from 'react-native';
+// 修改 import：增加 useRef/useCallback，并移除未使用的 View
+import React, { forwardRef, useRef, useCallback } from 'react';
+import { TextInput, StyleSheet, Pressable, ViewStyle, TextStyle, Text, StyleProp, Platform, View } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 import { Icon, IconType } from '../Icon';
 import { useSpacingStyle, SpacingProps } from '../../../theme/spacing';
@@ -40,6 +41,7 @@ export interface InputProps extends SpacingProps, TestableProps, BoxProps {
     testID?: string;
 }
 
+// Input 组件（forwardRef）
 const Input = forwardRef<TextInput, InputProps>((props, ref) => {
     const {
         value,
@@ -116,8 +118,34 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
         : (typeof color === 'string' ? color : colors.primary);
     const iconSize = size === 'xs' ? 16 : size === 'sm' ? 18 : size === 'md' ? 20 : size === 'lg' ? 22 : 24;
 
+    // 本地保存 TextInput 引用，方便容器点击时聚焦
+    const innerRef = useRef<TextInput | null>(null);
+
+    /**
+     * 同步内部 ref 与外部转发的 ref
+     * 保证容器点击聚焦可用，同时不影响外部拿到 input 引用
+     */
+    const setRef = useCallback((node: TextInput | null) => {
+        innerRef.current = node;
+        if (typeof ref === 'function') {
+            ref(node);
+        } else if (ref && 'current' in ref) {
+            (ref as React.MutableRefObject<TextInput | null>).current = node;
+        }
+    }, [ref]);
+
+    /**
+     * 点击容器触发聚焦
+     * 解决只有点中间才能选中的问题
+     */
+    const handleContainerPress = useCallback(() => {
+        if (disabled || !editable) return;
+        innerRef.current?.focus();
+    }, [disabled, editable]);
+
     return (
-        <View
+        <Pressable
+            onPress={handleContainerPress}
             style={containerStyle}
             testID={computedTestID}
             accessible
@@ -135,7 +163,7 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
             ) : null}
 
             <TextInput
-                ref={ref}
+                ref={setRef}
                 value={value}
                 defaultValue={defaultValue}
                 placeholder={placeholder}
@@ -172,7 +200,7 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
             {!!helperText && (
                 <Text style={[styles.helperText, { color: error ? colors.error : colors.textSecondary }]}>{helperText}</Text>
             )}
-        </View>
+        </Pressable>
     );
 });
 
