@@ -1,9 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, Animated, ViewStyle, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFadeAnimation } from '../../../animation';
 import { ToastService, ToastOptions, ToastPosition } from './ToastService';
 
+/**
+ * ToastContainer：全局轻提示容器。
+ * - 动画：淡入/淡出。
+ * - 位置：top/center/bottom。
+ * - Android 兼容：通过为 Text 设置 lineHeight 与 includeFontPadding 修复多行文本在部分机型（如小米 15 / MIUI）底部被裁切的问题。
+ */
 export const ToastContainer: React.FC = () => {
     const insets = useSafeAreaInsets();
     const [visible, setVisible] = useState(false);
@@ -74,7 +80,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         maxWidth: '100%',
     },
-    text: { color: '#fff', fontSize: 14, textAlign: 'center' },
+    text: {
+        color: '#fff',
+        fontSize: 14,
+        textAlign: 'center',
+        ...(Platform.OS === 'android' ? { lineHeight: 18, includeFontPadding: false } : {}),
+    },
 });
 
 export default ToastContainer;
