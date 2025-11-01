@@ -18,3 +18,10 @@ export * from './components';
 
 // 工具函数
 export * from './utils';
+
+// 页面 props 类型
+export type PageProps<T> = {
+    route: {
+        params: T;
+    };
+}

@@ -126,12 +126,19 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
       if (flattened.paddingRight !== undefined) contentPaddingStyle.paddingRight = flattened.paddingRight;
     }
 
+    /**
+     * 处理滚动事件：计算是否“接近底部”，并仅在内容可滚动时记录吸底状态。
+     * 修复目的：避免内容不满屏幕时被误判为接近底部，导致刷新后自动滚到底部。
+     */
     const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { contentSize, layoutMeasurement, contentOffset } = e.nativeEvent;
       const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      stickToBottomRef.current = distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD;
-
-      // 新增：上拉触底检测（只在内容高度大于容器高度时有效）
+    
+      // 修复：只有当内容高度大于容器高度（可滚动）时才允许吸底
+      const isScrollable = contentSize.height > layoutMeasurement.height;
+      stickToBottomRef.current = isScrollable && distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD;
+    
+      // 上拉触底检测（仅在内容可滚动时有效）
       if (onReachBottom) {
         const nearBottom = distanceFromBottom <= reachBottomThreshold;
         if (
@@ -144,7 +151,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
           onReachBottom();
         }
       }
-
+    
       // 透传用户自定义 onScroll
       scrollViewProps?.onScroll?.(e);
     };

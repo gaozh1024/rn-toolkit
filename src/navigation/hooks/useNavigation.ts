@@ -98,6 +98,12 @@ export const useNavigation = () => {
 
         // 监听器
         addStateChangeListener: (listener: any) => navigationService.addStateChangeListener(listener),
+        /** 查询：左侧抽屉是否打开 */
+        isLeftDrawerOpen: () => navigationService.isLeftDrawerOpen(),
+        /** 查询：右侧抽屉是否打开 */
+        isRightDrawerOpen: () => navigationService.isRightDrawerOpen(),
+        /** 查询：是否有任一抽屉打开 */
+        isAnyDrawerOpen: () => navigationService.isAnyDrawerOpen(),
     };
 };
 

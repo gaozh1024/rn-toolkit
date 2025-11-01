@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Drawer } from 'react-native-drawer-layout';
 import { DrawerConfig } from '../types';
 import { setGlobalDrawerController } from '../DrawerContext';
@@ -19,14 +19,45 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ leftDrawer, rightDra
     const leftOpenValue = isLeftControlled ? !!leftDrawer!.open : leftOpen;
     const rightOpenValue = isRightControlled ? !!rightDrawer!.open : rightOpen;
 
+    // === 新增：用 ref 记录当前打开态，并确保“立即可读” ===
+    const leftOpenRef = useRef<boolean>(leftOpenValue);
+    const rightOpenRef = useRef<boolean>(rightOpenValue);
+
+    useEffect(() => { leftOpenRef.current = leftOpenValue; }, [leftOpenValue]);
+    useEffect(() => { rightOpenRef.current = rightOpenValue; }, [rightOpenValue]);
+
+    /**
+     * 立即设置左抽屉打开态（受控/非受控均更新 ref；非受控同步 state）
+     * 这样在同一事件流里读取 isLeftOpen() 也能得到最新值
+     */
+    const setLeftOpenImmediate = (next: boolean) => {
+        leftOpenRef.current = next;
+        if (!isLeftControlled) setLeftOpen(next);
+    };
+
+    /**
+     * 立即设置右抽屉打开态（受控/非受控均更新 ref；非受控同步 state）
+     * 保证 isRightOpen() 在事件内返回最新值
+     */
+    const setRightOpenImmediate = (next: boolean) => {
+        rightOpenRef.current = next;
+        if (!isRightControlled) setRightOpen(next);
+    };
+
     useEffect(() => {
         setGlobalDrawerController({
-            openLeft: () => setLeftOpen(true),
-            closeLeft: () => setLeftOpen(false),
-            toggleLeft: () => setLeftOpen(o => !o),
-            openRight: () => setRightOpen(true),
-            closeRight: () => setRightOpen(false),
-            toggleRight: () => setRightOpen(o => !o),
+            openLeft: () => setLeftOpenImmediate(true),
+            closeLeft: () => setLeftOpenImmediate(false),
+            toggleLeft: () => setLeftOpenImmediate(!leftOpenRef.current),
+
+            openRight: () => setRightOpenImmediate(true),
+            closeRight: () => setRightOpenImmediate(false),
+            toggleRight: () => setRightOpenImmediate(!rightOpenRef.current),
+
+            /** 查询：左侧抽屉是否打开（即时、无等待） */
+            isLeftOpen: () => leftOpenRef.current,
+            /** 查询：右侧抽屉是否打开（即时、无等待） */
+            isRightOpen: () => rightOpenRef.current,
         });
     }, []);
 
@@ -42,8 +73,8 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ leftDrawer, rightDra
     const RightWrapped = (
         <Drawer
             open={!!rightDrawer && rightOpenValue}
-            onOpen={() => { rightDrawer?.onOpen?.(); if (!isRightControlled) setRightOpen(true); }}
-            onClose={() => { rightDrawer?.onClose?.(); if (!isRightControlled) setRightOpen(false); }}
+            onOpen={() => { rightDrawer?.onOpen?.(); setRightOpenImmediate(true); }}
+            onClose={() => { rightDrawer?.onClose?.(); setRightOpenImmediate(false); }}
             drawerStyle={{ width: rightDrawer?.width ?? 280 }}
             drawerPosition="right"
             renderDrawerContent={() => renderDrawerContent(rightDrawer) || <></>}
@@ -57,8 +88,8 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ leftDrawer, rightDra
     return leftDrawer ? (
         <Drawer
             open={leftOpenValue}
-            onOpen={() => { leftDrawer?.onOpen?.(); if (!isLeftControlled) setLeftOpen(true); }}
-            onClose={() => { leftDrawer?.onClose?.(); if (!isLeftControlled) setLeftOpen(false); }}
+            onOpen={() => { leftDrawer?.onOpen?.(); setLeftOpenImmediate(true); }}
+            onClose={() => { leftDrawer?.onClose?.(); setLeftOpenImmediate(false); }}
             drawerStyle={{ width: leftDrawer.width ?? 280 }}
             drawerPosition="left"
             renderDrawerContent={() => renderDrawerContent(leftDrawer) || <></>}

@@ -305,6 +305,38 @@ class NavigationService {
       console.warn('NavigationService: Drawer controller not set');
     }
   }
+
+  /**
+   * 查询左侧抽屉是否打开
+   * @returns boolean
+   */
+  isLeftDrawerOpen(): boolean {
+    try {
+      return !!getGlobalDrawerController().isLeftOpen();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 查询右侧抽屉是否打开
+   * @returns boolean
+   */
+  isRightDrawerOpen(): boolean {
+    try {
+      return !!getGlobalDrawerController().isRightOpen();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 查询是否有任一抽屉打开
+   * @returns boolean
+   */
+  isAnyDrawerOpen(): boolean {
+    return this.isLeftDrawerOpen() || this.isRightDrawerOpen();
+  }
 }
 
 // 导出NavigationService类
