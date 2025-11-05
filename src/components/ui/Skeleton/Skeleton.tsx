@@ -2,9 +2,9 @@
 import React from 'react';
 import { ViewStyle, StyleProp, DimensionValue } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
-import { useTheme, useThemeColors } from '../../../theme';
+import { useTheme, useThemeColors, SpacingProps, useSpacingStyle } from '../../../theme';
 
-export interface SkeletonProps {
+export interface SkeletonProps extends SpacingProps {
   variant?: 'rect' | 'circle' | 'line';
   width?: DimensionValue; // 修改：使用 DimensionValue 支持数字与百分比
   height?: number;
@@ -13,16 +13,27 @@ export interface SkeletonProps {
   testID?: string;
 }
 
-const Skeleton: React.FC<SkeletonProps> = ({
-  variant = 'rect',
-  width,
-  height,
-  animated = true,
-  style,
-  testID,
-}) => {
+/**
+ * Skeleton 骨架屏组件
+ * - 支持形态：rect | circle | line
+ * - 新增：支持 SpacingProps（margin/padding 间距）
+ * - 支持动画：animated 开启呼吸动画
+ */
+const Skeleton: React.FC<SkeletonProps> = (props) => {
+  const {
+    variant = 'rect',
+    width,
+    height,
+    animated = true,
+    style,
+    testID,
+  } = props;
+
   const { theme, isDark } = useTheme();
   const colors = useThemeColors();
+
+  // 间距样式（新增）
+  const spacingStyle = useSpacingStyle(props);
 
   // 调整：加深默认背景色，区分亮/暗主题
   const baseColor = isDark
@@ -72,7 +83,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
     <Animated.View
       testID={testID}
       accessible={false}
-      style={[{ width: dims.width, height: dims.height }, containerStyle, animatedStyle, style]}
+      style={[spacingStyle, { width: dims.width, height: dims.height }, containerStyle, animatedStyle, style]}
     />
   );
 };
