@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, ViewStyle, TextStyle, StyleProp, DimensionValue } from 'react-native';
+import { View, Text, TouchableOpacity, ViewStyle, TextStyle, StyleProp, DimensionValue } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 import { buildTestID, type TestableProps } from '../../common/test';
 import { useSpacingStyle, type SpacingProps } from '../../../theme/spacing';
@@ -52,6 +52,8 @@ export interface ChatBubbleProps extends TestableProps, SpacingProps, BoxProps {
     };
     /** 底部内容位置：inside=在气泡内，outside=在气泡外（默认） */
     footerPlacement?: 'inside' | 'outside';
+    /** 开启后：本条气泡的高度只会增高，不会因内容变化而下降（默认 false） */
+    growHeightOnly?: boolean;
 }
 
 // ChatBubble 组件：更新根容器左右对齐
@@ -76,6 +78,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     squareCornerNearAvatar = false,
     squareCorners,
     footerPlacement = 'outside',
+    /** 开启“高度只增不减” */
+    growHeightOnly = false,
     // BoxProps/SpacingProps 由接口继承
     ...restProps
 }) => {
@@ -120,9 +124,20 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     const rootAlignStyle: ViewStyle = { alignItems: isRight ? 'flex-end' : 'flex-start' };
 
     // 列容器：约束气泡与底部行的最大宽度
+    const [maxStableHeight, setMaxStableHeight] = React.useState<number>(0);
+
+    /**
+     * 函数：在 growHeightOnly 开启时，记录当前渲染高度的历史最大值
+     * - 仅当新的高度更大时更新，从而实现“只增不减”的最小高度约束
+     */
+    const handleColumnLayout = (h: number) => {
+        setMaxStableHeight(prev => (h > prev ? h : prev));
+    };
+
     const bubbleColumnStyle: ViewStyle = {
         maxWidth: maxBubbleWidth,
         flexShrink: 1,
+        ...(growHeightOnly && maxStableHeight > 0 ? { minHeight: maxStableHeight } : {}),
     };
 
     // 默认背景基于方向与主题，交由 BoxProps 可覆盖
@@ -175,7 +190,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         <View style={[rootAlignStyle, spacingStyle, style]} testID={buildTestID('ChatBubble', testID)}>
             <View style={{ flexDirection: isRight ? 'row-reverse' : 'row', alignItems: alignItemsRow }}>
                 {avatarNode && <View style={{ marginHorizontal: 8 }}>{avatarNode}</View>}
-                <View style={bubbleColumnStyle}>
+                <View
+                    style={bubbleColumnStyle}
+                    onLayout={growHeightOnly ? (e) => handleColumnLayout(e.nativeEvent.layout.height) : undefined}
+                >
                     <View style={[bubbleContainerStyle, bubbleStyle]}>
                         {text != null ? <Text style={[defaultTextStyle, textStyle]}>{text}</Text> : children}
                         {(leftActions?.length || rightFooterText) && footerPlacement === 'inside' && (

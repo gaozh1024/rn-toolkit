@@ -53,7 +53,12 @@ function getConfigHints(alias: PermissionAlias): string {
   }
 }
 
-function resolvePermissions(alias: PermissionAlias, _opts?: EnsureOptions): Permission[] | 'notification' {
+/**
+ * 函数：根据别名与选项解析平台权限列表
+ * - Android 13+（T+）：photo 默认仅 READ_MEDIA_IMAGES；opts.includeVideo=true 时加 READ_MEDIA_VIDEO
+ * - Android 12-：photo 默认仅 READ_EXTERNAL_STORAGE；opts.write=true 时加 WRITE_EXTERNAL_STORAGE
+ */
+function resolvePermissions(alias: PermissionAlias, opts?: EnsureOptions): Permission[] | 'notification' {
   if (alias === 'notification') return 'notification';
 
   if (Platform.OS === 'ios') {
@@ -79,17 +84,24 @@ function resolvePermissions(alias: PermissionAlias, _opts?: EnsureOptions): Perm
     switch (alias) {
       case 'camera': return [PERMISSIONS.ANDROID.CAMERA];
       case 'microphone': return [PERMISSIONS.ANDROID.RECORD_AUDIO];
-      case 'photo':
-      case 'storage': {
+      case 'photo': {
         if (isAndroidTPlus) {
-          const base: Permission[] = [
-            PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
-            PERMISSIONS.ANDROID.READ_MEDIA_VIDEO,
-          ];
+          const base: Permission[] = [PERMISSIONS.ANDROID.READ_MEDIA_IMAGES];
+          if (opts?.includeVideo) base.push(PERMISSIONS.ANDROID.READ_MEDIA_VIDEO);
           return base;
         }
         const base: Permission[] = [PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE];
-        base.push(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
+        if (opts?.write) base.push(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
+        return base;
+      }
+      case 'storage': {
+        if (isAndroidTPlus) {
+          const base: Permission[] = [PERMISSIONS.ANDROID.READ_MEDIA_IMAGES];
+          if (opts?.includeVideo) base.push(PERMISSIONS.ANDROID.READ_MEDIA_VIDEO);
+          return base;
+        }
+        const base: Permission[] = [PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE];
+        if (opts?.write) base.push(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
         return base;
       }
       case 'bluetooth': {
