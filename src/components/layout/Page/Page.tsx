@@ -1,6 +1,6 @@
-import React from 'react';
-import { StatusBar, ViewStyle, StyleProp, Platform } from 'react-native';
-import { Edge } from 'react-native-safe-area-context';
+import React, { useEffect, useRef, useState } from 'react';
+import { StatusBar, ViewStyle, StyleProp, Platform, KeyboardAvoidingView, Keyboard, View } from 'react-native';
+import { Edge, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafeAreaView } from '../SafeAreaView/SafeAreaView';
 import { Container } from '../Container/Container';
 import { Header } from '../Header';
@@ -43,6 +43,63 @@ export interface PageProps extends TestableProps, GradientProps {
     rightDrawer?: DrawerConfig;
     // 新增：点击空白处收起键盘
     dismissKeyboardOnTapOutside?: boolean;
+    /** 启用键盘避让（默认 false）。开启后底部输入不再被键盘遮挡 */
+    keyboardAvoiding?: boolean;
+    /**
+     * 键盘垂直偏移（可选）。
+     * - 不传时自动使用：Header高度 + 顶部安全区（若 Header 开启 safeAreaTopEnabled）
+     * - iOS 常用；Android 在 adjustResize 下可留空或传 'height' 行为
+     */
+    keyboardVerticalOffset?: number;
+}
+
+
+/** 
+ * useAndroidKeyboardPadding
+ * Android 专用键盘避让：通过底部 padding 把内容顶到键盘上方
+ * - 在键盘显示期间只增不减，避免候选栏/ActionMode 导致的高度抖动
+ * - 键盘隐藏时归零
+ */
+function useAndroidKeyboardPadding(enabled: boolean) {
+    const [paddingBottom, setPaddingBottom] = useState(0);
+    const maxWhileVisible = useRef(0);
+
+    useEffect(() => {
+        if (!enabled || Platform.OS !== 'android') return;
+
+        const onShow = (e: any) => {
+            const h = e?.endCoordinates?.height ?? 0;
+            if (h > maxWhileVisible.current) {
+                maxWhileVisible.current = h;
+                setPaddingBottom(maxWhileVisible.current);
+            }
+        };
+        // 某些输入法或状态栏变化可能重复上报显示事件；保持“只增不减”
+        const onChange = (e: any) => {
+            const h = e?.endCoordinates?.height ?? 0;
+            if (h > maxWhileVisible.current) {
+                maxWhileVisible.current = h;
+                setPaddingBottom(maxWhileVisible.current);
+            }
+        };
+        const onHide = () => {
+            maxWhileVisible.current = 0;
+            setPaddingBottom(0);
+        };
+
+        const s1 = Keyboard.addListener('keyboardDidShow', onShow);
+        // 注意：部分 RN 版本在 Android 上不会触发 keyboardDidChangeFrame；这里做兼容
+        const s2 = Keyboard.addListener('keyboardDidChangeFrame', onChange);
+        const s3 = Keyboard.addListener('keyboardDidHide', onHide);
+
+        return () => {
+            s1.remove();
+            s2.remove();
+            s3.remove();
+        };
+    }, [enabled]);
+
+    return paddingBottom;
 }
 
 // export const Page: React.FC<PageProps>
@@ -64,10 +121,12 @@ export const Page: React.FC<PageProps> = (rawProps) => {
         leftDrawer,
         rightDrawer,
         dismissKeyboardOnTapOutside = false,
+        keyboardAvoiding = false,
+        keyboardVerticalOffset,
     } = rawProps;
-
     const { theme, isDark } = useTheme();
     const colors = theme.colors;
+    const insets = useSafeAreaInsets();
     const finalTestID = buildTestID('Page', rawProps.testID);
     const gradientCfg = normalizeGradientConfig([colors.primary, colors.secondary], rawProps);
 
@@ -93,6 +152,15 @@ export const Page: React.FC<PageProps> = (rawProps) => {
         <Header {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} />
     ) : null;
 
+    // 计算 Header 顶部安全区与高度，用于键盘偏移
+    /** 计算：键盘避让的默认偏移 = Header内容高度 + 顶部安全区（若启用） */
+    const headerHeight = theme.navigation?.height ?? 44;
+    const headerTopInset = (headerProps?.safeAreaTopEnabled ?? true) ? insets.top : 0;
+    const defaultKeyboardOffset = headerShown ? (headerHeight + headerTopInset) : 0;
+
+    // Android：使用自定义 padding 避让（只增不减）；iOS：使用 KAV
+    const androidKeyboardPadding = useAndroidKeyboardPadding(keyboardAvoiding);
+
     const content = (
         <SafeAreaView
             edges={safeAreaEdges}
@@ -107,16 +175,51 @@ export const Page: React.FC<PageProps> = (rawProps) => {
 
             {headerNode}
 
-            <Container
-                flex={1}
-                p={padding}
-                scrollable={scrollable}
-                style={contentStyle}
-                backgroundColor={bgColor}
-                dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
-            >
-                {children}
-            </Container>
+            {/* 键盘避让：iOS 使用 KAV；Android 使用底部 padding（稳定不缩） */}
+            {keyboardAvoiding ? (
+                Platform.OS === 'ios' ? (
+                    <KeyboardAvoidingView
+                        behavior="padding"
+                        keyboardVerticalOffset={keyboardVerticalOffset ?? defaultKeyboardOffset}
+                        style={{ flex: 1 }}
+                    >
+                        <Container
+                            flex={1}
+                            p={padding}
+                            scrollable={scrollable}
+                            style={contentStyle}
+                            backgroundColor={bgColor}
+                            dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
+                        >
+                            {children}
+                        </Container>
+                    </KeyboardAvoidingView>
+                ) : (
+                    <View style={{ flex: 1, paddingBottom: androidKeyboardPadding }}>
+                        <Container
+                            flex={1}
+                            p={padding}
+                            scrollable={scrollable}
+                            style={contentStyle}
+                            backgroundColor={bgColor}
+                            dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
+                        >
+                            {children}
+                        </Container>
+                    </View>
+                )
+            ) : (
+                <Container
+                    flex={1}
+                    p={padding}
+                    scrollable={scrollable}
+                    style={contentStyle}
+                    backgroundColor={bgColor}
+                    dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
+                >
+                    {children}
+                </Container>
+            )}
         </SafeAreaView>
     );
 
@@ -141,3 +244,4 @@ export const Page: React.FC<PageProps> = (rawProps) => {
 };
 
 export default Page;
+

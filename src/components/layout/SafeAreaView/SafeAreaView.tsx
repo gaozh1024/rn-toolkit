@@ -1,5 +1,5 @@
 import React from 'react';
-import { ViewStyle, StyleProp } from 'react-native';
+import { ViewStyle, StyleProp, View } from 'react-native';
 import { SafeAreaView as RNSafeAreaView, Edge } from 'react-native-safe-area-context';
 import { useTheme } from '../../../theme/hooks';
 
@@ -30,14 +30,16 @@ export const SafeAreaView: React.FC<SafeAreaViewProps> = ({
   };
 
   return (
-    <RNSafeAreaView
-      edges={edges}
-      mode={mode}
-      style={[containerStyle, style]}
-      testID={testID}
-      {...props}
-    >
-      {children}
-    </RNSafeAreaView>
+    <View style={[{ flex: 1 }, containerStyle, style]}>
+      <RNSafeAreaView
+        edges={edges}
+        mode={mode}
+        testID={testID}
+        style={{ flex: 1 }}
+        {...props}
+      >
+        {children}
+      </RNSafeAreaView>
+    </View>
   );
 };
