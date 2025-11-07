@@ -26,6 +26,7 @@ export const Card: React.FC<CardProps> = ({
   children,
   style,
   onPress,
+  onLongPress,
   disabled = false,
   testID,
   shadowSize = 'none',
@@ -141,6 +142,7 @@ export const Card: React.FC<CardProps> = ({
       <TouchableOpacity
         style={containerStyle}
         onPress={onPress}
+        onLongPress={onLongPress}
         disabled={disabled}
         activeOpacity={0.7}
         testID={computedTestID}
