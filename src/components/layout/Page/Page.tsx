@@ -160,7 +160,13 @@ export const Page: React.FC<PageProps> = (rawProps) => {
 
     // Android：使用自定义 padding 避让（只增不减）；iOS：使用 KAV
     const androidKeyboardPadding = useAndroidKeyboardPadding(keyboardAvoiding);
+    const keyboardHeight = useRef(0);
+    const keyboardHeight_first = useRef(0);
 
+    console.log('androidKeyboardPadding', androidKeyboardPadding);
+    console.log('defaultKeyboardOffset', defaultKeyboardOffset);
+    console.log('keyboardHeight', keyboardHeight.current);
+    console.log('keyboardHeight_first', keyboardHeight_first.current);
     const content = (
         <SafeAreaView
             edges={safeAreaEdges}
@@ -176,39 +182,21 @@ export const Page: React.FC<PageProps> = (rawProps) => {
             {headerNode}
 
             {/* 键盘避让：iOS 使用 KAV；Android 使用底部 padding（稳定不缩） */}
-            {keyboardAvoiding ? (
-                Platform.OS === 'ios' ? (
-                    <KeyboardAvoidingView
-                        behavior="padding"
-                        keyboardVerticalOffset={keyboardVerticalOffset ?? defaultKeyboardOffset}
-                        style={{ flex: 1 }}
-                    >
-                        <Container
-                            flex={1}
-                            p={padding}
-                            scrollable={scrollable}
-                            style={contentStyle}
-                            backgroundColor={bgColor}
-                            dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
-                        >
-                            {children}
-                        </Container>
-                    </KeyboardAvoidingView>
-                ) : (
-                    <View style={{ flex: 1, paddingBottom: androidKeyboardPadding }}>
-                        <Container
-                            flex={1}
-                            p={padding}
-                            scrollable={scrollable}
-                            style={contentStyle}
-                            backgroundColor={bgColor}
-                            dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
-                        >
-                            {children}
-                        </Container>
-                    </View>
-                )
-            ) : (
+            <KeyboardAvoidingView
+                onLayout={(e) => {
+                    const { height } = e.nativeEvent.layout;
+                    console.log('height', height)
+                    if (keyboardHeight_first.current === 0) {
+                        keyboardHeight_first.current = height;
+                    } else if (keyboardHeight.current === 0) {
+                        keyboardHeight.current = height - keyboardHeight_first.current;
+                    }
+
+                }}
+                enabled={keyboardAvoiding}
+                behavior={Platform.OS === 'ios' ? 'padding' : androidKeyboardPadding ? 'padding' : 'height'}
+                keyboardVerticalOffset={androidKeyboardPadding ? keyboardHeight.current : 0}
+                style={{ flex: 1 }}>
                 <Container
                     flex={1}
                     p={padding}
@@ -219,7 +207,7 @@ export const Page: React.FC<PageProps> = (rawProps) => {
                 >
                     {children}
                 </Container>
-            )}
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 
