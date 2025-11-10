@@ -185,7 +185,7 @@ export const Page: React.FC<PageProps> = (rawProps) => {
             <KeyboardAvoidingView
                 onLayout={(e) => {
                     const { height } = e.nativeEvent.layout;
-                    console.log('height', height)
+                    // console.log('height', height)
                     if (keyboardHeight_first.current === 0) {
                         keyboardHeight_first.current = height;
                     } else if (keyboardHeight.current === 0) {
