@@ -163,10 +163,10 @@ export const Page: React.FC<PageProps> = (rawProps) => {
     const keyboardHeight = useRef(0);
     const keyboardHeight_first = useRef(0);
 
-    console.log('androidKeyboardPadding', androidKeyboardPadding);
-    console.log('defaultKeyboardOffset', defaultKeyboardOffset);
-    console.log('keyboardHeight', keyboardHeight.current);
-    console.log('keyboardHeight_first', keyboardHeight_first.current);
+    // console.log('androidKeyboardPadding', androidKeyboardPadding);
+    // console.log('defaultKeyboardOffset', defaultKeyboardOffset);
+    // console.log('keyboardHeight', keyboardHeight.current);
+    // console.log('keyboardHeight_first', keyboardHeight_first.current);
     const content = (
         <SafeAreaView
             edges={safeAreaEdges}
