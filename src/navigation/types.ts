@@ -48,8 +48,9 @@ export interface CustomTabButtonProps {
   children?: React.ReactNode;
 }
 
+// DrawerConfig 接口
 export interface DrawerConfig {
-  /** 抽屉是否默认打开 */
+  /** 初始是否打开（可选，受控/非受控情况见 DrawerLayout） */
   open?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
@@ -60,6 +61,15 @@ export interface DrawerConfig {
   drawerType?: 'front' | 'back' | 'slide';
   /** 边缘手势宽度 */
   edgeWidth?: number;
+  /** 是否允许滑动手势（默认 true，若提供则覆盖内部策略） */
+  swipeEnabled?: boolean;
+  /**
+   * 手势模式
+   * - 'both'：打开/关闭都允许滑动（默认）
+   * - 'close-only'：关闭时允许滑动，关闭状态禁用滑动（满足“只能点击打开，打开后可滑动关闭”）
+   * - 'none'：完全禁用任何滑动手势
+   */
+  gestureMode?: 'both' | 'close-only' | 'none';
 }
 
 /** 额外的 Tabs 组（每组渲染为一个 RootStack.Screen） */

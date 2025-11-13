@@ -70,6 +70,28 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ leftDrawer, rightDra
         return cfg.content as React.ReactNode;
     };
 
+    /**
+     * 计算是否启用滑动手势
+     * - 仅在抽屉打开时启用：gestureMode='close-only'
+     * - 完全禁用：gestureMode='none'
+     * - 默认两端都启用：gestureMode='both'
+     * - 若显式传入 swipeEnabled，则优先生效
+     */
+    const computeSwipeEnabled = (cfg: DrawerConfig | undefined, isOpen: boolean): boolean => {
+        if (!cfg) return false;
+        if (typeof cfg.swipeEnabled === 'boolean') return cfg.swipeEnabled;
+        switch (cfg.gestureMode) {
+            case 'none': return false;
+            case 'close-only': return isOpen;
+            case 'both':
+            default: return true;
+        }
+    };
+
+    /**
+     * 渲染右侧抽屉
+     * - 透传 swipeEnabled/edgeWidth 等手势配置
+     */
     const RightWrapped = (
         <Drawer
             open={!!rightDrawer && rightOpenValue}
@@ -80,11 +102,16 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ leftDrawer, rightDra
             renderDrawerContent={() => renderDrawerContent(rightDrawer) || <></>}
             drawerType={rightDrawer?.drawerType}
             swipeEdgeWidth={rightDrawer?.edgeWidth}
+            swipeEnabled={computeSwipeEnabled(rightDrawer, rightOpenValue)}
         >
             {children}
         </Drawer>
     );
 
+    /**
+     * 渲染左侧抽屉
+     * - 透传 swipeEnabled/edgeWidth 等手势配置
+     */
     return leftDrawer ? (
         <Drawer
             open={leftOpenValue}
@@ -95,6 +122,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ leftDrawer, rightDra
             renderDrawerContent={() => renderDrawerContent(leftDrawer) || <></>}
             drawerType={leftDrawer.drawerType}
             swipeEdgeWidth={leftDrawer.edgeWidth}
+            swipeEnabled={computeSwipeEnabled(leftDrawer, leftOpenValue)}
         >
             {RightWrapped}
         </Drawer>
