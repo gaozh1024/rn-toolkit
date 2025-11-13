@@ -82,7 +82,7 @@ export const Stack: React.FC<StackProps> = ({
       </TouchableOpacity>
     );
   }
-
+  
   return (
     <View style={[containerStyle, spacingStyle, style]} testID={finalTestID}>
       {content}
