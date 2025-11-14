@@ -80,7 +80,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
   const baseContainerStyle: ViewStyle = {
     ...backgroundStyle,
     ...marginOnly,
-    ...(props.flex != null ? { flex: props.flex } : {}),
+    ...(props.flex != null ? { flex: props.flex } : { flex: 1 }),
   };
 
   // 外部样式拍平，用于滚动模式下剥离 padding
@@ -133,11 +133,11 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
     const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { contentSize, layoutMeasurement, contentOffset } = e.nativeEvent;
       const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
-    
+
       // 修复：只有当内容高度大于容器高度（可滚动）时才允许吸底
       const isScrollable = contentSize.height > layoutMeasurement.height;
       stickToBottomRef.current = isScrollable && distanceFromBottom <= SCROLL_BOTTOM_THRESHOLD;
-    
+
       // 上拉触底检测（仅在内容可滚动时有效）
       if (onReachBottom) {
         const nearBottom = distanceFromBottom <= reachBottomThreshold;
@@ -151,7 +151,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
           onReachBottom();
         }
       }
-    
+
       // 透传用户自定义 onScroll
       scrollViewProps?.onScroll?.(e);
     };
@@ -190,8 +190,8 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
       <ScrollView
         ref={scrollViewRef}
         {...scrollViewProps}
-        style={[styleWithoutPadding, baseContainerStyle]}
-        contentContainerStyle={contentPaddingStyle}
+        style={[{ flex: 1 }, styleWithoutPadding, baseContainerStyle]}
+        contentContainerStyle={[{ flex: 1 }, contentPaddingStyle]}
         keyboardShouldPersistTaps={dismissKeyboardOnTapOutside ? 'handled' : undefined}
         onScrollBeginDrag={dismissKeyboardOnTapOutside ? Keyboard.dismiss : undefined}
         onScroll={handleScroll}
@@ -208,7 +208,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
 
   if (dismissKeyboardOnTapOutside) {
     return (
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <TouchableWithoutFeedback style={{ flex: 1 }} onPress={Keyboard.dismiss} accessible={false}>
         {/* 单独属性优先：外部 style 放前，基础样式与 padding 在后 */}
         <View style={[style, baseContainerStyle, paddingOnly]} testID={computedTestID}>
           {children}
@@ -219,7 +219,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
 
   return (
     // 单独属性优先：外部 style 放前，基础样式与 padding 在后
-    <View style={[style, baseContainerStyle, paddingOnly]} testID={computedTestID}>
+    <View style={[{ flex: 1 }, style, baseContainerStyle, paddingOnly]} testID={computedTestID}>
       {children}
     </View>
   );

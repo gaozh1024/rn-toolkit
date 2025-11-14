@@ -170,7 +170,7 @@ export const Page: React.FC<PageProps> = (rawProps) => {
     const content = (
         <SafeAreaView
             edges={safeAreaEdges}
-            style={[{ backgroundColor: bgColor }, style]}
+            style={[{ backgroundColor: bgColor, flex: 1 }, style]}
             testID={finalTestID}
         >
             <StatusBar
