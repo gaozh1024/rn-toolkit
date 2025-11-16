@@ -170,7 +170,7 @@ export const Page: React.FC<PageProps> = (rawProps) => {
     const content = (
         <SafeAreaView
             edges={safeAreaEdges}
-            style={[{ backgroundColor: bgColor, flex: 1 }, style]}
+            style={[{ backgroundColor: bgColor }, style]}
             testID={finalTestID}
         >
             <StatusBar
@@ -184,13 +184,13 @@ export const Page: React.FC<PageProps> = (rawProps) => {
             {/* 键盘避让：iOS 使用 KAV；Android 使用底部 padding（稳定不缩） */}
             <KeyboardAvoidingView
                 onLayout={(e) => {
-                    const { height } = e.nativeEvent.layout;
-                    // console.log('height', height)
-                    if (keyboardHeight_first.current === 0) {
-                        keyboardHeight_first.current = height;
-                    } else if (keyboardHeight.current === 0) {
-                        keyboardHeight.current = height - keyboardHeight_first.current;
-                    }
+                    // const { height } = e.nativeEvent.layout;
+                    // // console.log('height', height)
+                    // if (keyboardHeight_first.current === 0) {
+                    //     keyboardHeight_first.current = height;
+                    // } else if (keyboardHeight.current === 0) {
+                    //     keyboardHeight.current = height - keyboardHeight_first.current;
+                    // }
 
                 }}
                 enabled={keyboardAvoiding}

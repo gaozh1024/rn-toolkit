@@ -80,7 +80,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
   const baseContainerStyle: ViewStyle = {
     ...backgroundStyle,
     ...marginOnly,
-    ...(props.flex != null ? { flex: props.flex } : { flex: 1 }),
+    ...(props.flex != null ? { flex: props.flex } : {}),
   };
 
   // 外部样式拍平，用于滚动模式下剥离 padding
@@ -190,8 +190,8 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
       <ScrollView
         ref={scrollViewRef}
         {...scrollViewProps}
-        style={[{ flex: 1 }, styleWithoutPadding, baseContainerStyle]}
-        contentContainerStyle={[{ flex: 1 }, contentPaddingStyle]}
+        style={[styleWithoutPadding, baseContainerStyle]}
+        contentContainerStyle={[contentPaddingStyle]}
         keyboardShouldPersistTaps={dismissKeyboardOnTapOutside ? 'handled' : undefined}
         onScrollBeginDrag={dismissKeyboardOnTapOutside ? Keyboard.dismiss : undefined}
         onScroll={handleScroll}
@@ -208,7 +208,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
 
   if (dismissKeyboardOnTapOutside) {
     return (
-      <TouchableWithoutFeedback style={{ flex: 1 }} onPress={Keyboard.dismiss} accessible={false}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         {/* 单独属性优先：外部 style 放前，基础样式与 padding 在后 */}
         <View style={[style, baseContainerStyle, paddingOnly]} testID={computedTestID}>
           {children}
@@ -219,7 +219,7 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
 
   return (
     // 单独属性优先：外部 style 放前，基础样式与 padding 在后
-    <View style={[{ flex: 1 }, style, baseContainerStyle, paddingOnly]} testID={computedTestID}>
+    <View style={[style, baseContainerStyle, paddingOnly]} testID={computedTestID}>
       {children}
     </View>
   );
