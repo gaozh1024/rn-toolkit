@@ -1,6 +1,6 @@
 // Container 组件（新增：forwardRef 暴露 scrollToBottom；新增 defaultScrollToBottom）
 import React from 'react';
-import { View, ViewStyle, StyleProp, ScrollView, StyleSheet, TouchableWithoutFeedback, Keyboard, NativeSyntheticEvent, NativeScrollEvent, RefreshControl } from 'react-native';
+import { View, ViewStyle, StyleProp, ScrollView, StyleSheet, TouchableWithoutFeedback, Keyboard, NativeSyntheticEvent, NativeScrollEvent, RefreshControl, Platform } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 import { SpacingProps, useSpacingStyle } from '../../../theme';
 import { BackgroundProps, buildBackgroundStyle, buildTestID, TestableProps } from '../../common';
@@ -186,14 +186,19 @@ export const Container = React.forwardRef<ContainerHandle, ContainerProps>(funct
       )
       : scrollViewProps?.refreshControl;
 
+    /**
+     * 函数注释：ScrollView 行为优化
+     * - contentContainerStyle 增加 flexGrow: 1，让内容在首帧也撑满，滚动更跟手。
+     * - iOS 使用 keyboardDismissMode="on-drag" 替代 onScrollBeginDrag 主动收起键盘，手势更自然。
+     */
     return (
       <ScrollView
         ref={scrollViewRef}
         {...scrollViewProps}
         style={[styleWithoutPadding, baseContainerStyle]}
-        contentContainerStyle={[contentPaddingStyle]}
+        contentContainerStyle={[{ flexGrow: 1 }, contentPaddingStyle]}
         keyboardShouldPersistTaps={dismissKeyboardOnTapOutside ? 'handled' : undefined}
-        onScrollBeginDrag={dismissKeyboardOnTapOutside ? Keyboard.dismiss : undefined}
+        keyboardDismissMode={dismissKeyboardOnTapOutside ? (Platform.OS === 'ios' ? 'on-drag' : undefined) : undefined}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={16}
