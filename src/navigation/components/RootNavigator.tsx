@@ -19,11 +19,31 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
   tabsGroups = [],
   ...tabConfig
 }) => {
+  /**
+   * 函数注释：初始路由分发策略
+   * - 若 initialRouteName 命中某个 Stack 名称，则将 RootStack 的初始路由设为该 Stack（满足“打开非 Tab 的首屏”需求）。
+   * - 若 initialRouteName 命中某个 Tab 名称，则仅把它传给 TabNavigator；RootStack 仍以主 Tabs 屏幕为初始路由。
+   * - 避免将一个不存在于 Tabs 的名称传给 TabNavigator，防止 "Couldn't find a screen named ..." 警告。
+   */
+  const tabNames = (tabs || []).map(t => t.name);
+  const isInitialTab = !!initialRouteName && tabNames.includes(initialRouteName!);
+  const isInitialStack = !!initialRouteName && (stacks || []).some(s => s.name === initialRouteName);
+
+  const rootInitialRouteName = (() => {
+    if (isInitialStack) return initialRouteName!; // 初始路由是某个 Stack
+    if (tabs.length > 0) return tabsScreenName || 'MainTabs'; // 默认进入主 Tabs
+    if (stacks.length > 0) return stacks[0].name; // 无 Tabs 时进入第一个 Stack
+    if ((tabsGroups || []).length > 0) return tabsGroups[0].screenName; // 或第一个 Tabs 组
+    return undefined;
+  })();
+
+  const tabsInitialRouteName = isInitialTab ? initialRouteName : undefined;
+
   // 创建主标签导航器组件
   const TabsComponent = () => (
     <TabNavigator
       tabs={tabs}
-      initialRouteName={initialRouteName}
+      initialRouteName={tabsInitialRouteName}
       tabBarHeight={tabConfig.tabBarHeight}
       backgroundColor={tabConfig.backgroundColor}
       activeColor={tabConfig.activeColor}
@@ -93,6 +113,8 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
 
   return (
     <RootStack.Navigator
+      // 若定义了根初始路由，则应用；否则使用 React Navigation 默认行为（第一个声明的屏幕）
+      initialRouteName={rootInitialRouteName as any}
       screenOptions={{ headerShown: false }}
     >
       {/* 主标签导航器：仅在存在主组 tabs 时挂载 */}

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { StatusBar, ViewStyle, StyleProp, Platform, Keyboard, View } from 'react-native';
-import { Edge, useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from 'react';
+import { StatusBar, ViewStyle, StyleProp } from 'react-native';
+import { Edge } from 'react-native-safe-area-context';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from '../SafeAreaView/SafeAreaView';
 import { Container } from '../Container/Container';
@@ -46,10 +46,6 @@ export interface PageProps extends TestableProps, GradientProps {
     dismissKeyboardOnTapOutside?: boolean;
     // 新增：键盘避让（默认 false）。开启后底部输入不再被键盘遮挡
     keyboardAvoiding?: boolean;
-    // 新增：键盘垂直偏移（可选）。
-    // - 不传时自动使用：Header高度 + 顶部安全区（若 Header 开启 safeAreaTopEnabled）
-    // - iOS 常用；Android 在 adjustResize 下可留空或传 'height' 行为
-    keyboardVerticalOffset?: number;
 }
 
 // export const Page: React.FC<PageProps>
@@ -57,7 +53,6 @@ export interface PageProps extends TestableProps, GradientProps {
  * 函数注释：Page（键盘避让布局）
  * - Header 固定在避让视图之外，避免随内容上移。
  * - 两端统一使用 keyboard-controller 的 KeyboardAvoidingView（translate-with-padding）。
- * - keyboardVerticalOffset 默认取 Header 高度 + 顶部安全区，避免首帧贴底。
  */
 export const Page: React.FC<PageProps> = (rawProps) => {
     const {
@@ -78,11 +73,9 @@ export const Page: React.FC<PageProps> = (rawProps) => {
         rightDrawer,
         dismissKeyboardOnTapOutside = false,
         keyboardAvoiding = false,
-        keyboardVerticalOffset,
     } = rawProps;
     const { theme, isDark } = useTheme();
     const colors = theme.colors;
-    const insets = useSafeAreaInsets();
     const finalTestID = buildTestID('Page', rawProps.testID);
     const gradientCfg = normalizeGradientConfig([colors.primary, colors.secondary], rawProps);
 
@@ -108,20 +101,17 @@ export const Page: React.FC<PageProps> = (rawProps) => {
         <Header {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} />
     ) : null;
 
-    const headerHeight = theme.navigation?.height ?? 44;
-    const headerTopInset = (headerProps?.safeAreaTopEnabled ?? true) ? insets.top : 0;
-    const defaultKeyboardOffset = headerShown ? (headerHeight + headerTopInset) : 0;
-
     const content = (
         <SafeAreaView
             edges={safeAreaEdges}
-            style={[{ backgroundColor: bgColor }, style]}
+            backgroundColor={bgColor}
+            style={[style]}
             testID={finalTestID}
         >
             <StatusBar
                 barStyle={autoStatusBarStyle}
                 backgroundColor={autoStatusBarBgColor}
-                translucent={useTransparentStatusBar}
+                translucent={true}
             />
 
             {headerNode}

@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect } from 'react';
+import { Platform, View } from 'react-native';
 import { NavigationContainer as RNNavigationContainer } from '@react-navigation/native';
-import { Platform } from 'react-native';
 import { KeyboardProvider, KeyboardController, AndroidSoftInputModes } from 'react-native-keyboard-controller';
 import { navigationRef } from '../services/NavigationService';
 import { DialogContainer, LoadingContainer, ToastContainer, ActionSheetContainer, SnackbarContainer } from '../../components/feedback';
@@ -43,8 +43,8 @@ export const NavigationContainer: React.FC<NavigationContainerProps> = ({
   }, []);
 
   return (
-    <KeyboardProvider preload={false}>
-      <SafeAreaProvider>
+    <SafeAreaProvider>
+      <KeyboardProvider preload={false} statusBarTranslucent navigationBarTranslucent >
         <RNNavigationContainer
           ref={navigationRef}
           onReady={handleReady}
@@ -58,7 +58,7 @@ export const NavigationContainer: React.FC<NavigationContainerProps> = ({
           <SnackbarContainer />
           {children}
         </RNNavigationContainer>
-      </SafeAreaProvider>
-    </KeyboardProvider>
+      </KeyboardProvider>
+    </SafeAreaProvider>
   );
 };

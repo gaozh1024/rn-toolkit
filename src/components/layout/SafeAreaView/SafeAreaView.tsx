@@ -21,12 +21,17 @@ export const SafeAreaView: React.FC<SafeAreaViewProps> = ({
   testID,
   ...props
 }) => {
+  /**
+   * 函数注释：SafeAreaView（安全区容器）
+   * - 外层 View：承接外部样式（布局、叠加样式）。
+   * - 内部 RNSafeAreaView：应用安全区 padding/margin，并使用 backgroundColor 涂色安全区。
+   */
   const { theme } = useTheme();
   const colors = theme.colors;
 
   const containerStyle: StyleProp<ViewStyle> = {
     flex: 1,
-    backgroundColor: backgroundColor || colors.background,
+    backgroundColor: backgroundColor ?? colors.background,
   };
 
   return (
@@ -35,11 +40,11 @@ export const SafeAreaView: React.FC<SafeAreaViewProps> = ({
         edges={edges}
         mode={mode}
         testID={testID}
-        style={{ flex: 1 }}
+        style={[{ flex: 1}]}
         {...props}
       >
         {children}
       </RNSafeAreaView>
     </View>
   );
-};
+}

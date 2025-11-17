@@ -45,7 +45,8 @@ export const Screen: React.FC<ScreenProps> = ({
     return (
         <SafeAreaView
             edges={safeAreaEdges}
-            style={[{ backgroundColor: backgroundColor || colors.background }, style]}
+            backgroundColor={backgroundColor || colors.background}
+            style={style}
             testID={testID}
         >
             <StatusBar
