@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, Animated, TouchableWithoutFeedback, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Animated, TouchableWithoutFeedback, StyleSheet } from 'react-native';
 import { LoadingService, LoadingState } from './LoadingService';
 import { useTheme } from '../../../theme/hooks';
 import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Text } from '../../ui';
 
+/**
+ * 函数注释：Loading 容器
+ * - 使用 UI.Text 替代 RN.Text，解决部分机型上原生 Text 渲染与交互异常问题。
+ * - 保持原有样式与行为一致，仅替换文本组件来源，提升兼容性与主题一致性。
+ */
 export const LoadingContainer: React.FC = () => {
-    const { theme } = useTheme?.() ?? { theme: { colors: { background: '#FFFFFF', textPrimary: '#333333' } } };
-    const colors = theme?.colors ?? { background: '#FFFFFF', textPrimary: '#333333' };
+    const { theme } = useTheme?.() ?? { theme: { colors: { background: '#FFFFFF', text: '#333333' } } };
+    const colors = theme?.colors ?? { background: '#FFFFFF', text: '#333333' };
 
     const [state, setState] = useState<LoadingState>({ visible: false });
     const duration = state.visible && state.animationDuration != null ? state.animationDuration : 200;
@@ -32,6 +38,10 @@ export const LoadingContainer: React.FC = () => {
     const pointerEventsRoot = state.visible ? (state.mode === 'blocking' ? 'auto' : 'box-none') : 'none';
     const showCancelButton = !!state.visible && !!state.cancelable && state.mode === 'semi';
 
+    /**
+     * 函数注释：半阻断模式下支持取消
+     * - 在可取消且可见的情况下，点击遮罩或按钮触发取消并隐藏 Loading。
+     */
     const handleCancel = () => {
         if (!state.visible || !state.cancelable) return;
         try { state.onCancel?.(); } finally { LoadingService.hide(); }
