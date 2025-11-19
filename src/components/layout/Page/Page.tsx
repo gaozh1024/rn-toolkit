@@ -116,23 +116,11 @@ export const Page: React.FC<PageProps> = (rawProps) => {
 
             {headerNode}
 
-            {keyboardAvoiding ? (
-                <KeyboardAvoidingView
-                    behavior={'padding'}
-                    style={{ flex: 1 }}
-                >
-                    <Container
-                        flex={1}
-                        p={padding}
-                        scrollable={scrollable}
-                        style={contentStyle}
-                        backgroundColor={bgColor}
-                        dismissKeyboardOnTapOutside={dismissKeyboardOnTapOutside}
-                    >
-                        {children}
-                    </Container>
-                </KeyboardAvoidingView>
-            ) : (
+            <KeyboardAvoidingView
+                enabled={keyboardAvoiding}
+                behavior={'padding'}
+                style={{ flex: 1 }}
+            >
                 <Container
                     flex={1}
                     p={padding}
@@ -143,7 +131,7 @@ export const Page: React.FC<PageProps> = (rawProps) => {
                 >
                     {children}
                 </Container>
-            )}
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 

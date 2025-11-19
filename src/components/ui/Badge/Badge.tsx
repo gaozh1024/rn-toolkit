@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, ViewStyle, TextStyle, StyleSheet, StyleProp } from 'react-native';
+import { View, ViewStyle, TextStyle, StyleSheet, StyleProp } from 'react-native';
 import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { buildTestID, TestableProps } from '../../common/test';
 import { buildBoxStyle, BoxProps } from '../../common/box';
 import { buildShadowStyle, ShadowProps } from '../../common/shadow';
+import { Text } from '../Text';
 
 export type BadgeVariant = 'solid' | 'outline';
 export type BadgeColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | string;

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
+import { Text } from '../../ui/Text';
 
 export interface EmptyAction {
     text: string;

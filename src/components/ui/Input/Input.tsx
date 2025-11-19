@@ -36,6 +36,14 @@ export interface InputProps extends SpacingProps, TestableProps, BoxProps {
     onChangeText?: (text: string) => void;
     onFocus?: () => void;
     onBlur?: () => void;
+    /**
+     * 是否在渲染后自动聚焦；并通过回调返回是否成功获得焦点
+     */
+    autoFocus?: boolean;
+    /**
+     * 自动聚焦结果回调：true=获得焦点，false=未获得焦点
+     */
+    onAutoFocusResult?: (focused: boolean) => void;
     accessibilityLabel?: string;
     accessibilityHint?: string;
     testID?: string;
@@ -68,6 +76,8 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
         onChangeText,
         onFocus,
         onBlur,
+        autoFocus,
+        onAutoFocusResult,
         accessibilityLabel,
         accessibilityHint,
         testID,
@@ -120,6 +130,8 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
 
     // 本地保存 TextInput 引用，方便容器点击时聚焦
     const innerRef = useRef<TextInput | null>(null);
+    const requestedAutoFocusRef = useRef(false);
+    const [isFocused, setIsFocused] = React.useState(false);
 
     /**
      * 同步内部 ref 与外部转发的 ref
@@ -142,6 +154,48 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
         if (disabled || !editable) return;
         innerRef.current?.focus();
     }, [disabled, editable]);
+
+    /**
+     * 焦点事件包装：上报给外部，同时在自动聚焦路径中返回成功
+     */
+    const handleFocus = useCallback(() => {
+        setIsFocused(true);
+        if (requestedAutoFocusRef.current) {
+            onAutoFocusResult?.(true);
+            requestedAutoFocusRef.current = false;
+        }
+        onFocus?.();
+    }, [onFocus, onAutoFocusResult]);
+
+    const handleBlur = useCallback(() => {
+        setIsFocused(false);
+        onBlur?.();
+    }, [onBlur]);
+
+    /**
+     * 自动聚焦流程：尝试 focus，并在超时未获得焦点时回调 false
+     */
+    React.useEffect(() => {
+        if (!autoFocus) return;
+        if (disabled || !editable) {
+            onAutoFocusResult?.(false);
+            return;
+        }
+        requestedAutoFocusRef.current = true;
+        // 触发聚焦（同时将 autoFocus 传递给 TextInput）
+        const tick = setTimeout(() => innerRef.current?.focus(), 0);
+        const timer = setTimeout(() => {
+            if (requestedAutoFocusRef.current) {
+                const ok = !!innerRef.current?.isFocused && innerRef.current.isFocused();
+                onAutoFocusResult?.(ok);
+                requestedAutoFocusRef.current = false;
+            }
+        }, 600);
+        return () => {
+            clearTimeout(tick);
+            clearTimeout(timer);
+        };
+    }, [autoFocus, disabled, editable, onAutoFocusResult]);
 
     return (
         <Pressable
@@ -170,13 +224,14 @@ const Input = forwardRef<TextInput, InputProps>((props, ref) => {
                 placeholderTextColor={placeholderTextColor}
                 secureTextEntry={secureTextEntry}
                 editable={editable && !disabled}
+                autoFocus={autoFocus}
                 keyboardType={keyboardType}
                 returnKeyType={returnKeyType}
                 autoCapitalize={autoCapitalize}
                 maxLength={maxLength}
                 onChangeText={onChangeText}
-                onFocus={onFocus}
-                onBlur={onBlur}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
                 style={[
                   styles.input,
                   Platform.OS === 'android' ? { textAlignVertical: 'center', lineHeight: 20, paddingTop: 2 } : undefined,

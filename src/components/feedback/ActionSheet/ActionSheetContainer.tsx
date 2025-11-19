@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, PanResponder } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, PanResponder } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../theme/hooks';
+import { Text } from '../../ui/Text';
 import { ActionSheetService, ActionSheetState, ActionSheetAction } from './ActionSheetService';
 
 export const ActionSheetContainer: React.FC = () => {

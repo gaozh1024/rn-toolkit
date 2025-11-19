@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import { View, Text, ViewStyle, TextStyle, StyleSheet, ImageSourcePropType } from 'react-native';
+import { View, ViewStyle, TextStyle, StyleSheet, ImageSourcePropType } from 'react-native';
 import { useTheme, useSpacingStyle, SpacingProps } from '../../../theme';
 import { Avatar, AvatarSize, AvatarShape, AvatarStatus } from '../Avatar';
 import { buildTestID, TestableProps } from '../../common/test';
 import { buildBoxStyle, BoxProps } from '../../common/box';
+import { Text } from '../Text';
 
 export interface AvatarItem { src?: ImageSourcePropType; name?: string; status?: AvatarStatus }
 export interface AvatarGroupProps extends SpacingProps, BoxProps, TestableProps {

@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { View, Animated, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { DialogService, DialogState } from './DialogService';
 import { useFadeAnimation, useScaleAnimation } from '../../../animation';
 import { useTheme } from '../../../theme/hooks';
+import { Text } from '../../ui/Text';
 
 export const DialogContainer: React.FC = () => {
     const { theme } = useTheme() ?? { theme: { colors: { background: '#FFFFFF', textPrimary: '#333333' } } };
@@ -66,7 +67,7 @@ export const DialogContainer: React.FC = () => {
             </TouchableWithoutFeedback>
 
             <View style={styles.center} pointerEvents="box-none">
-                <Animated.View style={[styles.card, { backgroundColor: colors.background, transform: [{ scale: scaleAnim }] }] }>
+                <Animated.View style={[styles.card, { backgroundColor: colors.background, transform: [{ scale: scaleAnim }] }]}>
                     {!!title && (
                         <View style={styles.titleWrapper}>
                             <Text style={[styles.title, { color: colors.text }]}>{title}</Text>

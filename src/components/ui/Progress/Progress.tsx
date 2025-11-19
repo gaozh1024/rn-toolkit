@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { View, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../../../theme/hooks';
@@ -8,6 +8,7 @@ import { useSpacingStyle, type SpacingProps } from '../../../theme/spacing';
 import { buildTestID, type TestableProps } from '../../common/test';
 import { buildBoxStyle, type BoxProps } from '../../common/box';
 import { buildShadowStyle, type ShadowProps } from '../../common/shadow';
+import { Text } from '../Text';
 
 export type ProgressVariant = 'linear' | 'circular';
 export type ProgressColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'text' | 'subtext' | 'border' | 'divider' | string;

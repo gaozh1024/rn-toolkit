@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Animated, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFadeAnimation } from '../../../animation';
 import { useTheme } from '../../../theme/hooks';
 import { SnackbarService, SnackbarState } from './SnackbarService';
+import { Text } from '../../ui/Text';
 
 export const SnackbarContainer: React.FC = () => {
   const { theme } = useTheme?.() ?? { theme: { colors: { background: '#1C1C1E', text: '#FFFFFF', primary: '#0A84FF' } } } as any;
@@ -87,8 +88,8 @@ export const SnackbarContainer: React.FC = () => {
 
   return (
     <View pointerEvents="box-none" style={styles.root}>
-      <View pointerEvents="box-none" style={[styles.overlay, { paddingBottom: bottomPadding }]}> 
-        <Animated.View style={[styles.bar, { backgroundColor: colors.background, opacity: fadeAnim, transform: [{ translateY }] }]}> 
+      <View pointerEvents="box-none" style={[styles.overlay, { paddingBottom: bottomPadding }]}>
+        <Animated.View style={[styles.bar, { backgroundColor: colors.background, opacity: fadeAnim, transform: [{ translateY }] }]}>
           <Text style={[styles.message, { color: colors.text }]} numberOfLines={2}>{message}</Text>
           {!!actionText && (
             <TouchableOpacity onPress={onPressAction} activeOpacity={0.8} style={styles.actionWrap}>

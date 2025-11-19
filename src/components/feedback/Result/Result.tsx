@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 import { Icon } from '../../ui/Icon';
+import { Text } from '../../ui/Text';
 
 export type ResultStatus = 'success' | 'error' | 'warning' | 'info' | 'offline';
 

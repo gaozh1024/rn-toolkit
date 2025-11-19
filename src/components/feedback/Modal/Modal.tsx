@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableWithoutFeedback, TouchableOpacity, StyleSheet, Dimensions, ViewStyle, DimensionValue, Animated } from 'react-native';
+import { View, TouchableWithoutFeedback, StyleSheet, Dimensions, ViewStyle, DimensionValue, Animated } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useComponentNavigation } from '../../../navigation';
 import { useFadeAnimation } from '../../../animation';
 import { StackActions } from '@react-navigation/native';
-import Icon from '../../ui/Icon';
+import { Text } from '../../ui/Text';
 import { Row } from '../../layout';
 import { IconButton } from '../../ui';
 
@@ -112,7 +113,11 @@ export const ModalScreen: React.FC<any> = ({ route }) => {
                 </TouchableWithoutFeedback>
             )}
 
-            <View style={[styles.container, getPositionStyle()]}>
+            <KeyboardAvoidingView
+                style={[styles.container, getPositionStyle()]}
+                behavior={'padding'}
+                keyboardVerticalOffset={useInsets ? insets.bottom : 0}
+            >
                 <Animated.View
                     style={[
                         styles.card,
@@ -159,7 +164,7 @@ export const ModalScreen: React.FC<any> = ({ route }) => {
                         {children ?? <Text style={styles.placeholder}>No Content</Text>}
                     </View>
                 </Animated.View>
-            </View>
+            </KeyboardAvoidingView>
         </View>
     );
 };

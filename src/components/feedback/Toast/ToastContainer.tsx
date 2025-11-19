@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, ViewStyle, Platform } from 'react-native';
+import { View, StyleSheet, Animated, ViewStyle, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFadeAnimation } from '../../../animation';
 import { ToastService, ToastOptions, ToastPosition } from './ToastService';
+import { Text } from '../../ui/Text';
 
 /**
  * ToastContainer：全局轻提示容器。

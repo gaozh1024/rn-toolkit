@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Animated } from 'react-native';
+import { View, FlatList, StyleSheet, Animated } from 'react-native';
 import { useTheme, useLayoutStyles, useSpacingStyles } from '../../../theme';
 import { useComponentNavigation } from '../../../navigation';
 import Button from '../../ui/Button/Button';
 import { PickerService, type PickerItem } from './PickerService';
+import { Text } from '../../ui/Text';
 
 type PickerParams = {
     id: string;
@@ -72,7 +73,7 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
                     if (ref && col.length > 0) {
                         try {
                             ref.scrollToIndex({ index: Math.min(idx, col.length - 1), animated: false });
-                        } catch {}
+                        } catch { }
                     }
                 });
             }, 0);
@@ -97,7 +98,7 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
                     if (ref && maxIdx >= 0) {
                         try {
                             ref.scrollToIndex({ index: clamped, animated: false });
-                        } catch {}
+                        } catch { }
                     }
                 });
             }, 0);
@@ -113,7 +114,7 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
                 if (ref && col.length > 0) {
                     try {
                         ref.scrollToIndex({ index: Math.min(idx, col.length - 1), animated: false });
-                    } catch {}
+                    } catch { }
                 }
             });
         }, 0);

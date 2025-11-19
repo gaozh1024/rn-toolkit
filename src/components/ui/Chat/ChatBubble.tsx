@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ViewStyle, TextStyle, StyleProp, DimensionValue } from 'react-native';
+import { View, TouchableOpacity, ViewStyle, TextStyle, StyleProp, DimensionValue } from 'react-native';
 import { useTheme } from '../../../theme/hooks';
 import { buildTestID, type TestableProps } from '../../common/test';
 import { useSpacingStyle, type SpacingProps } from '../../../theme/spacing';
 import { buildBoxStyle, type BoxProps } from '../../common/box';
+import { Text } from '../Text';
 
 export type ChatBubbleAlign = 'left' | 'right';
 export type ChatAction = React.ReactNode | { label: string; onPress?: () => void };
