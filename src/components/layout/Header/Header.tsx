@@ -63,6 +63,7 @@ export interface HeaderProps extends TestableProps, ShadowProps, SpacingProps {
     gradientCenter?: { x: number; y: number };
     gradientRadius?: number;
     gradientOpacity?: number;
+    rightNode?: React.ReactNode;
 }
 
 // Header 组件布局修复：让渐变覆盖安全区+bar
@@ -98,6 +99,7 @@ export const Header: React.FC<HeaderProps> = (rawProps) => {
         shadowOpacity,
         shadowRadius,
         shadowOffset,
+        rightNode,
     } = rawProps;
 
     const { theme, styles } = useTheme();
@@ -250,7 +252,10 @@ export const Header: React.FC<HeaderProps> = (rawProps) => {
                             <Text
                                 numberOfLines={1}
                                 ellipsizeMode="tail"
-                                style={{ fontSize: act.labelSize ?? navTheme.labelSize, fontWeight: act.labelWeight ?? navTheme.labelWeight }}
+                                style={{
+                                    fontSize: act.labelSize ?? navTheme.labelSize,
+                                    fontWeight: act.labelWeight ?? navTheme.labelWeight,
+                                }}
                                 color={color ?? navTheme.labelColor}
                             >
                                 {label}
@@ -310,7 +315,7 @@ export const Header: React.FC<HeaderProps> = (rawProps) => {
                         )}
                     </View>
                     {/* 右侧动作区（最多3个槽位，固定宽度） */}
-                    <View style={rightContainerStyle}>{renderActionSlots()}</View>
+                    <View style={rightContainerStyle}>{rightNode ? rightNode : renderActionSlots()}</View>
                 </View>
             </View>
         </View>

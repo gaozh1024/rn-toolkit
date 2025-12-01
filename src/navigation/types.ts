@@ -99,6 +99,8 @@ export interface NavigatorConfig {
   inactiveColor?: string;
   showLabels?: boolean;
   transitionMode?: TransitionMode;
+  /** Tabs 屏幕过渡模式（仅主 Tabs 与 Tabs 组生效） */
+  tabsTransitionMode?: TransitionMode;
   leftDrawer?: DrawerConfig;
   rightDrawer?: DrawerConfig;
   /** 主 Tabs 在 RootStack 中的屏幕名称（默认 'MainTabs'） */

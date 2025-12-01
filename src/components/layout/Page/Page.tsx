@@ -67,7 +67,7 @@ export const Page: React.FC<PageProps> = (rawProps) => {
         padding = 0,
         safeAreaEdges = ['bottom', 'left', 'right'],
         statusBarStyle,
-        statusBarBackgroundColor,
+        statusBarBackgroundColor,// 新增：自定义状态栏背景颜色
         // 梯度与测试ID来自公共能力（rawProps.gradientEnabled/...，rawProps.testID）
         leftDrawer,
         rightDrawer,

@@ -117,8 +117,10 @@ export const ModalScreen: React.FC<any> = ({ route }) => {
                 style={[styles.container, getPositionStyle()]}
                 behavior={'padding'}
                 keyboardVerticalOffset={useInsets ? insets.bottom : 0}
+                pointerEvents="box-none"
             >
                 <Animated.View
+                    onStartShouldSetResponder={() => true}
                     style={[
                         styles.card,
                         {

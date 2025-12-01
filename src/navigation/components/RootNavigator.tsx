@@ -15,6 +15,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
   modals = [],
   initialRouteName,
   transitionMode = 'ios',
+  tabsTransitionMode,
   tabsScreenName,
   tabsGroups = [],
   ...tabConfig
@@ -122,7 +123,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
         <RootStack.Screen
           name={tabsScreenName || 'MainTabs'}
           component={TabsComponent}
-          options={getTransitionOptions(transitionMode)}
+          options={getTransitionOptions(tabsTransitionMode ?? transitionMode)}
         />
       )}
 
@@ -142,7 +143,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
               showLabels={group.showLabels ?? tabConfig.showLabels}
             />
           )}
-          options={getTransitionOptions(transitionMode)}
+          options={getTransitionOptions(tabsTransitionMode ?? transitionMode)}
         />
       ))}
 

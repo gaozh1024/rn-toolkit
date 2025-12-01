@@ -141,11 +141,16 @@ const Button: React.FC<ButtonProps> = ({
     const defaultBackground = (() => {
         const themeColor = getThemeColor();
         switch (variant) {
-            case 'primary': return themeColor ?? colors.primary;
-            case 'secondary': return theme.button.secondary.backgroundColor;
-            case 'outline': return 'transparent';
-            case 'text': return theme.button.text.backgroundColor;
-            default: return themeColor ?? colors.primary;
+            case 'primary':
+                return themeColor ?? colors.primary;
+            case 'secondary':
+                return themeColor ?? theme.button.secondary.backgroundColor;
+            case 'outline':
+                return 'transparent';
+            case 'text':
+                return theme.button.text.backgroundColor;
+            default:
+                return themeColor ?? colors.primary;
         }
     })();
 
@@ -284,6 +289,8 @@ const Button: React.FC<ButtonProps> = ({
     // 获取文本颜色
     const getTextColor = (): string => {
         if (textColor) return textColor;
+        const themeColor = getThemeColor();
+        if (themeColor) return themeColor;
         switch (variant) {
             case 'primary': return theme.button.primary.textColor;
             case 'secondary': return theme.button.secondary.textColor;

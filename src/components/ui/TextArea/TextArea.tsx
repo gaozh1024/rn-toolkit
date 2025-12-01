@@ -1,4 +1,4 @@
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useState, useRef, useCallback } from 'react';
 import { TextInput, View, ViewStyle, TextStyle, Pressable, StyleProp } from 'react-native';
 import { useTheme, useThemeColors } from '../../../theme';
 import { Text } from '../Text';
@@ -38,6 +38,9 @@ export interface TextAreaProps extends TestableProps, SpacingProps, BoxProps {
 type IconObject = { name: string; color?: string; size?: number; onPress?: () => void };
 const isIconObject = (x: any): x is IconObject => !!x && typeof x === 'object' && 'name' in x;
 
+/**
+ * 文本域组件：支持容器点击聚焦、固定高度滚动、内容自增高
+ */
 const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
     const {
         value,
@@ -77,7 +80,21 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
     const isControlled = props.value !== undefined;
     const currentValue = isControlled ? value! : localValue;
 
+    // 新增：内部文本输入引用与转发
+    const innerRef = useRef<TextInput | null>(null);
+    const setRef = useCallback((node: TextInput | null) => {
+        innerRef.current = node;
+        if (typeof ref === 'function') {
+            ref(node);
+        } else if (ref && 'current' in ref) {
+            (ref as React.MutableRefObject<TextInput | null>).current = node;
+        }
+    }, [ref]);
+
     const widthStyle: ViewStyle = flex != null ? { flex } : fullWidth ? { width: '100%' } : {};
+    // 新增：如果通过 BoxProps 指定了固定高度，则禁用自增高并启用内部滚动
+    const fixedContainerHeight = typeof (props as any).height === 'number' ? (props as any).height as number : undefined;
+    const autoSizeEffective = autoSize && fixedContainerHeight == null;
 
     const lineHeightBySize = 22;
 
@@ -110,6 +127,7 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
                 paddingHorizontal: theme.spacing.sm,
                 paddingVertical: theme.spacing.md,
                 ...widthStyle,
+                overflow: 'hidden',
             }
         ),
     };
@@ -133,8 +151,14 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
         }
     };
 
+    // 新增：点击容器任意位置聚焦输入框
+    const handleContainerPress = useCallback(() => {
+        if (disabled || !editable) return;
+        innerRef.current?.focus();
+    }, [disabled, editable]);
+
     return (
-        <View style={[containerStyle, spacingStyle, style]} testID={buildTestID('TextArea', testID)}>
+        <Pressable onPress={handleContainerPress} style={[containerStyle, spacingStyle, style]} testID={buildTestID('TextArea', testID)}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                 {
                     leftIcon ? (
@@ -151,7 +175,7 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
                 }
 
                 <TextInput
-                    ref={ref}
+                    ref={setRef}
                     value={currentValue}
                     defaultValue={defaultValue}
                     placeholder={placeholder}
@@ -173,16 +197,22 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
                     multiline
                     numberOfLines={rows}
                     onContentSizeChange={(e) => {
-                        if (!autoSize) return;
+                        if (!autoSizeEffective) return;
                         const contentHeight = e.nativeEvent.contentSize.height;
                         setHeight(Math.max(minHeight, contentHeight));
                     }}
                     textAlignVertical="top"
+                    scrollEnabled={fixedContainerHeight != null}
                     style={[
                         {
                             color: textColor,
                             minHeight,
-                            height: autoSize ? height : undefined,
+                            // 固定高度场景：让输入框填满容器可视区，避免“只显示一半”
+                            height: autoSizeEffective ? height : (
+                                fixedContainerHeight != null
+                                    ? Math.max(minHeight, fixedContainerHeight - theme.spacing.md * 2)
+                                    : undefined
+                            ),
                             lineHeight: 22,
                             paddingVertical: 2,
                             paddingHorizontal: 0,
@@ -218,7 +248,7 @@ const TextArea = forwardRef<TextInput, TextAreaProps>((props, ref) => {
                     <Text color={error ? 'error' : 'subtext'} size={size}>{helperText}</Text>
                 </View>
             ) : null}
-        </View>
+        </Pressable>
     );
 });
 

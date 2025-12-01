@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { ScrollView, View, Pressable, Text, StyleSheet, LayoutChangeEvent, ViewStyle, ColorValue } from 'react-native';
+import { ScrollView, View, Pressable, Text, StyleSheet, LayoutChangeEvent, ViewStyle, TextStyle, ColorValue, StyleProp } from 'react-native';
 import { useTheme } from '../../../theme';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
@@ -19,14 +19,19 @@ export interface SegmentedMenuProps {
   selectColor?: ColorValue; // 选中文本颜色（默认取主题 primary）
   lineColor?: ColorValue; // 指示条颜色（默认取主题 primary）
   lineSize?: number; // 指示条宽度（px），默认 24
+  indicatorVariant?: 'line' | 'background'; // 指示样式：底部线 or 背景块
+  indicatorStyle?: StyleProp<ViewStyle>; // 指示器样式（可定制圆角/高度/颜色等）
   edge?: number; // 每项左右内边距，默认 16
   fontSize?: number; // 字体大小，默认 14
   animatedDuration?: number; // 动画时长，默认 240ms
   // 容器/项样式
-  style?: ViewStyle | ViewStyle[];
-  styleInner?: ViewStyle | ViewStyle[];
-  itemStyle?: ViewStyle | ViewStyle[];
-  selectStyle?: ViewStyle | ViewStyle[];
+  style?: StyleProp<ViewStyle>;
+  styleInner?: StyleProp<ViewStyle>;
+  itemStyle?: StyleProp<ViewStyle>;
+  // 选中样式（文本/容器分离），兼容旧 selectStyle
+  selectedTextStyle?: StyleProp<TextStyle>;
+  selectedItemStyle?: StyleProp<ViewStyle>;
+  selectStyle?: StyleProp<any>;
   testID?: string;
 }
 
@@ -40,12 +45,16 @@ const SegmentedMenu: React.FC<SegmentedMenuProps> = ({
   selectColor,
   lineColor,
   lineSize = 24,
+  indicatorVariant = 'line',
+  indicatorStyle: indicatorUserStyle,
   edge = 16,
   fontSize = 14,
   animatedDuration = 240,
   style,
   styleInner,
   itemStyle,
+  selectedTextStyle,
+  selectedItemStyle,
   selectStyle,
   testID,
 }) => {
@@ -67,8 +76,10 @@ const SegmentedMenu: React.FC<SegmentedMenuProps> = ({
 
   // 指示条 X 偏移
   const translateX = useSharedValue(0);
+  const indicatorWidth = useSharedValue(lineSize);
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
+    width: indicatorWidth.value,
   }));
 
   const handleContainerLayout = (e: LayoutChangeEvent) => {
@@ -96,9 +107,12 @@ const SegmentedMenu: React.FC<SegmentedMenuProps> = ({
     if (!widths.length || idx < 0 || idx >= widths.length) return;
     const offsetLeft = sumBefore(widths, idx);
     const w = widths[idx];
-    const targetX = offsetLeft + Math.max(0, (w - lineSize) / 2);
+    const targetX = indicatorVariant === 'line'
+      ? (offsetLeft + Math.max(0, (w - lineSize) / 2))
+      : offsetLeft;
 
     translateX.value = withTiming(targetX, { duration: animatedDuration });
+    indicatorWidth.value = withTiming(indicatorVariant === 'line' ? lineSize : w, { duration: animatedDuration });
 
     // 自动将当前项居中
     const centerX = offsetLeft + w / 2;
@@ -134,6 +148,17 @@ const SegmentedMenu: React.FC<SegmentedMenuProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.content, styleInner]}
       >
+        {indicatorVariant === 'background' && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.indicatorBg,
+              { backgroundColor: indicatorColor },
+              indicatorUserStyle,
+              indicatorStyle,
+            ]}
+          />
+        )}
         {items.map((item, i) => {
           const isActive = i === currentIndex;
           return (
@@ -154,18 +179,23 @@ const SegmentedMenu: React.FC<SegmentedMenuProps> = ({
                 <Text style={[
                   styles.text,
                   { fontSize, color: isActive ? (textActiveColor as string) : (textColor as string) },
-                  isActive ? selectStyle : null,
+                  isActive ? selectedTextStyle : null,
+                  isActive ? (selectStyle as any) : null,
                 ]}>
                   {item.label}
                 </Text>
               ) : (
-                <View style={isActive ? selectStyle : undefined}>{item.label}</View>
+                <View style={isActive ? [selectedItemStyle, selectStyle as any] : undefined}>{item.label}</View>
               )}
             </Pressable>
           );
         })}
-        {/* 指示条 */}
-        <Animated.View style={[styles.indicator, { width: lineSize, backgroundColor: indicatorColor }, indicatorStyle]} />
+        {indicatorVariant === 'line' && (
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.indicatorLine, { backgroundColor: indicatorColor }, indicatorUserStyle, indicatorStyle]}
+          />
+        )}
       </ScrollView>
     </View>
   );
@@ -183,12 +213,19 @@ const styles = StyleSheet.create({
   text: {
     fontWeight: '500',
   },
-  indicator: {
+  indicatorLine: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     height: 3,
     borderRadius: 2,
+  },
+  indicatorBg: {
+    position: 'absolute',
+    top: 4,
+    left: 0,
+    height: 36,
+    borderRadius: 12,
   },
 });
 

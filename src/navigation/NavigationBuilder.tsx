@@ -142,6 +142,14 @@ export class NavigationBuilder {
   }
 
   /**
+   * 设置 Tabs 屏幕的过渡动画（仅进入 Tabs 时生效，不影响 Stack）
+   */
+  setTabsTransition(mode: TransitionMode): NavigationBuilder {
+    this.config.tabsTransitionMode = mode;
+    return this;
+  }
+
+  /**
    * 设置是否显示标签
    */
   setShowLabels(show: boolean): NavigationBuilder {

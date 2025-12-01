@@ -28,6 +28,10 @@ export interface IconButtonProps extends SpacingProps, TestableProps, PressEvent
   testID?: string;// 测试 ID（默认 `${name}IconButton`）
 }
 
+/**
+ * 图标按钮组件：支持阴影预设与渐变背景
+ * 修复：正确使用样式预设的阴影（styles.shadow）
+ */
 const IconButton: React.FC<IconButtonProps> = ({
   name,
   type = 'ionicons',
@@ -48,7 +52,7 @@ const IconButton: React.FC<IconButtonProps> = ({
   onLongPress,
   ...props
 }) => {
-  const { theme } = useTheme();
+  const { theme, styles } = useTheme();
   const colors = useThemeColors();
 
   const [containerSize, setContainerSize] = React.useState<{ width: number; height: number } | null>(null);
@@ -89,7 +93,7 @@ const IconButton: React.FC<IconButtonProps> = ({
 
   // 盒子样式与阴影样式
   const boxStyle = buildBoxStyle({ defaultBackground }, props, { ...base, ...variantOverrides });
-  const shadowStyle = buildShadowStyle((theme as any).styles?.shadow ?? {}, props);
+  const shadowStyle = buildShadowStyle(styles.shadow, props);
 
   const finalStyle: StyleProp<ViewStyle> = [boxStyle, shadowStyle, spacingStyle, style];
 
