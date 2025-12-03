@@ -51,6 +51,7 @@ export const ModalScreen: React.FC<any> = ({ route }) => {
         direction = 'none',
         headerShown = true,
         useSafeAreaInsets: useInsets = true, // 新增：默认启用安全区
+        animationDuration = 250, // 动画时长，默认 250ms
         children,
     } = route?.params || {};
 
@@ -79,8 +80,8 @@ export const ModalScreen: React.FC<any> = ({ route }) => {
     const [maskVisible] = useState(true);
     const { fadeAnim, fadeIn } = useFadeAnimation(0);
     useEffect(() => {
-        fadeIn(200).start();
-    }, [fadeIn]);
+        fadeIn(animationDuration).start();
+    }, [fadeIn, animationDuration]);
 
     const initialTranslateX = direction === 'left' ? -SCREEN_WIDTH : direction === 'right' ? SCREEN_WIDTH : 0;
     const initialTranslateY = direction === 'top' ? -SCREEN_HEIGHT : direction === 'bottom' || direction === 'ios' ? SCREEN_HEIGHT : 0;
@@ -91,13 +92,13 @@ export const ModalScreen: React.FC<any> = ({ route }) => {
     useEffect(() => {
         const anims: Animated.CompositeAnimation[] = [];
         if (direction === 'fade') {
-            anims.push(Animated.timing(cardOpacity, { toValue: 1, duration: 200, useNativeDriver: true }));
+            anims.push(Animated.timing(cardOpacity, { toValue: 1, duration: animationDuration, useNativeDriver: true }));
         }
         if (initialTranslateX !== 0) {
-            anims.push(Animated.timing(cardTranslateX, { toValue: 0, duration: 250, useNativeDriver: true }));
+            anims.push(Animated.timing(cardTranslateX, { toValue: 0, duration: animationDuration, useNativeDriver: true }));
         }
         if (initialTranslateY !== 0) {
-            anims.push(Animated.timing(cardTranslateY, { toValue: 0, duration: 250, useNativeDriver: true }));
+            anims.push(Animated.timing(cardTranslateY, { toValue: 0, duration: animationDuration, useNativeDriver: true }));
         }
         if (anims.length) {
             Animated.parallel(anims).start();

@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 import { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 export interface TabConfig {
   name: string;
@@ -21,8 +21,9 @@ export interface TabConfig {
 export interface StackConfig {
   name: string;
   component: ComponentType<any>;
-  options?: NativeStackNavigationOptions;
+  options?: StackNavigationOptions;
   transitionMode?: TransitionMode; // 单屏覆盖过渡动画
+  animationDuration?: number; // 动画时长
 }
 
 export interface SafeAreaInsets {
@@ -99,6 +100,8 @@ export interface NavigatorConfig {
   inactiveColor?: string;
   showLabels?: boolean;
   transitionMode?: TransitionMode;
+  /** 动画时长（毫秒），目前仅对 Modal 和自定义 Fade 模式生效 */
+  animationDuration?: number;
   /** Tabs 屏幕过渡模式（仅主 Tabs 与 Tabs 组生效） */
   tabsTransitionMode?: TransitionMode;
   leftDrawer?: DrawerConfig;

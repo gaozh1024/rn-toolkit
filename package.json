@@ -44,6 +44,7 @@
     "react-native-device-info": ">=12.0.0",
     "react-native-drawer-layout": ">=4.0.0",
     "react-native-gesture-handler": ">=2.0.0",
+    "react-native-keyboard-controller": ">=1.19.5",
     "react-native-localize": ">=3.5.0",
     "react-native-mmkv": ">=2.0.0",
     "react-native-permissions": ">=5.4.0",
@@ -51,8 +52,7 @@
     "react-native-safe-area-context": ">=4.0.0",
     "react-native-screens": ">=3.0.0",
     "react-native-svg": ">=15.0.0",
-    "react-native-worklets": ">=0.6.0",
-    "react-native-keyboard-controller": ">=1.19.5"
+    "react-native-worklets": ">=0.6.0"
   },
   "peerDependenciesMeta": {
     "react-native-reanimated": {
@@ -64,6 +64,7 @@
     "@react-navigation/bottom-tabs": "^7.4.9",
     "@react-navigation/native": "^7.1.18",
     "@react-navigation/native-stack": "^7.3.28",
+    "@react-navigation/stack": "^7.6.8",
     "@types/react": "^19.1.0",
     "@types/react-native": "^0.73.0",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
@@ -71,7 +72,7 @@
     "eslint": "^8.56.0",
     "react-native-device-info": "^14.1.1",
     "react-native-drawer-layout": "^4.1.13",
-    "react-native-gesture-handler": "^2.28.0",
+    "react-native-gesture-handler": "^2.29.1",
     "react-native-keyboard-controller": "^1.19.5",
     "react-native-localize": "^3.5.4",
     "react-native-mmkv": "^3.3.3",
@@ -86,6 +87,5 @@
     "typescript": "^5.3.3",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4"
-  },
-  "dependencies": {}
+  }
 }

@@ -150,6 +150,15 @@ export class NavigationBuilder {
   }
 
   /**
+   * 设置动画时长（毫秒）
+   * 注意：目前仅对 Modal 和自定义 Fade 模式生效，原生 Stack 页面过渡受系统限制
+   */
+  setAnimationDuration(duration: number): NavigationBuilder {
+    this.config.animationDuration = duration;
+    return this;
+  }
+
+  /**
    * 设置是否显示标签
    */
   setShowLabels(show: boolean): NavigationBuilder {

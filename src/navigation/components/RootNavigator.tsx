@@ -16,6 +16,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
   initialRouteName,
   transitionMode = 'ios',
   tabsTransitionMode,
+  animationDuration, // 新增：全局动画时长
   tabsScreenName,
   tabsGroups = [],
   ...tabConfig
@@ -170,6 +171,7 @@ export const RootNavigator: React.FC<NavigatorConfig> = ({
           key={modal.name}
           name={modal.name}
           component={modal.component}
+          initialParams={{ animationDuration }} // 传递全局动画时长
           options={({ route }: any) => {
             const base = getTransitionOptions('fade');
             return {
