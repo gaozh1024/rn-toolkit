@@ -1,6 +1,6 @@
 import React from 'react';
-import { StatusBar, ViewStyle, StyleProp } from 'react-native';
-import { Edge } from 'react-native-safe-area-context';
+import { StatusBar, ViewStyle, StyleProp, View, Platform } from 'react-native';
+import { Edge, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from '../SafeAreaView/SafeAreaView';
 import { Container } from '../Container/Container';
@@ -75,6 +75,7 @@ export const Page: React.FC<PageProps> = (rawProps) => {
         keyboardAvoiding = false,
     } = rawProps;
     const { theme, isDark } = useTheme();
+    const insets = useSafeAreaInsets();
     const colors = theme.colors;
     const finalTestID = buildTestID('Page', rawProps.testID);
     const gradientCfg = normalizeGradientConfig([colors.primary, colors.secondary], rawProps);
@@ -83,7 +84,15 @@ export const Page: React.FC<PageProps> = (rawProps) => {
     const useTransparentStatusBar = !!gradientCfg.colors;
 
     const autoStatusBarStyle = statusBarStyle || (isDark ? 'light-content' : 'dark-content');
-    const autoStatusBarBgColor = useTransparentStatusBar ? 'transparent' : (statusBarBackgroundColor || colors.background);
+    
+    // 是否需要渲染自定义状态栏背景（当颜色不是透明时）
+    // 修正：只有当用户显式设置了 statusBarBackgroundColor 时，才渲染自定义 View
+    // 这样默认情况下（未设置时），状态栏颜色由 Header 背景色决定（通过透明状态栏透出 Header）
+    const shouldRenderStatusBarBg = !!statusBarBackgroundColor && statusBarBackgroundColor !== 'transparent';
+
+    // 如果我们自己渲染状态栏背景，Header 就不应该处理顶部安全区
+    const headerSafeAreaTop = !shouldRenderStatusBarBg;
+
     const bgColor = useTransparentStatusBar ? 'transparent' : (backgroundColor || colors.background);
 
     const wrapWithDrawer = (node: React.ReactNode) => {
@@ -98,7 +107,10 @@ export const Page: React.FC<PageProps> = (rawProps) => {
     };
 
     const headerNode = headerShown ? (
-        <Header {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} />
+        <Header 
+            {...(headerActions ? { ...headerProps, actions: headerActions } : headerProps)} 
+            safeAreaTopEnabled={headerSafeAreaTop}
+        />
     ) : null;
 
     const content = (
@@ -108,9 +120,14 @@ export const Page: React.FC<PageProps> = (rawProps) => {
             style={[style]}
             testID={finalTestID}
         >
+            {/* 
+                状态栏配置：
+                - translucent: 始终为 true，实现沉浸式布局，由我们自己控制背景 View 或 Header padding。
+                - backgroundColor: 设为 transparent，因为我们用 View 或 Header 来填充颜色。
+            */}
             <StatusBar
                 barStyle={autoStatusBarStyle}
-                backgroundColor={autoStatusBarBgColor}
+                backgroundColor="transparent"
                 translucent={true}
             />
 

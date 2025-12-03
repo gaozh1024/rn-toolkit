@@ -27,6 +27,7 @@ export const TabNavigator: React.FC<NavigatorConfig> = ({
           label={showLabels ? (tab.label || tab.name) : undefined}
           iconName={tab.iconName}
           activeIconName={tab.activeIconName}
+          iconType={tab.iconType}
           iconSize={tab.iconSize}
           badge={tab.badge}
           badgeColor={tab.badgeColor}

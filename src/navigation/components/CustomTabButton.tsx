@@ -9,6 +9,7 @@ export const CustomTabButton: React.FC<CustomTabButtonProps> = ({
   label,
   iconName,
   activeIconName,
+  iconType,
   iconSize = 24,
   badge,
   badgeColor = '#FF3B30',
@@ -35,7 +36,7 @@ export const CustomTabButton: React.FC<CustomTabButtonProps> = ({
         <View style={styles.iconContainer}>
           {children || (
             displayIconName ? (
-              <Icon name={displayIconName} size={iconSize} color={tintColor} />
+              <Icon name={displayIconName} type={iconType} size={iconSize} color={tintColor} />
             ) : (
               <View style={[
                 styles.defaultIcon,

@@ -9,6 +9,8 @@ export interface TabConfig {
   iconName?: string;
   /** 选中态时使用的图标名称（可选）。如果未设置则沿用 iconName */
   activeIconName?: string;
+  /** 图标类型（可选，默认 'ionicon'） */
+  iconType?: string;
   iconSize?: number;
   badge?: string | number;
   badgeColor?: string;
@@ -39,6 +41,8 @@ export interface CustomTabButtonProps {
   iconName?: string;
   /** 选中态时使用的图标名称（可选） */
   activeIconName?: string;
+  /** 图标类型（可选，默认 'ionicon'） */
+  iconType?: string;
   iconSize?: number;
   badge?: string | number;
   badgeColor?: string;
