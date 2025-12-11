@@ -5,10 +5,13 @@ import { useComponentNavigation } from '../../../navigation';
 import Button from '../../ui/Button/Button';
 import { PickerService, type PickerItem } from './PickerService';
 import { Text } from '../../ui/Text';
+import { I18nService } from '../../../utils';
 
 type PickerParams = {
     id: string;
     title?: string;
+    cancelLabel?: string;
+    confirmLabel?: string;
     direction?: 'bottom' | 'top' | 'left' | 'right' | 'fade' | 'none' | 'ios';
     initialIndices?: number[];
     columns?: PickerItem[][];
@@ -20,8 +23,11 @@ const HALF = Math.floor(VISIBLE_COUNT / 2);
 
 const WheelPickerModal: React.FC<any> = ({ route }) => {
     const params = (route?.params || {}) as PickerParams;
-    const { id, title = '请选择', direction = 'bottom' } = params;
+    const { id, title = '请选择', direction = 'bottom', cancelLabel, confirmLabel } = params;
     const initialIndicesProp = params.initialIndices || [];
+
+    const cancelText = cancelLabel || I18nService.t('common.cancel') || '取消';
+    const confirmText = confirmLabel || I18nService.t('common.confirm') || '确定';
 
     const { theme } = useTheme();
     const layout = useLayoutStyles();
@@ -182,9 +188,9 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
                 ]}
             >
                 <View style={[layout.rowBetween, spacing.pxMd, spacing.ptMd, spacing.pbSm]}>
-                    <Button variant="text" title="取消" onPress={doCancel} />
+                    <Button variant="text" title={cancelText} onPress={doCancel} />
                     <Text style={{ ...theme.text.h6, color: theme.colors.text }}>{title}</Text>
-                    <Button variant="text" title="确定" onPress={doConfirm} />
+                    <Button variant="text" title={confirmText} onPress={doConfirm} />
                 </View>
 
                 <View style={[{ height: ITEM_HEIGHT * VISIBLE_COUNT }, spacing.pxMd]}>

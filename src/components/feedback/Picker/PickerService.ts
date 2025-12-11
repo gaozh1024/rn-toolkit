@@ -70,6 +70,8 @@ class PickerServiceImpl {
         columns: PickerItem[][];
         initialIndices?: number[];
         title?: string;
+        cancelLabel?: string;
+        confirmLabel?: string;
         direction?: 'bottom' | 'top' | 'left' | 'right' | 'fade' | 'none' | 'ios';
     }): Promise<any[]> {
         const id = this.genId();
@@ -80,6 +82,8 @@ class PickerServiceImpl {
             const params = {
                 id,
                 title: options.title,
+                cancelLabel: options.cancelLabel,
+                confirmLabel: options.confirmLabel,
                 direction: options.direction ?? 'bottom',
                 initialIndices: options.initialIndices,
                 columns: options.columns,
@@ -99,6 +103,8 @@ class PickerServiceImpl {
         columns: PickerItem[][];
         initialIndices?: number[];
         title?: string;
+        cancelLabel?: string;
+        confirmLabel?: string;
         direction?: 'bottom' | 'top' | 'left' | 'right' | 'fade' | 'none' | 'ios';
     }): { id: string; result: Promise<any[]>; updateColumns: (cols: PickerItem[][]) => void; updateSelection: (indices: number[]) => void; close: () => void } {
         const id = this.genId();
@@ -109,6 +115,8 @@ class PickerServiceImpl {
             const params = {
                 id,
                 title: options.title,
+                cancelLabel: options.cancelLabel,
+                confirmLabel: options.confirmLabel,
                 direction: options.direction ?? 'bottom',
                 initialIndices: options.initialIndices,
                 columns: options.columns,
