@@ -18,9 +18,9 @@ type I18nState = {
 };
 
 const STORAGE_KEYS = {
-    LANG_MODE: 'rn_toolkit_lang_mode',
-    LANG_TAG: 'rn_toolkit_lang_tag',
-    LANG_OVERRIDES: 'rn_toolkit_lang_overrides',
+    LANG_MODE: 'rn_toolkit_lang_mode',// 语言模式（system/fixed）
+    LANG_TAG: 'rn_toolkit_lang_tag',// 固定语言标签（若模式为 fixed）
+    LANG_OVERRIDES: 'rn_toolkit_lang_overrides',// 消息覆盖（key-value 扁平结构）
 } as const;
 
 class I18nServiceImpl {
@@ -198,8 +198,22 @@ class I18nServiceImpl {
         }
 
         // system 模式：按系统语言选最佳
-        const best = LocalizationService.findBestLanguage(registeredTags) || { languageTag: registeredTags[0], isRTL: false };
-        const normalized = this.resolveTag(best.languageTag) || registeredTags[0];
+        // 将别名也加入候选列表，以提高匹配率（例如 iOS zh-Hans-CN 可能匹配到别名 zh-Hans，从而定位到 zh-CN）
+        const allCandidates = [...registeredTags, ...Array.from(this.aliasMap.keys())];
+
+        // Debug: 打印系统语言与匹配过程
+        const sysLocale = LocalizationService.getInfo().locale;
+        console.log('\x1b[32m[I18nService] 系统语言:\x1b[0m', sysLocale.languageTag);
+        // console.log('[I18nService] Candidates:', allCandidates);
+
+        const best = LocalizationService.findBestLanguage(allCandidates);
+        console.log('[I18nService] Best Match:', best);
+
+        // 匹配到的可能是别名，需要 resolve 为主 tag；若未匹配到则兜底使用第一个注册包
+        const matchedTag = best ? best.languageTag : registeredTags[0];
+        const normalized = this.resolveTag(matchedTag) || registeredTags[0];
+
+        console.log('\x1b[32m[I18nService] 最终解决的标签:\x1b[0m', normalized);
 
         this.currentTag = normalized;
         this.isRTL = this.computeRTL(normalized);
