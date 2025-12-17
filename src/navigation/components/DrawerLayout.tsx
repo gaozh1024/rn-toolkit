@@ -79,13 +79,29 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ leftDrawer, rightDra
      */
     const computeSwipeEnabled = (cfg: DrawerConfig | undefined, isOpen: boolean): boolean => {
         if (!cfg) return false;
-        if (typeof cfg.swipeEnabled === 'boolean') return cfg.swipeEnabled;
-        switch (cfg.gestureMode) {
-            case 'none': return false;
-            case 'close-only': return isOpen;
-            case 'both':
-            default: return true;
+
+        // 1. 处理 'none' 模式
+        if (cfg.gestureMode === 'none') {
+             // 特殊兼容：如果用户设置了 none 但又强行开了 swipeEnabled=true，
+             // 我们将其理解为“禁止手势打开，但允许手势关闭”（等同于 close-only）
+             if (cfg.swipeEnabled === true) return isOpen;
+             return false;
         }
+
+        // 2. 处理 'close-only' 模式
+        if (cfg.gestureMode === 'close-only') {
+            // 如果显式禁用了 swipeEnabled，则全禁
+            if (cfg.swipeEnabled === false) return false;
+            // 否则（true 或 undefined），仅在打开状态下允许滑动（即只允许滑动关闭）
+            return isOpen;
+        }
+
+        // 3. 其他模式 ('both' 或 undefined)
+        // 优先遵循 swipeEnabled 显式配置
+        if (typeof cfg.swipeEnabled === 'boolean') return cfg.swipeEnabled;
+        
+        // 默认为 true (both)
+        return true;
     };
 
     /**
