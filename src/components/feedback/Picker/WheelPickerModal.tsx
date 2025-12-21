@@ -5,7 +5,6 @@ import { useComponentNavigation } from '../../../navigation';
 import Button from '../../ui/Button/Button';
 import { PickerService, type PickerItem } from './PickerService';
 import { Text } from '../../ui/Text';
-import { I18nService } from '../../../utils';
 
 type PickerParams = {
     id: string;
@@ -26,8 +25,8 @@ const WheelPickerModal: React.FC<any> = ({ route }) => {
     const { id, title = '请选择', direction = 'bottom', cancelLabel, confirmLabel } = params;
     const initialIndicesProp = params.initialIndices || [];
 
-    const cancelText = cancelLabel || I18nService.t('common.cancel') || '取消';
-    const confirmText = confirmLabel || I18nService.t('common.confirm') || '确定';
+    const cancelText = cancelLabel || '取消';
+    const confirmText = confirmLabel || '确定';
 
     const { theme } = useTheme();
     const layout = useLayoutStyles();
